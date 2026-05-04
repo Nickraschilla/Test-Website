@@ -22,19 +22,54 @@ export function useReelsData() {
         complete: (results) => {
           if (!isActive) return;
 
-          const rows = results.data.slice(1);
-          const cleaned = rows.map((row) => ({
-            name: row[0] || "",
-            reelName: row[1] || "",
-            clipUrl: row[2] || "",
-            igMediaId: row[3] || "",
-            views: toNumber(row[4]),
-            likes: toNumber(row[5]),
-            comments: toNumber(row[6]),
-            reshares: toNumber(row[7]),
-            saves: toNumber(row[8]),
-            lastSyncedAt: row[9] || "",
-          }));
+          const [rawHeaders = [], ...rows] = results.data;
+          const headerMap = rawHeaders.reduce((map, value, index) => {
+            const key = String(value || "").trim().toLowerCase();
+            if (key) {
+              map[key] = index;
+            }
+            return map;
+          }, {});
+
+          const getByHeader = (row, header, fallbackIndex = -1) => {
+            const index = headerMap[header.toLowerCase()];
+            if (index !== undefined) {
+              return row[index];
+            }
+            return fallbackIndex >= 0 ? row[fallbackIndex] : "";
+          };
+
+          const cleaned = rows.map((row) => {
+            const igViews = toNumber(getByHeader(row, "igViews", 4));
+            const igLikes = toNumber(getByHeader(row, "igLikes", 5));
+            const igComments = toNumber(getByHeader(row, "igComments", 6));
+            const igShares = toNumber(getByHeader(row, "igShares", 7));
+            const fbViews = toNumber(getByHeader(row, "fbViews", 10));
+            const fbLikes = toNumber(getByHeader(row, "fbLikes", 11));
+            const fbComments = toNumber(getByHeader(row, "fbComments", 12));
+            const fbShares = toNumber(getByHeader(row, "fbShares", 13));
+
+            return {
+              name: getByHeader(row, "name", 0) || "",
+              reelName: getByHeader(row, "reelName", 1) || "",
+              clipUrl: getByHeader(row, "clipUrl", 2) || "",
+              igMediaId: getByHeader(row, "igMediaId", 3) || "",
+              views: toNumber(getByHeader(row, "totalViews", 14)) || igViews,
+              likes: toNumber(getByHeader(row, "totalLikes", 15)) || igLikes,
+              comments: toNumber(getByHeader(row, "totalComments", 16)) || igComments,
+              reshares: toNumber(getByHeader(row, "totalShares", 17)) || igShares,
+              saves: toNumber(getByHeader(row, "igSaves", 8)),
+              lastSyncedAt: getByHeader(row, "lastSyncedAt", 9) || "",
+              igViews,
+              igLikes,
+              igComments,
+              igShares,
+              fbViews,
+              fbLikes,
+              fbComments,
+              fbShares,
+            };
+          });
 
           startTransition(() => {
             setReels(cleaned);

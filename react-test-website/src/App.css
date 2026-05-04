@@ -324,9 +324,10 @@ button, select, input, textarea { font: inherit; }
 }
 
 .hero-leader-spotlight-inline {
-  grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.28fr);
   align-items: end;
-  gap: 18px;
+  gap: 22px;
+  min-width: 0;
 }
 
 .meta-pill,
@@ -381,8 +382,9 @@ button, select, input, textarea { font: inherit; }
 .hero-leader-copy {
   display: grid;
   align-content: start;
-  gap: 6px;
-  max-width: 18rem;
+  gap: 8px;
+  max-width: 13rem;
+  min-width: 0;
 }
 
 
@@ -390,25 +392,30 @@ button, select, input, textarea { font: inherit; }
   margin-top: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 14px;
   align-content: stretch;
   align-self: end;
+  width: 100%;
+  min-width: 0;
 }
 
 .hero-leader-stats .hero-brand-metric {
-  min-height: 118px;
+  min-height: 132px;
+  min-width: 0;
   align-content: end;
-  gap: 8px;
-  padding: 16px 16px 14px;
+  gap: 10px;
+  padding: 18px 18px 16px;
   background: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
 }
 
 .hero-brand-metric strong {
   font-family: "Barlow Condensed", sans-serif;
-  font-size: clamp(2rem, 2.2vw, 2.5rem);
-  line-height: 0.95;
+  font-size: clamp(1.72rem, 1.8vw, 2.1rem);
+  line-height: 0.92;
   font-weight: 800;
   color: #131313;
+  white-space: nowrap;
 }
 
 .hero-feature-card {
