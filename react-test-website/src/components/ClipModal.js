@@ -1,7 +1,18 @@
+import { useEffect, useState } from "react";
+
 export function ClipModal({ activeClip, activeClipPresentation, onClose }) {
+  const [driveFallback, setDriveFallback] = useState(false);
+
+  useEffect(() => {
+    setDriveFallback(false);
+  }, [activeClipPresentation?.src, activeClipPresentation?.fallbackSrc, activeClip?.clipUrl]);
+
   if (!activeClip || !activeClipPresentation) {
     return null;
   }
+
+  const renderDriveEmbed =
+    activeClipPresentation.type === "drive" && driveFallback;
 
   return (
     <div className="clip-modal-overlay" role="presentation" onClick={onClose}>
@@ -36,16 +47,29 @@ export function ClipModal({ activeClip, activeClipPresentation, onClose }) {
         <div className="clip-modal-body">
           {activeClipPresentation.type === "video" ? (
             <video
-              className="clip-player"
+              className="clip-player clip-player-video"
               src={activeClipPresentation.src}
               controls
               autoPlay
               playsInline
             />
+          ) : activeClipPresentation.type === "drive" && !renderDriveEmbed ? (
+            <video
+              className="clip-player clip-player-video"
+              src={activeClipPresentation.src}
+              controls
+              autoPlay
+              playsInline
+              onError={() => setDriveFallback(true)}
+            />
           ) : (
             <iframe
-              className="clip-player"
-              src={activeClipPresentation.src}
+              className="clip-player clip-player-embed"
+              src={
+                activeClipPresentation.type === "drive"
+                  ? activeClipPresentation.fallbackSrc
+                  : activeClipPresentation.src
+              }
               title={`${activeClip.reelName || "Clip"} preview`}
               allow="autoplay; encrypted-media; picture-in-picture"
               allowFullScreen

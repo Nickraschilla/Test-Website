@@ -73,8 +73,9 @@ export const getClipPresentation = (url) => {
   const driveMatch = trimmedUrl.match(/drive\.google\.com\/file\/d\/([^/]+)/);
   if (driveMatch) {
     return {
-      type: "iframe",
-      src: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
+      type: "drive",
+      src: `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`,
+      fallbackSrc: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
     };
   }
 
