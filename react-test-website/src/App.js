@@ -6,50 +6,89 @@ import { DashboardHero } from "./components/DashboardHero";
 import { LeaderboardTable } from "./components/LeaderboardTable";
 import { useReelsData } from "./hooks/useReelsData";
 import {
+  buildMonthOptions,
   calculateTotals,
+  formatMonthKey,
   formatNumber,
   getClipPresentation,
   getImpactScore,
+  getMonthKey,
+  isInstagramReel,
+  isPublishedInYear,
   sortReels,
 } from "./utils/reels";
+
+const DISPLAY_YEAR = 2026;
 
 function App() {
   const { reels, loading, error, lastUpdated } = useReelsData();
   const [sortKey, setSortKey] = useState("score");
   const [ascending, setAscending] = useState(false);
   const [selectedContributor, setSelectedContributor] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
   const [activeClip, setActiveClip] = useState(null);
+
+  const yearFilteredReels = useMemo(
+    () => reels.filter((reel) => isPublishedInYear(reel, DISPLAY_YEAR)),
+    [reels]
+  );
+
+  const monthOptions = useMemo(
+    () => buildMonthOptions(yearFilteredReels),
+    [yearFilteredReels]
+  );
+
+  const monthFilteredReels = useMemo(
+    () =>
+      selectedMonth === "all"
+        ? yearFilteredReels
+        : yearFilteredReels.filter((reel) => getMonthKey(reel) === selectedMonth),
+    [yearFilteredReels, selectedMonth]
+  );
 
   const contributors = useMemo(
     () =>
-      [...new Set(reels.map((reel) => reel.name).filter(Boolean))].sort((a, b) =>
-        a.localeCompare(b)
+      [...new Set(monthFilteredReels.map((reel) => reel.name).filter(Boolean))].sort(
+        (a, b) => a.localeCompare(b)
       ),
-    [reels]
+    [monthFilteredReels]
   );
 
   const filteredReels = useMemo(
     () =>
       selectedContributor === "all"
-        ? reels
-        : reels.filter((reel) => reel.name === selectedContributor),
-    [reels, selectedContributor]
+        ? monthFilteredReels
+        : monthFilteredReels.filter((reel) => reel.name === selectedContributor),
+    [monthFilteredReels, selectedContributor]
+  );
+
+  const tableReels = useMemo(
+    () => filteredReels.filter(isInstagramReel),
+    [filteredReels]
   );
 
   const sortedReels = useMemo(
-    () => sortReels(filteredReels, sortKey, ascending),
-    [filteredReels, sortKey, ascending]
+    () => sortReels(tableReels, sortKey, ascending),
+    [tableReels, sortKey, ascending]
   );
 
-  const fullRanking = useMemo(() => sortReels(reels, "score", false), [reels]);
+  const fullRanking = useMemo(
+    () => sortReels(monthFilteredReels, "score", false),
+    [monthFilteredReels]
+  );
   const totals = useMemo(() => calculateTotals(filteredReels), [filteredReels]);
-  const overallTotals = useMemo(() => calculateTotals(reels), [reels]);
+  const overallTotals = useMemo(
+    () => calculateTotals(monthFilteredReels),
+    [monthFilteredReels]
+  );
   const topPerformer = sortedReels[0];
   const overallTopPerformer = fullRanking[0];
   const activeClipPresentation = activeClip
     ? getClipPresentation(activeClip.clipUrl)
     : null;
   const shouldAnimateHeadlineStats = selectedContributor === "all";
+  const selectedMonthLabel =
+    selectedMonth === "all" ? "All months" : formatMonthKey(selectedMonth);
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -82,7 +121,7 @@ function App() {
 
       <main className="dashboard-shell">
         <DashboardHero
-          reelCount={reels.length}
+          reelCount={monthFilteredReels.length}
           lastUpdated={lastUpdated}
           topPerformer={overallTopPerformer}
           totals={overallTotals}
@@ -99,15 +138,15 @@ function App() {
               <h2 className="leaderboard-heading">Live leaderboard</h2>
               <p className="leaderboard-subheading">
                 {selectedContributor === "all"
-                  ? "Live social impact rankings sorted by weighted impact score."
-                  : `Focused view for ${selectedContributor}, still ranked by weighted impact score.`}
+                  ? `Social impact rankings for ${selectedMonthLabel.toLowerCase()}.`
+                  : `${selectedContributor} performance for ${selectedMonthLabel.toLowerCase()}.`}
               </p>
             </div>
 
             <div className="leaderboard-stage-actions">
               <div className="leaderboard-status-pill">
                 <span className="status-dot" aria-hidden="true" />
-                {reels.length} live reels
+                {tableReels.length} reels
               </div>
 
               {selectedContributor !== "all" ? (
@@ -131,6 +170,25 @@ function App() {
                   {contributors.map((name) => (
                     <option key={name} value={name}>
                       {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="filter-control">
+                <span className="filter-label">Date</span>
+                <select
+                  className="filter-select filter-select-date"
+                  value={selectedMonth}
+                  onChange={(event) => {
+                    setSelectedMonth(event.target.value);
+                    setSelectedContributor("all");
+                  }}
+                >
+                  <option value="all">All months</option>
+                  {monthOptions.map((month) => (
+                    <option key={month.value} value={month.value}>
+                      {month.label}
                     </option>
                   ))}
                 </select>

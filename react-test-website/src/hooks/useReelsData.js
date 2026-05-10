@@ -44,30 +44,40 @@ export function useReelsData() {
             const igLikes = toNumber(getByHeader(row, "igLikes", 5));
             const igComments = toNumber(getByHeader(row, "igComments", 6));
             const igShares = toNumber(getByHeader(row, "igShares", 7));
+            const igSaves = toNumber(getByHeader(row, "igSaves", 8));
             const fbViews = toNumber(getByHeader(row, "fbViews", 10));
             const fbLikes = toNumber(getByHeader(row, "fbLikes", 11));
             const fbComments = toNumber(getByHeader(row, "fbComments", 12));
             const fbShares = toNumber(getByHeader(row, "fbShares", 13));
+            const fbSaves = toNumber(getByHeader(row, "fbSaves"));
 
             return {
               name: getByHeader(row, "name", 0) || "",
               reelName: getByHeader(row, "reelName", 1) || "",
               clipUrl: getByHeader(row, "clipUrl", 2) || "",
               igMediaId: getByHeader(row, "igMediaId", 3) || "",
+              publishedAt:
+                getByHeader(row, "publishedAt") ||
+                getByHeader(row, "postDate") ||
+                getByHeader(row, "date") ||
+                getByHeader(row, "timestamp") ||
+                "",
               views: toNumber(getByHeader(row, "totalViews", 14)) || igViews,
               likes: toNumber(getByHeader(row, "totalLikes", 15)) || igLikes,
               comments: toNumber(getByHeader(row, "totalComments", 16)) || igComments,
               reshares: toNumber(getByHeader(row, "totalShares", 17)) || igShares,
-              saves: toNumber(getByHeader(row, "igSaves", 8)),
+              saves: toNumber(getByHeader(row, "totalSaves")) || igSaves,
               lastSyncedAt: getByHeader(row, "lastSyncedAt", 9) || "",
               igViews,
               igLikes,
               igComments,
               igShares,
+              igSaves,
               fbViews,
               fbLikes,
               fbComments,
               fbShares,
+              fbSaves,
             };
           });
 

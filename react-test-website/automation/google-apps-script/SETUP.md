@@ -5,7 +5,7 @@ This setup keeps your React dashboard reading from Google Sheets, while Meta sup
 The sheet structure for this version is:
 
 ```text
-name | reelName | clipUrl | igMediaId | views | likes | comments | reshares | saves | lastSyncedAt
+name | reelName | clipUrl | igMediaId | views | likes | comments | reshares | saves | lastSyncedAt | publishedAt
 ```
 
 ## What the script does
@@ -15,6 +15,7 @@ name | reelName | clipUrl | igMediaId | views | likes | comments | reshares | sa
 - Pulls updated metrics from Meta using that `igMediaId`
 - Writes fresh values into `views`, `likes`, `comments`, `reshares`, `saves`
 - Timestamps each sync in `lastSyncedAt`
+- Stores the Instagram publish time from Meta in `publishedAt`
 
 ## Files
 
@@ -41,7 +42,7 @@ Meta help center references:
 Create these headers in row 1:
 
 ```text
-name | reelName | clipUrl | igMediaId | views | likes | comments | reshares | saves | lastSyncedAt
+name | reelName | clipUrl | igMediaId | views | likes | comments | reshares | saves | lastSyncedAt | publishedAt
 ```
 
 Fill at least:
@@ -59,6 +60,7 @@ Leave these blank for now if you do not have them yet:
 - `reshares`
 - `saves`
 - `lastSyncedAt`
+- `publishedAt`
 
 ### 2. Create your Meta app
 

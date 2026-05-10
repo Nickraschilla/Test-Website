@@ -14,54 +14,41 @@ export function DashboardHero({
   const topImpact = topPerformer ? formatNumber(Math.round(getImpactScore(topPerformer))) : "0";
   const topViews = topPerformer ? formatNumber(topPerformer.views) : "0";
   const topShares = topPerformer ? formatNumber(topPerformer.reshares) : "0";
+  const topInitials = topName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 
   return (
     <section className="hero">
       <div className="hero-brand-card">
-        <div className="hero-card-topbar" aria-hidden="true" />
         <div className="hero-brand-stack">
           <div className="hero-brand-intro">
             <div className="hero-brand-header">
-              <div className="hero-card-label-pill">Social performance board</div>
+              <div className="hero-card-label-pill">Premier Data Social</div>
               <h1 className="hero-title">
                 <span className="hero-title-primary">Coders</span>
-                <span className="hero-title-accent">Social</span>
-                <span className="hero-title-accent">Impact</span>
+                <span className="hero-title-accent">Social Impact</span>
               </h1>
               <p className="hero-copy">
-                A shared board for the coding team to see what is landing, celebrate standout reels,
-                and help Premier Data turn every post into stronger reach for the brand.
+                Performance intelligence for every reel, ranked by reach, response and momentum.
               </p>
             </div>
 
             <div className="hero-meta-pills">
               <div className="hero-meta-pill">{reelCount} reels tracked</div>
-              <div className="hero-meta-pill">Refreshes every 15 minutes</div>
+              <div className="hero-meta-pill">15 min refresh</div>
             </div>
           </div>
 
-          <div className="hero-brand-story-grid">
-            <div className="hero-brand-note hero-brand-note-strong">
-              <span className="hero-brand-note-label">Built for the team</span>
-              <p>
-                From first upload to strongest performer, the board gives the group one place to back each other,
-                learn what is resonating, and build a stronger sense of shared momentum.
-              </p>
+          <div className="hero-leader-spotlight">
+            <div className="hero-player-portrait" aria-hidden="true">
+              <span>{topInitials || "PD"}</span>
             </div>
 
-            <div className="hero-brand-points hero-brand-points-compact">
-              <div className="hero-brand-point">
-                <span className="hero-brand-point-label">Shared momentum</span>
-                <strong>See which reels are helping lift the board each refresh.</strong>
-              </div>
-              <div className="hero-brand-point">
-                <span className="hero-brand-point-label">Bigger reach</span>
-                <strong>Track how the team's output is expanding Premier Data's social footprint.</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="hero-leader-spotlight hero-leader-spotlight-inline">
             <div className="hero-leader-copy">
               <div className="hero-card-label">Team spotlight</div>
               <div className="hero-feature-rank">Current leading reel</div>
@@ -70,7 +57,7 @@ export function DashboardHero({
             </div>
 
             <div className="hero-leader-stats">
-              <div className="hero-brand-metric hero-brand-metric-featured">
+              <div className="hero-brand-metric">
                 <span className="hero-brand-metric-label">Impact score</span>
                 <strong>{topImpact}</strong>
               </div>
@@ -88,11 +75,10 @@ export function DashboardHero({
       </div>
 
       <div className="hero-feature-card hero-totals-card">
-        <div className="hero-card-topbar" aria-hidden="true" />
         <div className="hero-feature-header hero-totals-header">
           <div>
             <div className="hero-card-label">Board totals</div>
-            <div className="hero-feature-rank">Live social reach across the team</div>
+            <div className="hero-feature-rank">Team reach</div>
           </div>
           <div className="hero-rank-chip">Live</div>
         </div>

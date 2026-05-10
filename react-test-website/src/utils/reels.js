@@ -12,6 +12,58 @@ export const getImpactScore = (reel) =>
 
 export const formatNumber = (value) => Number(value || 0).toLocaleString();
 
+export const parseReelDate = (reel) => {
+  const rawDate =
+    reel.publishedAt ||
+    reel.postDate ||
+    reel.date ||
+    reel.timestamp ||
+    reel.lastSyncedAt ||
+    "";
+
+  if (!rawDate) return null;
+
+  const parsedDate = new Date(rawDate);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
+export const getMonthKey = (reel) => {
+  const date = parseReelDate(reel);
+  if (!date) return "";
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+};
+
+export const isPublishedInYear = (reel, year) => {
+  const date = parseReelDate(reel);
+  return date ? date.getFullYear() === year : false;
+};
+
+export const formatMonthKey = (monthKey) => {
+  if (!monthKey) return "";
+
+  const [year, month] = monthKey.split("-").map(Number);
+  if (!year || !month) return monthKey;
+
+  return new Intl.DateTimeFormat("en-AU", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
+};
+
+export const buildMonthOptions = (reels) =>
+  [...new Set(reels.map(getMonthKey).filter(Boolean))]
+    .sort((a, b) => b.localeCompare(a))
+    .map((value) => ({
+      value,
+      label: formatMonthKey(value),
+    }));
+
+export const isInstagramReel = (reel) => {
+  const clipUrl = String(reel.clipUrl || "").toLowerCase();
+  return clipUrl.includes("instagram.com/reel/");
+};
+
 export const buildSortValueMap = () => ({
   score: (reel) => getImpactScore(reel),
 });
