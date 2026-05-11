@@ -143,8 +143,248 @@ select {
   display: grid;
   place-items: center;
   background: var(--bg-main);
-  color: var(--text-main);
+  color: #ffffff;
   font-size: 1rem;
+  padding: 24px;
+  text-align: center;
+}
+
+.loading-screen {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 24px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(237, 27, 52, 0.26), transparent 26%),
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.12), transparent 24%),
+    linear-gradient(135deg, #183353 0%, #0c1c33 100%);
+}
+
+.loading-screen::before,
+.loading-screen::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.loading-screen::before {
+  width: min(62vw, 760px);
+  aspect-ratio: 1;
+  right: -18vw;
+  top: -22vw;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 70px rgba(255, 255, 255, 0.04),
+    inset 0 0 0 142px rgba(237, 27, 52, 0.06),
+    inset 0 0 0 214px rgba(255, 255, 255, 0.025);
+}
+
+.loading-screen::after {
+  inset: 0;
+  opacity: 0.22;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.45) 1px, transparent 0);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 74%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 74%);
+}
+
+.loading-field {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 118px 118px;
+  -webkit-mask-image: radial-gradient(circle at center, #000 0%, transparent 72%);
+  mask-image: radial-gradient(circle at center, #000 0%, transparent 72%);
+}
+
+.loading-card {
+  position: relative;
+  z-index: 1;
+  width: min(600px, 100%);
+  display: grid;
+  gap: 26px;
+  padding: clamp(26px, 5vw, 42px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 30px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.055)),
+    rgba(12, 28, 51, 0.62);
+  box-shadow: 0 34px 110px rgba(4, 12, 25, 0.28);
+  backdrop-filter: blur(20px);
+}
+
+.loading-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: loadingRail 1.8s ease-in-out infinite;
+}
+
+.loading-mark {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 40px;
+}
+
+.loading-mark span {
+  display: block;
+  width: 52px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: skewX(-14deg);
+  animation: loadingMark 1.35s ease-in-out infinite;
+}
+
+.loading-mark span:nth-child(1) {
+  height: 32px;
+}
+
+.loading-mark span:nth-child(2) {
+  height: 24px;
+  animation-delay: 0.12s;
+}
+
+.loading-mark span:nth-child(3) {
+  width: 40px;
+  animation-delay: 0.24s;
+}
+
+.loading-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.loading-pill {
+  width: fit-content;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.loading-copy h1 {
+  margin: 0;
+  max-width: 460px;
+  color: #ffffff;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: clamp(3.4rem, 11vw, 6.2rem);
+  font-weight: 900;
+  line-height: 0.82;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.loading-copy p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.loading-visual {
+  position: relative;
+  min-height: 88px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 82% 16%, rgba(237, 27, 52, 0.12), transparent 30%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.075), transparent),
+    rgba(7, 18, 35, 0.46);
+}
+
+.loading-bar {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 16px 28px rgba(0, 0, 0, 0.14);
+}
+
+.loading-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #c71f34 0%, var(--accent) 72%, #ff5264 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: loadingBarFill 1.65s ease-in-out infinite;
+}
+
+.loading-scan {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  transform: translateX(-110%);
+  animation: loadingScan 2.1s linear infinite;
+}
+
+@keyframes loadingMark {
+  0%,
+  100% {
+    opacity: 0.68;
+    transform: translateY(0) skewX(-14deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px) skewX(-14deg);
+  }
+}
+
+@keyframes loadingBarFill {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.72;
+  }
+  58% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0.72;
+  }
+}
+
+@keyframes loadingScan {
+  to {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes loadingRail {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .hero {

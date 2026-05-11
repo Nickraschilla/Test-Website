@@ -21,6 +21,33 @@ import {
 
 const DISPLAY_YEAR = 2026;
 
+function LoadingScreen() {
+  return (
+    <div className="loading-screen" role="status" aria-live="polite">
+      <div className="loading-field" aria-hidden="true" />
+
+      <section className="loading-card">
+        <div className="loading-mark" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+
+        <div className="loading-copy">
+          <div className="loading-pill">Premier Data Social</div>
+          <h1>Syncing live data</h1>
+          <p>IG live · FB weekly</p>
+        </div>
+
+        <div className="loading-visual" aria-hidden="true">
+          <div className="loading-bar" />
+          <div className="loading-scan" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function App() {
   const { reels, loading, error, lastUpdated } = useReelsData();
   const [sortKey, setSortKey] = useState("score");
@@ -112,7 +139,7 @@ function App() {
   };
 
   if (loading) {
-    return <div className="dashboard-message">Loading data...</div>;
+    return <LoadingScreen />;
   }
 
   if (error) {
