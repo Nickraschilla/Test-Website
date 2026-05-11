@@ -3,12 +3,36 @@ export const DIRECT_VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm", ".m4v", ".ogg"]
 export const toNumber = (value) =>
   Number(String(value || "").replace(/,/g, "")) || 0;
 
-export const getImpactScore = (reel) =>
-  reel.views * 0.05 +
-  reel.likes +
-  reel.comments * 3 +
-  reel.reshares * 5 +
-  reel.saves * 4;
+export const SCORE_MIN_LIVE_DAYS = 5;
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+export const getScoreLiveDays = (reel, referenceDate = new Date()) => {
+  const publishedDate = parseReelDate(reel);
+
+  if (!publishedDate) {
+    return SCORE_MIN_LIVE_DAYS;
+  }
+
+  const elapsedDays = Math.ceil(
+    (referenceDate.getTime() - publishedDate.getTime()) / DAY_IN_MS
+  );
+
+  return Math.max(SCORE_MIN_LIVE_DAYS, elapsedDays || 1);
+};
+
+export const getMomentumScore = (reel) => {
+  const liveDays = getScoreLiveDays(reel);
+
+  return (
+    reel.views * 0.04 +
+    reel.likes +
+    reel.comments * 4 +
+    reel.reshares * 7 +
+    reel.saves * 6
+  ) / liveDays;
+};
+
+export const getImpactScore = getMomentumScore;
 
 export const formatNumber = (value) => Number(value || 0).toLocaleString();
 
@@ -65,7 +89,7 @@ export const isInstagramReel = (reel) => {
 };
 
 export const buildSortValueMap = () => ({
-  score: (reel) => getImpactScore(reel),
+  score: (reel) => getMomentumScore(reel),
 });
 
 export const sortReels = (reels, sortKey, ascending) => {
@@ -100,6 +124,47 @@ export const calculateTotals = (reels) => ({
   reshares: reels.reduce((sum, reel) => sum + reel.reshares, 0),
   saves: reels.reduce((sum, reel) => sum + reel.saves, 0),
 });
+
+export const buildContributorLeaders = (reels) => {
+  const leadersByName = reels.reduce((leaders, reel) => {
+    const name = reel.name || "Unnamed";
+    const existingLeader = leaders.get(name) || {
+      name,
+      reelCount: 0,
+      score: 0,
+      totals: {
+        views: 0,
+        likes: 0,
+        comments: 0,
+        reshares: 0,
+        saves: 0,
+      },
+      topReel: null,
+    };
+    const reelScore = getMomentumScore(reel);
+    const currentTopScore = existingLeader.topReel
+      ? getMomentumScore(existingLeader.topReel)
+      : -Infinity;
+
+    leaders.set(name, {
+      ...existingLeader,
+      reelCount: existingLeader.reelCount + 1,
+      score: existingLeader.score + reelScore,
+      totals: {
+        views: existingLeader.totals.views + reel.views,
+        likes: existingLeader.totals.likes + reel.likes,
+        comments: existingLeader.totals.comments + reel.comments,
+        reshares: existingLeader.totals.reshares + reel.reshares,
+        saves: existingLeader.totals.saves + reel.saves,
+      },
+      topReel: reelScore > currentTopScore ? reel : existingLeader.topReel,
+    });
+
+    return leaders;
+  }, new Map());
+
+  return [...leadersByName.values()].sort((a, b) => b.score - a.score);
+};
 
 export const getClipPresentation = (url) => {
   if (!url) return null;

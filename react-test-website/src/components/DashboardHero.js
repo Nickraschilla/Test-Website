@@ -5,13 +5,13 @@ export function DashboardHero({
   topPerformer,
   totals,
   formatNumber,
-  getImpactScore,
+  getMomentumScore,
   animateHeadlineStats = false,
   animationKey,
 }) {
   const topName = topPerformer ? topPerformer.name || "Unnamed" : "No data";
   const topReel = topPerformer ? topPerformer.reelName || "Untitled reel" : "";
-  const topImpact = topPerformer ? formatNumber(Math.round(getImpactScore(topPerformer))) : "0";
+  const topMomentum = topPerformer ? formatNumber(Math.round(getMomentumScore(topPerformer))) : "0";
   const topViews = topPerformer ? formatNumber(topPerformer.views) : "0";
   const topShares = topPerformer ? formatNumber(topPerformer.reshares) : "0";
   const topInitials = topName
@@ -40,7 +40,8 @@ export function DashboardHero({
 
             <div className="hero-meta-pills">
               <div className="hero-meta-pill">{reelCount} reels tracked</div>
-              <div className="hero-meta-pill">15 min refresh</div>
+              <div className="hero-meta-pill hero-meta-pill-live">IG live</div>
+              <div className="hero-meta-pill">FB weekly</div>
             </div>
           </div>
 
@@ -58,8 +59,8 @@ export function DashboardHero({
 
             <div className="hero-leader-stats">
               <div className="hero-brand-metric">
-                <span className="hero-brand-metric-label">Impact score</span>
-                <strong>{topImpact}</strong>
+                <span className="hero-brand-metric-label">Momentum score</span>
+                <strong>{topMomentum}</strong>
               </div>
               <div className="hero-brand-metric">
                 <span className="hero-brand-metric-label">Views</span>

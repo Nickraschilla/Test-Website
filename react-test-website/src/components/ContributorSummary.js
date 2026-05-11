@@ -6,7 +6,7 @@ export function ContributorSummary({
   totals,
   topPerformer,
   formatNumber,
-  getImpactScore,
+  getMomentumScore,
 }) {
   if (selectedContributor === "all" || !topPerformer) {
     return null;
@@ -29,8 +29,8 @@ export function ContributorSummary({
 
         <div className="contributor-summary-stats">
           <MiniStat
-            label="Top impact"
-            value={getImpactScore(topPerformer)}
+            label="Top momentum"
+            value={getMomentumScore(topPerformer)}
             formatValue={(value) => formatNumber(Math.round(value))}
           />
           <MiniStat label="Total comments" value={totals.comments} formatValue={formatNumber} />

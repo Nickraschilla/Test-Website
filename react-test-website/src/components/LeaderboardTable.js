@@ -6,7 +6,7 @@ export function LeaderboardTable({
   setSelectedContributor,
   setActiveClip,
   formatNumber,
-  getImpactScore,
+  getMomentumScore,
 }) {
   return (
     <div className="table-wrapper">
@@ -35,9 +35,9 @@ export function LeaderboardTable({
             <th
               className="th-score"
               onClick={() => handleSort("score")}
-              title="Weighted score based on views, likes, comments, shares, and saves."
+              title="Time-adjusted score based on views, likes, comments, shares, saves, and days live."
             >
-              <span className="th-content"><span className="th-label">Impact score</span><span className="th-arrow">{sortArrow("score")}</span></span>
+              <span className="th-content"><span className="th-label">Momentum score</span><span className="th-arrow">{sortArrow("score")}</span></span>
             </th>
           </tr>
         </thead>
@@ -104,7 +104,7 @@ export function LeaderboardTable({
                 <td><span className="metric-value">{formatNumber(reel.reshares)}</span></td>
                 <td className="score-cell">
                   <span className="score-cell-value">
-                    {formatNumber(Math.round(getImpactScore(reel)))}
+                    {formatNumber(Math.round(getMomentumScore(reel)))}
                   </span>
                 </td>
               </tr>

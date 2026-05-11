@@ -68,9 +68,11 @@ export function MiniStat({
     : value;
   const showTrend = animateValue && isNumeric && animationState !== "idle";
   const iconMarkup = icon && ICONS[icon] ? ICONS[icon] : null;
+  const statKey = icon || "default";
 
   return (
-    <div className="mini-stat">
+    <div className={`mini-stat mini-stat-${statKey}`}>
+      <div className="mini-stat-accent" aria-hidden="true" />
       <div className="mini-stat-head">
         {iconMarkup ? <div className="mini-stat-icon">{iconMarkup}</div> : null}
         <div className="mini-stat-label">{label}</div>
@@ -81,10 +83,14 @@ export function MiniStat({
           <TrendIndicator animationState={animationState} />
         ) : null}
       </div>
-      <svg className="mini-stat-sparkline" viewBox="0 0 128 32" aria-hidden="true">
-        <path className="mini-stat-sparkline-base" d="M2 24 C 20 18, 27 21, 42 14 S 68 10, 80 17 S 105 24, 126 8" />
-        <path className="mini-stat-sparkline-line" d="M2 24 C 20 18, 27 21, 42 14 S 68 10, 80 17 S 105 24, 126 8" />
-      </svg>
+      <div className="mini-stat-signal" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
     </div>
   );
 }

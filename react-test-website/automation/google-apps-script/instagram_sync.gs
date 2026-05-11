@@ -226,7 +226,6 @@ function setValueByHeader_(row, headerMap, header, value) {
 function buildSheetRowForMedia_(config, headerMap, columnCount, media) {
   const row = Array(columnCount).fill("");
 
-  setValueByHeader_(row, headerMap, "name", config.creatorName);
   setValueByHeader_(row, headerMap, "reelName", buildReelName_(media));
   setValueByHeader_(row, headerMap, "clipUrl", media.permalink || "");
   setValueByHeader_(row, headerMap, "igMediaId", media.id);
@@ -317,7 +316,7 @@ function syncSheetRow_(config, row, mediaById, mediaByPermalink) {
   const insights = fetchInsightsWithFallback_(config.accessToken, matchedMedia.id);
 
   return rowToArray_({
-    name: row.name || config.creatorName,
+    name: row.name || "",
     reelName: row.reelName || buildReelName_(matchedMedia),
     clipUrl: row.clipUrl || matchedMedia.permalink || "",
     igMediaId: matchedMedia.id,
@@ -343,7 +342,6 @@ function syncSheetRowInPlace_(config, sheet, headerMap, row, mediaById, mediaByP
 
   const insights = fetchInsightsWithFallback_(config.accessToken, matchedMedia.id);
 
-  setCellByHeader_(sheet, headerMap, row.rowNumber, "name", row.name || config.creatorName);
   setCellByHeader_(sheet, headerMap, row.rowNumber, "reelName", row.reelName || buildReelName_(matchedMedia));
   setCellByHeader_(sheet, headerMap, row.rowNumber, "clipUrl", row.clipUrl || matchedMedia.permalink || "");
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igMediaId", matchedMedia.id);

@@ -7,11 +7,12 @@ import { LeaderboardTable } from "./components/LeaderboardTable";
 import { useReelsData } from "./hooks/useReelsData";
 import {
   buildMonthOptions,
+  buildContributorLeaders,
   calculateTotals,
   formatMonthKey,
   formatNumber,
   getClipPresentation,
-  getImpactScore,
+  getMomentumScore,
   getMonthKey,
   isInstagramReel,
   isPublishedInYear,
@@ -76,6 +77,10 @@ function App() {
     () => sortReels(monthFilteredReels, "score", false),
     [monthFilteredReels]
   );
+  const monthLeaders = useMemo(
+    () => buildContributorLeaders(monthFilteredReels.filter(isInstagramReel)),
+    [monthFilteredReels]
+  );
   const totals = useMemo(() => calculateTotals(filteredReels), [filteredReels]);
   const overallTotals = useMemo(
     () => calculateTotals(monthFilteredReels),
@@ -83,6 +88,7 @@ function App() {
   );
   const topPerformer = sortedReels[0];
   const overallTopPerformer = fullRanking[0];
+  const monthLeader = monthLeaders[0];
   const activeClipPresentation = activeClip
     ? getClipPresentation(activeClip.clipUrl)
     : null;
@@ -126,7 +132,7 @@ function App() {
           topPerformer={overallTopPerformer}
           totals={overallTotals}
           formatNumber={formatNumber}
-          getImpactScore={getImpactScore}
+          getMomentumScore={getMomentumScore}
           animateHeadlineStats={shouldAnimateHeadlineStats}
           animationKey={lastUpdated}
         />
@@ -138,7 +144,7 @@ function App() {
               <h2 className="leaderboard-heading">Live leaderboard</h2>
               <p className="leaderboard-subheading">
                 {selectedContributor === "all"
-                  ? `Social impact rankings for ${selectedMonthLabel.toLowerCase()}.`
+                  ? `Momentum rankings for ${selectedMonthLabel.toLowerCase()}.`
                   : `${selectedContributor} performance for ${selectedMonthLabel.toLowerCase()}.`}
               </p>
             </div>
@@ -203,8 +209,38 @@ function App() {
               totals={totals}
               topPerformer={topPerformer}
               formatNumber={formatNumber}
-              getImpactScore={getImpactScore}
+              getMomentumScore={getMomentumScore}
             />
+          ) : null}
+
+          {selectedContributor === "all" && monthLeader ? (
+            <section className="month-leader-card">
+              <div className="month-leader-copy">
+                <div className="section-kicker">
+                  {selectedMonth === "all" ? "Overall leader" : `${selectedMonthLabel} leader`}
+                </div>
+                <div className="month-leader-name">{monthLeader.name}</div>
+                <p className="month-leader-text">
+                  {monthLeader.reelCount} reel{monthLeader.reelCount === 1 ? "" : "s"} tracked
+                  with {formatNumber(monthLeader.totals.views)} views and a {formatNumber(Math.round(monthLeader.score))} momentum score.
+                </p>
+              </div>
+
+              <div className="month-leader-stats">
+                <div className="month-leader-stat">
+                  <span>Momentum</span>
+                  <strong>{formatNumber(Math.round(monthLeader.score))}</strong>
+                </div>
+                <div className="month-leader-stat">
+                  <span>Views</span>
+                  <strong>{formatNumber(monthLeader.totals.views)}</strong>
+                </div>
+                <div className="month-leader-stat">
+                  <span>Top reel</span>
+                  <strong>{monthLeader.topReel?.reelName || "-"}</strong>
+                </div>
+              </div>
+            </section>
           ) : null}
 
           <div className="leaderboard-table-frame">
@@ -216,7 +252,7 @@ function App() {
               setSelectedContributor={setSelectedContributor}
               setActiveClip={setActiveClip}
               formatNumber={formatNumber}
-              getImpactScore={getImpactScore}
+              getMomentumScore={getMomentumScore}
             />
           </div>
         </section>
