@@ -3,6 +3,7 @@ import {
   extractAcceptedLeadActions,
   getLeadActionResult,
   isAcceptedLeadActionType,
+  formatMetaApiDate,
   mapMetaCampaignRecordToSheetRow,
   normaliseMetaAdAccountId,
   parseMetaApiNumber,
@@ -19,6 +20,12 @@ test("parses numbers, blanks, zeroes and malformed values safely", () => {
   expect(parseMetaApiNumber("0")).toBe(0);
   expect(parseMetaApiNumber("")).toBeNull();
   expect(parseMetaApiNumber("not a number")).toBeNull();
+});
+
+test("formats Meta API timestamps as sheet-friendly dates", () => {
+  expect(formatMetaApiDate("2026-07-27T10:45:00+0000")).toBe("2026-07-27");
+  expect(formatMetaApiDate("2026-07-27 10:45:00")).toBe("2026-07-27");
+  expect(formatMetaApiDate("")).toBe("");
 });
 
 test("accepts valid Instant Form and website lead actions", () => {
@@ -125,14 +132,15 @@ test("maps an API campaign record into the existing Meta Ads sheet column order"
     campaign: {
       id: "cmp_123",
       effective_status: "ACTIVE",
-      stop_time: "2026-08-01",
+      start_time: "2026-06-15T09:30:00+0000",
+      stop_time: "2026-08-01T23:59:59+0000",
     },
     lastSynced: "2026-07-27T01:00:00Z",
   });
 
   expect(row).toEqual([
-    "2026-07-01",
-    "2026-07-27",
+    "2026-06-15",
+    "2026-08-01",
     "Lead Campaign",
     "ACTIVE",
     4,

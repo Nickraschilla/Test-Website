@@ -258,7 +258,7 @@ function fetchMetaCampaignInsights_(config) {
 function fetchMetaCampaignMetadata_(config) {
   var url = buildMetaApiUrl_(config, "/" + config.adAccountId + "/campaigns", {
     limit: 500,
-    fields: "id,name,status,effective_status,stop_time"
+    fields: "id,name,status,effective_status,start_time,stop_time"
   });
   var campaigns = fetchAllMetaPages_(url);
   var campaignMap = {};
@@ -367,10 +367,13 @@ function buildMetaAdsSheetRow_(insight, campaign, config, lastSynced) {
   var leadAction = getLeadActionResult_(insight.actions, config.leadActionType);
   var leads = leadAction.value;
   var costPerLead = calculateCostPerLead_(spend, leads);
+  var reportingStarts = formatMetaDate_(campaign.start_time || insight.date_start);
+  var reportingEnds = formatMetaDate_(campaign.stop_time || insight.date_stop);
+  var campaignEnds = formatMetaDate_(campaign.stop_time);
 
   return [
-    insight.date_start || "",
-    insight.date_stop || "",
+    reportingStarts,
+    reportingEnds,
     insight.campaign_name || campaign.name || "",
     campaign.effective_status || campaign.status || "",
     leads,
@@ -381,7 +384,7 @@ function buildMetaAdsSheetRow_(insight, campaign, config, lastSynced) {
     spend === null ? "" : spend,
     blankIfNull_(parseMetaNumber_(insight.impressions)),
     blankIfNull_(parseMetaNumber_(insight.reach)),
-    campaign.stop_time || "",
+    campaignEnds,
     insight.attribution_setting || "",
     "",
     "",
@@ -406,6 +409,12 @@ function parseMetaNumber_(value) {
 
 function blankIfNull_(value) {
   return value === null || value === undefined ? "" : value;
+}
+
+function formatMetaDate_(value) {
+  var text = String(value || "").trim();
+  if (!text) return "";
+  return text.split("T")[0].split(" ")[0];
 }
 
 function normaliseActionType_(value) {
@@ -483,6 +492,8 @@ function calculateCostPerLead_(spend, leads) {
 function buildMetaActionAuditRows_(insight, campaign, selectedLeadAction, lastSynced) {
   var actions = Array.isArray(insight.actions) ? insight.actions : [];
   var rows = [];
+  var reportingStarts = formatMetaDate_(campaign.start_time || insight.date_start);
+  var reportingEnds = formatMetaDate_(campaign.stop_time || insight.date_stop);
 
   if (actions.length === 0) {
     actions = [{ action_type: "(no actions returned)", value: "" }];
@@ -493,8 +504,8 @@ function buildMetaActionAuditRows_(insight, campaign, selectedLeadAction, lastSy
     var actionValue = parseMetaNumber_(actions[i].value);
 
     rows.push([
-      insight.date_start || "",
-      insight.date_stop || "",
+      reportingStarts,
+      reportingEnds,
       insight.campaign_name || campaign.name || "",
       insight.campaign_id || campaign.id || "",
       campaign.effective_status || campaign.status || "",

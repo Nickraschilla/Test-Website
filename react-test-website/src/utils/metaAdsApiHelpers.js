@@ -114,6 +114,12 @@ export const calculateCostPerLead = (spend, leads) => {
   return parsedSpend / parsedLeads;
 };
 
+export const formatMetaApiDate = (value) => {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return text.split("T")[0].split(" ")[0];
+};
+
 export const mapMetaCampaignRecordToSheetRow = ({
   insight,
   campaign = {},
@@ -125,10 +131,17 @@ export const mapMetaCampaignRecordToSheetRow = ({
   const leadAction = getLeadActionResult(insight?.actions);
   const leads = leadAction.value;
   const costPerLead = calculateCostPerLead(spend, leads);
+  const reportingStartDate = formatMetaApiDate(
+    campaign.start_time || insight?.date_start || reportingStarts
+  );
+  const reportingEndDate = formatMetaApiDate(
+    campaign.stop_time || insight?.date_stop || reportingEnds
+  );
+  const campaignEndDate = formatMetaApiDate(campaign.stop_time);
 
   return [
-    insight?.date_start || reportingStarts || "",
-    insight?.date_stop || reportingEnds || "",
+    reportingStartDate,
+    reportingEndDate,
     insight?.campaign_name || campaign.name || "",
     campaign.effective_status || campaign.status || "",
     leads,
@@ -139,7 +152,7 @@ export const mapMetaCampaignRecordToSheetRow = ({
     spend === null ? "" : spend,
     parseMetaApiNumber(insight?.impressions),
     parseMetaApiNumber(insight?.reach),
-    campaign.stop_time || "",
+    campaignEndDate,
     insight?.attribution_setting || "",
     "",
     "",
