@@ -9,9 +9,8 @@ import { MetaAdsReviewKpis } from "../components/metaAds/MetaAdsReviewKpis";
 import { useMetaAdsData } from "../hooks/useMetaAdsData";
 import { useMetaAdsManualLeads } from "../hooks/useMetaAdsManualLeads";
 import {
-  buildDateWindows,
   describeDateWindow,
-  filterMetaAdsRows,
+  parseDate,
 } from "../utils/metaAdsAnalytics";
 import {
   buildCampaignComparisonRows,
@@ -26,49 +25,41 @@ import {
   sortCampaignComparisonRows,
 } from "../utils/metaAdsCampaignReview";
 
-const DEFAULT_FILTERS = {
-  dateRange: "30",
-  campaign: "all",
-  delivery: "all",
-  resultIndicator: "all",
-  customStart: "",
-  customEnd: "",
-};
-
 const DEFAULT_SORT = {
   key: "latestDate",
   direction: "desc",
 };
 
+const describeCampaignRun = (campaignRows) => {
+  const dates = campaignRows
+    .flatMap((row) => [row.reportingStarts || row.date, row.reportingEnds])
+    .map(parseDate)
+    .filter(Boolean)
+    .sort((first, second) => first - second);
+
+  if (dates.length === 0) return "No reporting dates";
+
+  return describeDateWindow({
+    startDate: dates[0],
+    endDate: dates.at(-1),
+  });
+};
+
 export function MetaAdsReportingPage() {
   const { rows, loading, refreshing, error, usingFallback } = useMetaAdsData();
   const { leads, createLead, updateLead, deleteLead } = useMetaAdsManualLeads();
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [comparisonSort, setComparisonSort] = useState(DEFAULT_SORT);
 
-  const windows = useMemo(
-    () =>
-      buildDateWindows(filters.dateRange, rows, {
-        start: filters.customStart,
-        end: filters.customEnd,
-      }),
-    [filters.customEnd, filters.customStart, filters.dateRange, rows]
-  );
-  const activePeriod = useMemo(() => describeDateWindow(windows.current), [windows]);
-  const periodRows = useMemo(
-    () => filterMetaAdsRows(rows, filters, windows.current),
-    [filters, rows, windows]
-  );
-  const campaignOptions = useMemo(() => buildCampaignOptions(periodRows), [periodRows]);
+  const campaignOptions = useMemo(() => buildCampaignOptions(rows), [rows]);
 
   useEffect(() => {
-    if (periodRows.length === 0) return;
+    if (rows.length === 0) return;
     const selectedExists = campaignOptions.some((campaign) => campaign.id === selectedCampaignId);
     if (!selectedExists) {
-      setSelectedCampaignId(getDefaultCampaignId(periodRows));
+      setSelectedCampaignId(getDefaultCampaignId(rows));
     }
-  }, [campaignOptions, periodRows, selectedCampaignId]);
+  }, [campaignOptions, rows, selectedCampaignId]);
 
   const leadsByCampaign = useMemo(
     () =>
@@ -82,8 +73,8 @@ export function MetaAdsReportingPage() {
   );
 
   const comparison = useMemo(
-    () => buildCampaignComparisonRows(periodRows, selectedCampaignId, leadsByCampaign),
-    [leadsByCampaign, periodRows, selectedCampaignId]
+    () => buildCampaignComparisonRows(rows, selectedCampaignId, leadsByCampaign),
+    [leadsByCampaign, rows, selectedCampaignId]
   );
   const comparisonRows = useMemo(
     () => sortCampaignComparisonRows(comparison.rows, comparisonSort.key, comparisonSort.direction),
@@ -96,9 +87,10 @@ export function MetaAdsReportingPage() {
     [comparison.rows, comparison.selectedCampaign, selectedCampaignId]
   );
   const selectedRows = useMemo(
-    () => filterRowsByCampaignId(periodRows, getMetaCampaignId(selectedCampaign)),
-    [periodRows, selectedCampaign]
+    () => filterRowsByCampaignId(rows, getMetaCampaignId(selectedCampaign)),
+    [rows, selectedCampaign]
   );
+  const activePeriod = useMemo(() => describeCampaignRun(selectedRows), [selectedRows]);
   const selectedManualLeads = useMemo(
     () => leadsByCampaign[getMetaCampaignId(selectedCampaign)] || [],
     [leadsByCampaign, selectedCampaign]
@@ -130,18 +122,16 @@ export function MetaAdsReportingPage() {
   };
 
   const resetFilters = () => {
-    setFilters(DEFAULT_FILTERS);
+    setSelectedCampaignId(getDefaultCampaignId(rows));
     setComparisonSort(DEFAULT_SORT);
   };
 
   return (
     <main className="analytics-shell meta-ads-shell">
       <MetaAdsFilters
-        filters={filters}
         campaigns={campaignOptions}
         selectedCampaignId={selectedCampaignId}
         activePeriod={activePeriod}
-        onChange={setFilters}
         onSelectCampaign={setSelectedCampaignId}
         onReset={resetFilters}
       />
@@ -177,19 +167,13 @@ export function MetaAdsReportingPage() {
         </section>
       ) : null}
 
-      {!loading && rows.length > 0 && periodRows.length === 0 ? (
-        <section className="analytics-breakdown-card meta-ads-state-card">
-          Selected campaign has no data in this reporting period.
-        </section>
-      ) : null}
-
-      {!loading && periodRows.length > 0 && !selectedCampaign ? (
+      {!loading && rows.length > 0 && !selectedCampaign ? (
         <section className="analytics-breakdown-card meta-ads-state-card">
           Selected campaign not found.
         </section>
       ) : null}
 
-      {!loading && periodRows.length > 0 && selectedCampaign ? (
+      {!loading && rows.length > 0 && selectedCampaign ? (
         <>
           <MetaAdsCampaignScore
             score={campaignScore}

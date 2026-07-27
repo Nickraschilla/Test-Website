@@ -1,16 +1,10 @@
-import { DATE_RANGE_OPTIONS } from "../../utils/metaAdsAnalytics";
-
 export function MetaAdsFilters({
-  filters,
   campaigns,
   selectedCampaignId,
   activePeriod,
-  onChange,
   onSelectCampaign,
   onReset,
 }) {
-  const updateFilter = (key, value) => onChange({ ...filters, [key]: value });
-
   return (
     <section className="analytics-hero-panel meta-ads-hero-panel">
       <div className="analytics-hero-copy">
@@ -37,42 +31,6 @@ export function MetaAdsFilters({
             ))}
           </select>
         </label>
-
-        <label>
-          <span>Date Range</span>
-          <select
-            value={filters.dateRange}
-            onChange={(event) => updateFilter("dateRange", event.target.value)}
-          >
-            {DATE_RANGE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {filters.dateRange === "custom" ? (
-          <>
-            <label>
-              <span>Start Date</span>
-              <input
-                type="date"
-                value={filters.customStart}
-                onChange={(event) => updateFilter("customStart", event.target.value)}
-              />
-            </label>
-            <label>
-              <span>End Date</span>
-              <input
-                type="date"
-                value={filters.customEnd}
-                min={filters.customStart || undefined}
-                onChange={(event) => updateFilter("customEnd", event.target.value)}
-              />
-            </label>
-          </>
-        ) : null}
 
         <div className="analytics-filter-meta meta-ads-filter-meta">
           <button type="button" onClick={onReset}>
