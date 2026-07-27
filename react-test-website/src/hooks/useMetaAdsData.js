@@ -4,7 +4,7 @@ import { metaAdsFixtures } from "../data/metaAdsFixtures";
 import { parseMetaAdsSheetResults } from "../utils/metaAdsSheetParser";
 
 const META_ADS_SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSKyQK4e7j5RzWKVaRuyiMG6lw4zwsvE_Klrohk_xf1sUKUOHzLLojyCk2TLgAESkWkN87PZUHfE6Rb/pub?gid=381178904&single=true&output=csv";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSKyQK4e7j5RzWKVaRuyiMG6lw4zwsvE_Klrohk_xf1sUKUOHzLLojyCk2TLgAESkWkN87PZUHfE6Rb/pub?gid=17299601&single=true&output=csv";
 
 const normaliseFixtureRow = (row, index) => {
   const results = Number(row.results ?? row.leads ?? 0);
