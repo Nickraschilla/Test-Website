@@ -4,6 +4,7 @@ import App from './App';
 let mockSocialsData;
 let mockInstagramData;
 let mockMetaAdsData;
+let mockMetaAdsManualLeads;
 
 jest.mock('./hooks/useReelsData', () => ({
   useReelsData: () => mockSocialsData || ({
@@ -27,6 +28,15 @@ jest.mock('./hooks/useMetaAdsData', () => ({
     refreshing: false,
     error: '',
     usingFallback: false,
+  }),
+}));
+
+jest.mock('./hooks/useMetaAdsManualLeads', () => ({
+  useMetaAdsManualLeads: () => mockMetaAdsManualLeads || ({
+    leads: [],
+    loading: false,
+    refreshing: false,
+    error: '',
   }),
 }));
 
@@ -94,6 +104,35 @@ beforeEach(() => {
     refreshing: false,
     error: '',
     usingFallback: false,
+  };
+  mockMetaAdsManualLeads = {
+    leads: [
+      {
+        id: 'lead-1',
+        campaignId: 'cmp_active',
+        name: 'Test Lead',
+        position: 'President',
+        club: 'Example FC',
+        league: 'EDFL',
+        contacted: true,
+        converted: false,
+        status: 'Contacted',
+      },
+      {
+        id: 'lead-2',
+        campaignId: 'cmp_ended',
+        name: 'Other Lead',
+        position: 'Coach',
+        club: 'Other FC',
+        league: 'VAFA',
+        contacted: true,
+        converted: true,
+        status: 'Converted',
+      },
+    ],
+    loading: false,
+    refreshing: false,
+    error: '',
   };
 });
 
@@ -172,19 +211,15 @@ test('switches Meta Ads campaign from the dropdown and comparison table', () => 
   expect(screen.getByRole('combobox', { name: /^campaign$/i })).toHaveValue('cmp_active');
 });
 
-test('adds and edits a manual Meta Ads lead for the selected campaign', () => {
+test('shows lead pipeline rows from the lead sheet for the selected campaign', () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
-  fireEvent.change(screen.getByLabelText(/lead name/i), { target: { value: 'Test Lead' } });
-  fireEvent.change(screen.getByLabelText(/lead status/i), { target: { value: 'Converted' } });
-  fireEvent.click(screen.getByRole('button', { name: /add lead/i }));
 
-  expect(screen.getByDisplayValue('Test Lead')).toBeInTheDocument();
-  expect(screen.getAllByText(/100\.00%/i).length).toBeGreaterThan(0);
-
-  fireEvent.change(screen.getByLabelText(/notes for test lead/i), { target: { value: 'Good quality' } });
-  expect(screen.getByDisplayValue('Good quality')).toBeInTheDocument();
+  expect(screen.getByText('Test Lead')).toBeInTheDocument();
+  expect(screen.getByText('President')).toBeInTheDocument();
+  expect(screen.getByText('Example FC')).toBeInTheDocument();
+  expect(screen.queryByText('Other Lead')).not.toBeInTheDocument();
 });
 
 test('uses Instagram loading state for the default page', () => {

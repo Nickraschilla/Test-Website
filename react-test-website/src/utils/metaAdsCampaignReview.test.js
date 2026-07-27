@@ -10,7 +10,6 @@ import {
   getDefaultCampaignId,
   sortCampaignComparisonRows,
 } from "./metaAdsCampaignReview";
-import { metaAdsLeadsRepository, META_ADS_LEADS_STORAGE_KEY } from "./metaAdsLeadsRepository";
 
 const rows = [
   {
@@ -62,10 +61,6 @@ const rows = [
     reach: 350,
   },
 ];
-
-beforeEach(() => {
-  window.localStorage.clear();
-});
 
 test("orders campaigns newest to oldest, dedupes by campaign ID, and defaults to most recent active", () => {
   const options = buildCampaignOptions(rows);
@@ -150,31 +145,6 @@ test("builds manual lead status counts and rates", () => {
   expect(summary.counts).toMatchObject({ New: 1, Contacted: 1, Converted: 1, Failed: 1 });
   expect(summary.contactRate).toBe(75);
   expect(summary.conversionRate).toBe(25);
-});
-
-test("persists local manual leads and keeps campaigns separated", () => {
-  const first = metaAdsLeadsRepository.createLead({
-    campaignId: "active-old",
-    name: "Alex",
-    status: "New",
-  });
-  metaAdsLeadsRepository.createLead({
-    campaignId: "ended-new",
-    name: "Jordan",
-    status: "Converted",
-  });
-  metaAdsLeadsRepository.updateLead(first.id, { status: "Contacted", notes: "Called" });
-
-  expect(JSON.parse(window.localStorage.getItem(META_ADS_LEADS_STORAGE_KEY))).toHaveLength(2);
-  expect(metaAdsLeadsRepository.getLeadsByCampaign("active-old")[0]).toMatchObject({
-    name: "Alex",
-    status: "Contacted",
-    notes: "Called",
-  });
-
-  metaAdsLeadsRepository.deleteLead(first.id);
-  expect(metaAdsLeadsRepository.getLeadsByCampaign("active-old")).toHaveLength(0);
-  expect(metaAdsLeadsRepository.getLeadsByCampaign("ended-new")).toHaveLength(1);
 });
 
 test("generates supported takeaways without unsupported causal claims", () => {

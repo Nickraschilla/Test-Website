@@ -45,7 +45,12 @@ const describeCampaignRun = (campaignRows) => {
 
 export function MetaAdsReportingPage() {
   const { rows, loading, refreshing, error, usingFallback } = useMetaAdsData();
-  const { leads, createLead, updateLead, deleteLead } = useMetaAdsManualLeads();
+  const {
+    leads,
+    loading: leadsLoading,
+    refreshing: leadsRefreshing,
+    error: leadsError,
+  } = useMetaAdsManualLeads();
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [comparisonSort, setComparisonSort] = useState(DEFAULT_SORT);
 
@@ -181,10 +186,10 @@ export function MetaAdsReportingPage() {
           <MetaAdsLeadPipeline
             campaignId={getMetaCampaignId(selectedCampaign)}
             leads={leads}
+            loading={leadsLoading}
+            refreshing={leadsRefreshing}
+            error={leadsError}
             campaignSpend={selectedReview.amountSpent || 0}
-            onCreateLead={createLead}
-            onUpdateLead={updateLead}
-            onDeleteLead={deleteLead}
           />
           <MetaAdsKeyTakeaways takeaways={takeaways} />
         </>

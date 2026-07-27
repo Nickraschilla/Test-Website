@@ -1624,43 +1624,6 @@ select {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.meta-ads-lead-form {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) 150px 150px minmax(220px, 1fr) auto;
-  gap: 8px;
-  padding: 0 12px 12px;
-}
-
-.meta-ads-lead-form input,
-.meta-ads-lead-form select,
-.meta-ads-lead-table input,
-.meta-ads-lead-table select {
-  min-width: 0;
-  width: 100%;
-  min-height: 32px;
-  padding: 0 9px;
-  border: 1px solid #dce5ef;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #111d31;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.meta-ads-lead-form button,
-.meta-ads-lead-table button {
-  min-height: 32px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 6px;
-  background: #ff173a;
-  color: #ffffff;
-  cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
 .meta-ads-lead-table {
   min-width: 860px;
 }
@@ -4417,7 +4380,6 @@ select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .meta-ads-lead-form,
   .meta-ads-trend-support,
   .meta-ads-pipeline-summary,
   .meta-ads-pipeline-metrics,
