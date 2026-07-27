@@ -5,7 +5,7 @@ const kpis = [
   { key: "results", label: "Total Leads", format: "number" },
   { key: "costPerResult", label: "Cost Per Lead", format: "currency" },
   { key: "conversionRate", label: "Conversion Rate", format: "percent" },
-  { key: "costPerConvertedCustomer", label: "Cost Per Converted Customer", format: "currency" },
+  { key: "leadsPer100", label: "Leads Per $100", format: "decimal" },
 ];
 
 export function MetaAdsReviewKpis({ campaign }) {
