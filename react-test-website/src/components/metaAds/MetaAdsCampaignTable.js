@@ -2,8 +2,6 @@ import { formatDateLabel, formatMetricValue } from "../../utils/metaAdsAnalytics
 
 const columns = [
   { key: "campaignName", label: "Campaign", numeric: false },
-  { key: "campaignDelivery", label: "Delivery", numeric: false },
-  { key: "resultIndicator", label: "Result Type", numeric: false },
   { key: "amountSpent", label: "Spend", format: "currency", numeric: true },
   { key: "results", label: "Results", numeric: true },
   { key: "costPerResult", label: "Cost / Result", format: "currency", numeric: true },
@@ -23,6 +21,11 @@ export function MetaAdsCampaignTable({
   const sortArrow = (key) => {
     if (sort.key !== key) return "";
     return sort.direction === "asc" ? " ↑" : " ↓";
+  };
+  const getResultContext = (row) => {
+    if (!row.resultIndicator || row.resultIndicator === "—") return "";
+    if (/^\d+\s+types$/i.test(row.resultIndicator)) return "Mixed result types";
+    return row.resultIndicator;
   };
 
   return (
@@ -72,6 +75,17 @@ export function MetaAdsCampaignTable({
                       ? formatDateLabel(row[column.key])
                       : column.key === "campaignName"
                         ? row.campaignName
+                        : column.key === "results"
+                          ? (
+                            <>
+                              {formatMetricValue(row[column.key], column.format)}
+                              {getResultContext(row) ? (
+                                <span className="analytics-row-note meta-ads-result-note">
+                                  {getResultContext(row)}
+                                </span>
+                              ) : null}
+                            </>
+                          )
                         : column.numeric
                           ? formatMetricValue(row[column.key], column.format)
                           : row[column.key] || "—"}

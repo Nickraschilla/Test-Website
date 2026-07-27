@@ -1513,6 +1513,14 @@ select {
   min-width: 760px;
 }
 
+.meta-ads-result-note {
+  max-width: 160px;
+  overflow: hidden;
+  color: #60718a;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .meta-ads-campaign-table tbody tr,
 .meta-ads-delivery-table tbody tr {
   cursor: default;
