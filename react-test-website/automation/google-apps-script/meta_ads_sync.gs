@@ -23,7 +23,7 @@ var META_ADS_SHEET_HEADERS = [
   "Results (Initial) Indicator",
   "Campaign ID",
   "Frequency",
-  "Last synced",
+  "Last synced"
 ];
 
 var META_LEAD_ACTION_TYPE_PRIORITY = [
@@ -36,7 +36,7 @@ var META_LEAD_ACTION_TYPE_PRIORITY = [
   "offsite_conversion.custom.lead",
   "lead",
   "omni_lead",
-  "actions:leadgen.other",
+  "actions:leadgen.other"
 ];
 
 var META_ADS_ACTION_AUDIT_HEADERS = [
@@ -51,7 +51,7 @@ var META_ADS_ACTION_AUDIT_HEADERS = [
   "Amount spent (AUD)",
   "Impressions",
   "Reach",
-  "Last synced",
+  "Last synced"
 ];
 
 function testMetaConnection() {
@@ -60,7 +60,7 @@ function testMetaConnection() {
     level: "campaign",
     limit: 1,
     fields: "campaign_id,campaign_name,spend,actions",
-    date_preset: "last_7d",
+    date_preset: "last_7d"
   });
   var response = fetchMetaJson_(url);
 
@@ -223,7 +223,7 @@ function getMetaAdsConfig_() {
       props.getProperty("META_ADS_ACTION_AUDIT_SHEET_NAME") ||
       DEFAULT_META_ADS_ACTION_AUDIT_SHEET_NAME,
     leadActionType: props.getProperty("META_LEAD_ACTION_TYPE") || "",
-    datePreset: props.getProperty("META_ADS_DATE_PRESET") || META_ADS_DATE_PRESET,
+    datePreset: props.getProperty("META_ADS_DATE_PRESET") || META_ADS_DATE_PRESET
   };
   var missing = [];
 
@@ -249,7 +249,7 @@ function fetchMetaCampaignInsights_(config) {
     limit: 500,
     fields:
       "date_start,date_stop,campaign_id,campaign_name,spend,impressions,reach,frequency,actions,cost_per_action_type,attribution_setting",
-    date_preset: config.datePreset,
+    date_preset: config.datePreset
   });
 
   return fetchAllMetaPages_(url);
@@ -258,7 +258,7 @@ function fetchMetaCampaignInsights_(config) {
 function fetchMetaCampaignMetadata_(config) {
   var url = buildMetaApiUrl_(config, "/" + config.adAccountId + "/campaigns", {
     limit: 500,
-    fields: "id,name,status,effective_status,stop_time",
+    fields: "id,name,status,effective_status,stop_time"
   });
   var campaigns = fetchAllMetaPages_(url);
   var campaignMap = {};
@@ -290,7 +290,7 @@ function fetchAllMetaPages_(initialUrl) {
 function fetchMetaJson_(url) {
   var response = UrlFetchApp.fetch(url, {
     method: "get",
-    muteHttpExceptions: true,
+    muteHttpExceptions: true
   });
   var status = response.getResponseCode();
   var body = response.getContentText();
@@ -349,7 +349,7 @@ function hasUsefulMetaInsightRecord_(insight) {
     insight.spend,
     insight.impressions,
     insight.reach,
-    insight.actions,
+    insight.actions
   ];
 
   for (var i = 0; i < values.length; i += 1) {
@@ -387,7 +387,7 @@ function buildMetaAdsSheetRow_(insight, campaign, config, lastSynced) {
     "",
     insight.campaign_id || campaign.id || "",
     blankIfNull_(parseMetaNumber_(insight.frequency)),
-    lastSynced,
+    lastSynced
   ];
 }
 
@@ -444,7 +444,7 @@ function getLeadActionResult_(actions, preferredActionType) {
 
     actionsByType[actionType] = {
       originalActionType: actions[i].action_type || "",
-      value: parseMetaNumber_(actions[i].value) || 0,
+      value: parseMetaNumber_(actions[i].value) || 0
     };
   }
 
@@ -456,7 +456,7 @@ function getLeadActionResult_(actions, preferredActionType) {
       value: preferredAction ? preferredAction.value : 0,
       actionType: preferredAction
         ? preferredAction.originalActionType || preferredType
-        : preferredActionType,
+        : preferredActionType
     };
   }
 
@@ -467,7 +467,7 @@ function getLeadActionResult_(actions, preferredActionType) {
     if (matchedAction) {
       return {
         value: matchedAction.value,
-        actionType: matchedAction.originalActionType || priorityType,
+        actionType: matchedAction.originalActionType || priorityType
       };
     }
   }
@@ -506,7 +506,7 @@ function buildMetaActionAuditRows_(insight, campaign, selectedLeadAction, lastSy
       blankIfNull_(parseMetaNumber_(insight.spend)),
       blankIfNull_(parseMetaNumber_(insight.impressions)),
       blankIfNull_(parseMetaNumber_(insight.reach)),
-      lastSynced,
+      lastSynced
     ]);
   }
 
