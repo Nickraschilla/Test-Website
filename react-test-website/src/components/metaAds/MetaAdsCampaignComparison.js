@@ -3,7 +3,6 @@ import { formatDateLabel, formatMetricValue, getCampaignIdentity } from "../../u
 const columns = [
   { key: "campaignName", label: "Campaign" },
   { key: "latestDate", label: "Date" },
-  { key: "campaignDelivery", label: "Status" },
   { key: "amountSpent", label: "Amount Spent", format: "currency" },
   { key: "results", label: "Total Leads", sortKey: "results" },
   { key: "costPerResult", label: "Cost Per Lead", format: "currency", sortKey: "costPerResult" },
@@ -69,11 +68,9 @@ export function MetaAdsCampaignComparison({
                   <td key={column.key}>
                     {column.key === "latestDate"
                       ? formatDateLabel(row.latestDate)
-                      : column.key === "campaignDelivery"
-                          ? row.campaignDelivery || "—"
-                          : column.key === "campaignName"
-                            ? row.campaignName
-                            : formatMetricValue(row[column.key], column.format)}
+                      : column.key === "campaignName"
+                        ? row.campaignName
+                        : formatMetricValue(row[column.key], column.format)}
                   </td>
                 ))}
               </tr>
