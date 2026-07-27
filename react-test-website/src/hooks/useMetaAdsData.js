@@ -5,6 +5,10 @@ import { parseMetaAdsSheetResults } from "../utils/metaAdsSheetParser";
 
 const META_ADS_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSKyQK4e7j5RzWKVaRuyiMG6lw4zwsvE_Klrohk_xf1sUKUOHzLLojyCk2TLgAESkWkN87PZUHfE6Rb/pub?gid=17299601&single=true&output=csv";
+const META_ADS_LOAD_ERROR = "Could not load Meta Ads Reporting data.";
+const ALLOW_DEVELOPMENT_FIXTURES =
+  process.env.NODE_ENV === "development" &&
+  process.env.REACT_APP_USE_META_ADS_FIXTURES === "true";
 
 const normaliseFixtureRow = (row, index) => {
   const results = Number(row.results ?? row.leads ?? 0);
@@ -37,6 +41,7 @@ export function useMetaAdsData() {
   const [error, setError] = useState("");
   const [usingFallback, setUsingFallback] = useState(false);
   const hasLoadedRef = useRef(false);
+  const hasLiveRowsRef = useRef(false);
 
   useEffect(() => {
     let isActive = true;
@@ -59,9 +64,16 @@ export function useMetaAdsData() {
           if (results.errors?.length) {
             console.error("Meta Ads Papa parse errors:", results.errors);
             startTransition(() => {
-              setRows(fallbackRows);
-              setError("Could not load Meta Ads Reporting data. Showing development fallback data.");
-              setUsingFallback(true);
+              if (!hasLiveRowsRef.current && ALLOW_DEVELOPMENT_FIXTURES) {
+                setRows(fallbackRows);
+                setUsingFallback(true);
+              } else if (!hasLiveRowsRef.current) {
+                setRows([]);
+                setUsingFallback(false);
+              } else {
+                setUsingFallback(false);
+              }
+              setError(META_ADS_LOAD_ERROR);
               hasLoadedRef.current = true;
               setLoading(false);
               setRefreshing(false);
@@ -75,6 +87,7 @@ export function useMetaAdsData() {
             setRows(parsedRows.length ? parsedRows : []);
             setError("");
             setUsingFallback(false);
+            hasLiveRowsRef.current = true;
             hasLoadedRef.current = true;
             setLoading(false);
             setRefreshing(false);
@@ -84,9 +97,16 @@ export function useMetaAdsData() {
           if (!isActive) return;
           console.error("Meta Ads Papa download error:", fetchError);
           startTransition(() => {
-            setRows(fallbackRows);
-            setError("Could not load Meta Ads Reporting data. Showing development fallback data.");
-            setUsingFallback(true);
+            if (!hasLiveRowsRef.current && ALLOW_DEVELOPMENT_FIXTURES) {
+              setRows(fallbackRows);
+              setUsingFallback(true);
+            } else if (!hasLiveRowsRef.current) {
+              setRows([]);
+              setUsingFallback(false);
+            } else {
+              setUsingFallback(false);
+            }
+            setError(META_ADS_LOAD_ERROR);
             hasLoadedRef.current = true;
             setLoading(false);
             setRefreshing(false);
