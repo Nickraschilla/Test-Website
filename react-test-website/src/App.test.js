@@ -74,6 +74,18 @@ test('renders the reporting dashboard tabs', () => {
   );
 });
 
+test('opens the Meta Ads Reporting tab', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
+
+  expect(
+    screen.getByRole('heading', { name: /meta ads reporting/i })
+  ).toBeInTheDocument();
+  expect(screen.getByText(/campaign performance, lead generation and creative analysis/i)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /compare previous period/i })).toBeInTheDocument();
+});
+
 test('uses Instagram loading state for the default page', () => {
   mockSocialsData.loading = false;
   mockInstagramData.loading = true;
