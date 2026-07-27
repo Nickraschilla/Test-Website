@@ -1628,6 +1628,18 @@ select {
   min-width: 860px;
 }
 
+.meta-ads-lead-table th,
+.meta-ads-lead-table td,
+.meta-ads-lead-table th:first-child,
+.meta-ads-lead-table td:first-child {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.meta-ads-lead-table td:first-child {
+  font-weight: 950;
+}
+
 .meta-ads-takeaways {
   display: grid;
 }
