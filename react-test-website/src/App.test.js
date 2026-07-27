@@ -147,7 +147,7 @@ test('opens the Meta Ads Reporting tab', () => {
   ).toBeInTheDocument();
   expect(screen.getByText(/campaign review, lead quality and practical performance analysis/i)).toBeInTheDocument();
   expect(screen.getByRole('combobox', { name: /^campaign$/i })).toHaveValue('cmp_active');
-  expect(screen.getAllByText(/campaign score/i).length).toBeGreaterThan(0);
+  expect(screen.queryByText(/campaign score/i)).not.toBeInTheDocument();
   expect(screen.getByText(/performance over time/i)).toBeInTheDocument();
   expect(screen.getByText(/campaign comparison/i)).toBeInTheDocument();
   expect(screen.getByText(/lead pipeline/i)).toBeInTheDocument();

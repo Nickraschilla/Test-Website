@@ -10,7 +10,6 @@ const columns = [
   { key: "leadsPer100", label: "Leads Per $100", format: "decimal", sortKey: "leadsPer100" },
   { key: "conversionRate", label: "Conversion Rate", format: "percent", sortKey: "conversionRate" },
   { key: "costPerConvertedCustomer", label: "Cost Per Converted Customer", format: "currency", sortKey: "costPerConvertedCustomer" },
-  { key: "score", label: "Campaign Score", sortKey: "score" },
 ];
 
 export function MetaAdsCampaignComparison({
@@ -66,9 +65,7 @@ export function MetaAdsCampaignComparison({
                   <td key={column.key}>
                     {column.key === "latestDate"
                       ? formatDateLabel(row.latestDate)
-                      : column.key === "score"
-                        ? row.score.label
-                        : column.key === "campaignDelivery"
+                      : column.key === "campaignDelivery"
                           ? row.campaignDelivery || "—"
                           : column.key === "campaignName"
                             ? row.campaignName

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { MetaAdsCampaignComparison } from "../components/metaAds/MetaAdsCampaignComparison";
-import { MetaAdsCampaignScore } from "../components/metaAds/MetaAdsCampaignScore";
 import { MetaAdsFilters } from "../components/metaAds/MetaAdsFilters";
 import { MetaAdsKeyTakeaways } from "../components/metaAds/MetaAdsKeyTakeaways";
 import { MetaAdsLeadPipeline } from "../components/metaAds/MetaAdsLeadPipeline";
@@ -18,7 +17,6 @@ import {
   buildCampaignReviewMetrics,
   buildCampaignTrendSummary,
   buildKeyTakeaways,
-  calculateCampaignScore,
   filterRowsByCampaignId,
   getDefaultCampaignId,
   getMetaCampaignId,
@@ -99,10 +97,6 @@ export function MetaAdsReportingPage() {
     () => buildCampaignReviewMetrics({ ...selectedCampaign, rows: selectedRows }, selectedManualLeads),
     [selectedCampaign, selectedManualLeads, selectedRows]
   );
-  const campaignScore = useMemo(
-    () => calculateCampaignScore(selectedReview, comparison.comparableRows),
-    [comparison.comparableRows, selectedReview]
-  );
   const trendSummary = useMemo(() => buildCampaignTrendSummary(selectedRows), [selectedRows]);
   const takeaways = useMemo(
     () =>
@@ -175,10 +169,6 @@ export function MetaAdsReportingPage() {
 
       {!loading && rows.length > 0 && selectedCampaign ? (
         <>
-          <MetaAdsCampaignScore
-            score={campaignScore}
-            comparisonReason={comparison.comparisonReason}
-          />
           <MetaAdsReviewKpis campaign={selectedReview} />
           <MetaAdsPerformanceOverTime rows={selectedRows} />
           <MetaAdsCampaignComparison

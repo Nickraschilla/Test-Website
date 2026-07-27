@@ -1494,17 +1494,6 @@ select {
   font-weight: 950;
 }
 
-.meta-ads-score-card {
-  min-height: 104px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 18px;
-  padding: 18px 22px;
-  border-top: 4px solid #ff173a;
-}
-
-.meta-ads-score-card span,
 .meta-ads-trend-support span,
 .meta-ads-pipeline-summary span,
 .meta-ads-pipeline-metrics span {
@@ -1513,36 +1502,6 @@ select {
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-
-.meta-ads-score-card strong {
-  display: block;
-  color: #111d31;
-  font-size: clamp(2rem, 3vw, 3rem);
-  font-weight: 950;
-  line-height: 0.95;
-}
-
-.meta-ads-score-card p {
-  margin: 0;
-  color: #10243f;
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1.35;
-}
-
-.meta-ads-score-card small {
-  min-height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #eef3f8;
-  color: #617086;
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-align: center;
 }
 
 .meta-ads-review-chart {
@@ -4401,10 +4360,6 @@ select {
 
   .meta-ads-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .meta-ads-score-card {
-    grid-template-columns: 1fr;
   }
 
   .meta-ads-lead-form,
