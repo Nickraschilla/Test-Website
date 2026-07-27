@@ -14,7 +14,9 @@ import {
   buildInsights,
   buildMetaAdsSummary,
   buildTrendRows,
+  describeDateWindow,
   filterMetaAdsRows,
+  getDefaultGrouping,
   getMetaAdsFilterOptions,
   sortRows,
 } from "../utils/metaAdsAnalytics";
@@ -24,9 +26,11 @@ const DEFAULT_FILTERS = {
   campaign: "all",
   delivery: "all",
   resultIndicator: "all",
-  trendMetric: "amountSpent",
-  grouping: "Daily",
+  grouping: "auto",
   comparePrevious: false,
+  search: "",
+  customStart: "",
+  customEnd: "",
 };
 
 export function MetaAdsReportingPage() {
@@ -39,8 +43,23 @@ export function MetaAdsReportingPage() {
 
   const filterOptions = useMemo(() => getMetaAdsFilterOptions(rows), [rows]);
   const windows = useMemo(
-    () => buildDateWindows(filters.dateRange, rows),
-    [filters.dateRange, rows]
+    () =>
+      buildDateWindows(filters.dateRange, rows, {
+        start: filters.customStart,
+        end: filters.customEnd,
+      }),
+    [filters.customEnd, filters.customStart, filters.dateRange, rows]
+  );
+  const activePeriod = useMemo(
+    () => describeDateWindow(windows.current),
+    [windows]
+  );
+  const chartGrouping = useMemo(
+    () =>
+      filters.grouping === "auto"
+        ? getDefaultGrouping(windows.current)
+        : filters.grouping,
+    [filters.grouping, windows]
   );
 
   const filteredRows = useMemo(
@@ -55,22 +74,30 @@ export function MetaAdsReportingPage() {
   const summary = useMemo(() => buildMetaAdsSummary(filteredRows), [filteredRows]);
   const previousSummary = useMemo(() => buildMetaAdsSummary(previousRows), [previousRows]);
   const trendRows = useMemo(
-    () => buildTrendRows(filteredRows, filters.grouping, filters.trendMetric),
-    [filteredRows, filters.grouping, filters.trendMetric]
+    () => ({
+      amountSpent: buildTrendRows(filteredRows, chartGrouping, "amountSpent"),
+      results: buildTrendRows(filteredRows, chartGrouping, "results"),
+      costPerResult: buildTrendRows(filteredRows, chartGrouping, "costPerResult"),
+    }),
+    [chartGrouping, filteredRows]
   );
   const campaignRows = useMemo(() => {
-    const groupedRows = aggregateByCampaign(filteredRows);
+    const searchTerm = filters.search.trim().toLowerCase();
+    const groupedRows = aggregateByCampaign(filteredRows).filter((row) =>
+      searchTerm ? row.campaignName.toLowerCase().includes(searchTerm) : true
+    );
 
     return sortRows(groupedRows, campaignSort.key, campaignSort.direction);
-  }, [campaignSort, filteredRows]);
+  }, [campaignSort, filteredRows, filters.search]);
   const deliveryRows = useMemo(() => buildDeliveryRows(filteredRows), [filteredRows]);
   const insights = useMemo(
     () =>
       buildInsights({
         campaigns: aggregateByCampaign(filteredRows),
         summary,
+        previousSummary,
       }),
-    [filteredRows, summary]
+    [filteredRows, previousSummary, summary]
   );
 
   const handleCampaignSort = (key) => {
@@ -91,6 +118,7 @@ export function MetaAdsReportingPage() {
       <MetaAdsFilters
         filters={filters}
         options={filterOptions}
+        activePeriod={activePeriod}
         onChange={setFilters}
         onReset={resetFilters}
       />
@@ -134,10 +162,11 @@ export function MetaAdsReportingPage() {
             comparePrevious={filters.comparePrevious}
           />
 
-          <section className="analytics-main-grid meta-ads-main-grid">
-            <MetaAdsTrendChart rows={trendRows} metricKey={filters.trendMetric} />
-            <MetaAdsFunnel summary={summary} />
-          </section>
+          {filteredRows.length === 0 ? (
+            <section className="analytics-breakdown-card meta-ads-state-card">
+              No Meta Ads rows match this reporting period.
+            </section>
+          ) : null}
 
           <MetaAdsCampaignTable
             rows={campaignRows}
@@ -145,7 +174,10 @@ export function MetaAdsReportingPage() {
             onSort={handleCampaignSort}
           />
 
+          <MetaAdsTrendChart rowsByMetric={trendRows} grouping={chartGrouping} />
+
           <section className="analytics-main-grid meta-ads-main-grid">
+            <MetaAdsFunnel summary={summary} />
             <MetaAdsDeliveryBreakdown rows={deliveryRows} />
             <MetaAdsInsights insights={insights} />
           </section>

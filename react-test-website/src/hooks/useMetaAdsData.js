@@ -15,6 +15,7 @@ const normaliseFixtureRow = (row, index) => {
     id: row.id || `${row.campaignId || row.campaignName}-${index}`,
     reportingStarts: row.reportingStarts || row.date,
     reportingEnds: row.reportingEnds || row.date,
+    campaignId: row.campaignId || row.campaignName || "",
     campaignDelivery: row.campaignDelivery || row.campaignStatus || "",
     campaignStatus: row.campaignStatus || row.campaignDelivery || "",
     results,
@@ -23,6 +24,7 @@ const normaliseFixtureRow = (row, index) => {
     amountSpent,
     impressions: Number(row.impressions ?? 0),
     reach: Number(row.reach ?? 0),
+    frequency: row.frequency === undefined ? null : Number(row.frequency),
   };
 };
 

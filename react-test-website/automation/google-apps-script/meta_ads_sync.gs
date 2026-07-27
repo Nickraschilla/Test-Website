@@ -1,5 +1,6 @@
 var META_ADS_DATE_PRESET = "maximum";
 var DEFAULT_META_ADS_TEST_SHEET_NAME = "Meta Ads API Test";
+var DEFAULT_META_ADS_DAILY_SHEET_NAME = "Meta Ads Daily";
 var DEFAULT_META_ADS_ACTION_AUDIT_SHEET_NAME = "Meta Ads Action Audit";
 var DEFAULT_META_API_VERSION = "v23.0";
 var META_GRAPH_BASE_URL = "https://graph.facebook.com";
@@ -51,6 +52,28 @@ var META_ADS_ACTION_AUDIT_HEADERS = [
   "Amount spent (AUD)",
   "Impressions",
   "Reach",
+  "Last synced"
+];
+
+var META_ADS_DAILY_SHEET_HEADERS = [
+  "Reporting starts",
+  "Reporting ends",
+  "Campaign name",
+  "Campaign ID",
+  "Campaign delivery",
+  "Results",
+  "Result indicator",
+  "Cost per results",
+  "Ad Set Budget",
+  "Ad Set Budget Type",
+  "Amount spent (AUD)",
+  "Impressions",
+  "Reach",
+  "Ends",
+  "Attribution Setting",
+  "Results (Initial)",
+  "Results (Initial) Indicator",
+  "Frequency",
   "Last synced"
 ];
 
@@ -126,6 +149,72 @@ function syncMetaAdsData() {
       rows.length +
       " campaign rows to '" +
       config.sheetName +
+      "'."
+  );
+}
+
+function syncMetaAdsDailyData() {
+  var config = getMetaAdsConfig_();
+  var lastSynced = new Date();
+
+  Logger.log(
+    "Fetching daily Meta Ads campaign insights using date preset '" +
+      config.datePreset +
+      "'."
+  );
+
+  var campaignMetadataById = fetchMetaCampaignMetadata_(config);
+  var insights = fetchMetaDailyCampaignInsights_(config);
+  var rowsByKey = {};
+
+  for (var i = 0; i < insights.length; i += 1) {
+    var insight = insights[i];
+    if (!hasUsefulMetaInsightRecord_(insight)) continue;
+
+    var campaignId = insight.campaign_id || "";
+    var reportingDate = formatMetaDate_(insight.date_start || insight.date_stop);
+    var logicalKey = (campaignId || insight.campaign_name || "campaign") + "|" + reportingDate;
+
+    rowsByKey[logicalKey] = buildMetaAdsDailySheetRow_(
+      insight,
+      campaignMetadataById[campaignId] || {},
+      config,
+      lastSynced
+    );
+  }
+
+  var rows = Object.keys(rowsByKey)
+    .sort()
+    .map(function (key) {
+      return rowsByKey[key];
+    });
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) {
+    throw new Error(
+      "No active spreadsheet found. Use this script from the spreadsheet Apps Script project."
+    );
+  }
+
+  var sheet =
+    spreadsheet.getSheetByName(config.dailySheetName) ||
+    spreadsheet.insertSheet(config.dailySheetName);
+  var output = [META_ADS_DAILY_SHEET_HEADERS].concat(rows);
+
+  sheet.clearContents();
+  sheet.clearFormats();
+  sheet
+    .getRange(1, 1, output.length, META_ADS_DAILY_SHEET_HEADERS.length)
+    .setValues(output);
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, META_ADS_DAILY_SHEET_HEADERS.length);
+  applyMetaAdsDailySheetFormats_(sheet, Math.max(rows.length, 1));
+
+  Logger.log(
+    "Meta Ads daily sync complete. Wrote " +
+      rows.length +
+      " campaign-day rows to '" +
+      config.dailySheetName +
       "'."
   );
 }
@@ -219,6 +308,9 @@ function getMetaAdsConfig_() {
     sheetName:
       props.getProperty("META_ADS_TEST_SHEET_NAME") ||
       DEFAULT_META_ADS_TEST_SHEET_NAME,
+    dailySheetName:
+      props.getProperty("META_ADS_DAILY_SHEET_NAME") ||
+      DEFAULT_META_ADS_DAILY_SHEET_NAME,
     actionAuditSheetName:
       props.getProperty("META_ADS_ACTION_AUDIT_SHEET_NAME") ||
       DEFAULT_META_ADS_ACTION_AUDIT_SHEET_NAME,
@@ -250,6 +342,19 @@ function fetchMetaCampaignInsights_(config) {
     fields:
       "date_start,date_stop,campaign_id,campaign_name,spend,impressions,reach,frequency,actions,cost_per_action_type,attribution_setting",
     date_preset: config.datePreset
+  });
+
+  return fetchAllMetaPages_(url);
+}
+
+function fetchMetaDailyCampaignInsights_(config) {
+  var url = buildMetaApiUrl_(config, "/" + config.adAccountId + "/insights", {
+    level: "campaign",
+    limit: 500,
+    fields:
+      "date_start,date_stop,campaign_id,campaign_name,spend,impressions,reach,frequency,actions,cost_per_action_type,attribution_setting",
+    date_preset: config.datePreset,
+    time_increment: 1
   });
 
   return fetchAllMetaPages_(url);
@@ -394,6 +499,38 @@ function buildMetaAdsSheetRow_(insight, campaign, config, lastSynced) {
   ];
 }
 
+function buildMetaAdsDailySheetRow_(insight, campaign, config, lastSynced) {
+  var spend = parseMetaNumber_(insight.spend);
+  var leadAction = getLeadActionResult_(insight.actions, config.leadActionType);
+  var leads = leadAction.value;
+  var costPerLead = calculateCostPerLead_(spend, leads);
+  var reportingStarts = formatMetaDate_(insight.date_start);
+  var reportingEnds = formatMetaDate_(insight.date_stop || insight.date_start);
+  var campaignEnds = formatMetaDate_(campaign.stop_time);
+
+  return [
+    reportingStarts,
+    reportingEnds,
+    insight.campaign_name || campaign.name || "",
+    insight.campaign_id || campaign.id || "",
+    campaign.effective_status || campaign.status || "",
+    leads,
+    "Leads",
+    costPerLead === null ? "" : costPerLead,
+    "",
+    "",
+    spend === null ? "" : spend,
+    blankIfNull_(parseMetaNumber_(insight.impressions)),
+    blankIfNull_(parseMetaNumber_(insight.reach)),
+    campaignEnds,
+    insight.attribution_setting || "",
+    "",
+    "",
+    blankIfNull_(parseMetaNumber_(insight.frequency)),
+    lastSynced
+  ];
+}
+
 function parseMetaNumber_(value) {
   if (value === "" || value === null || value === undefined) return null;
 
@@ -532,6 +669,18 @@ function applyMetaAdsSheetFormats_(sheet, dataRowCount) {
   sheet.getRange(firstDataRow, 8, rowCount, 1).setNumberFormat("$#,##0.00");
   sheet.getRange(firstDataRow, 10, rowCount, 1).setNumberFormat("$#,##0.00");
   sheet.getRange(firstDataRow, 11, rowCount, 2).setNumberFormat("#,##0");
+  sheet.getRange(firstDataRow, 18, rowCount, 1).setNumberFormat("0.00");
+  sheet.getRange(firstDataRow, 19, rowCount, 1).setNumberFormat("yyyy-mm-dd hh:mm:ss");
+}
+
+function applyMetaAdsDailySheetFormats_(sheet, dataRowCount) {
+  var firstDataRow = 2;
+  var rowCount = Math.max(dataRowCount, 1);
+
+  sheet.getRange(firstDataRow, 8, rowCount, 1).setNumberFormat("$#,##0.00");
+  sheet.getRange(firstDataRow, 9, rowCount, 1).setNumberFormat("$#,##0.00");
+  sheet.getRange(firstDataRow, 11, rowCount, 1).setNumberFormat("$#,##0.00");
+  sheet.getRange(firstDataRow, 12, rowCount, 2).setNumberFormat("#,##0");
   sheet.getRange(firstDataRow, 18, rowCount, 1).setNumberFormat("0.00");
   sheet.getRange(firstDataRow, 19, rowCount, 1).setNumberFormat("yyyy-mm-dd hh:mm:ss");
 }

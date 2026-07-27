@@ -366,6 +366,32 @@ The sync replaces the complete contents of the test tab only after the Meta API
 fetch and parsing complete successfully. A failed or partial fetch will not
 overwrite valid test-tab data.
 
+## 4a. Run the daily Meta Ads sync for dashboard filters
+
+The React Meta Ads dashboard needs daily campaign rows for honest date filters
+and trend charts. The aggregate sync above stays available, but the dashboard
+enhancement uses:
+
+```text
+syncMetaAdsDailyData
+```
+
+This writes to a separate tab by default:
+
+```text
+Meta Ads Daily
+```
+
+Each row represents one campaign on one reporting date. The expected published
+CSV headings are:
+
+```text
+Reporting starts | Reporting ends | Campaign name | Campaign ID | Campaign delivery | Results | Result indicator | Cost per results | Ad Set Budget | Ad Set Budget Type | Amount spent (AUD) | Impressions | Reach | Ends | Attribution Setting | Results (Initial) | Results (Initial) Indicator | Frequency | Last synced
+```
+
+Repeated runs fully refresh that tab and dedupe by Campaign ID plus reporting
+date before writing, so repeated syncs should produce deterministic output.
+
 ## 5. Compare against Meta Ads Manager
 
 In Meta Ads Manager:

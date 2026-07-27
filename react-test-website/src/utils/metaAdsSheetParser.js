@@ -2,6 +2,7 @@ const HEADER_ALIASES = {
   reportingStarts: ["reporting starts", "reporting start", "start date"],
   reportingEnds: ["reporting ends", "reporting end", "end date"],
   campaignName: ["campaign name", "campaign"],
+  campaignId: ["campaign id", "campaign identifier"],
   campaignDelivery: ["campaign delivery", "delivery", "status"],
   results: ["leads", "results"],
   resultIndicator: ["result type", "result indicator", "results indicator"],
@@ -18,6 +19,7 @@ const HEADER_ALIASES = {
   amountSpent: ["amount spent aud", "amount spent (aud)", "amount spent", "spend"],
   impressions: ["impressions"],
   reach: ["reach"],
+  frequency: ["frequency"],
   ends: ["ends"],
   attributionSetting: ["attribution setting"],
   resultsInitial: ["results initial", "results (initial)"],
@@ -86,10 +88,11 @@ export const parseMetaAdsSheetResults = (results) => {
       const reportingEnds = parseCell(row, headerIndex, "reportingEnds");
 
       return {
-        id: `${parseCell(row, headerIndex, "campaignName") || "campaign"}-${index}`,
+        id: `${parseCell(row, headerIndex, "campaignId") || parseCell(row, headerIndex, "campaignName") || "campaign"}-${reportingStarts || index}`,
         reportingStarts,
         reportingEnds,
         date: reportingStarts,
+        campaignId: parseCell(row, headerIndex, "campaignId"),
         campaignName: parseCell(row, headerIndex, "campaignName") || "Untitled Campaign",
         campaignDelivery: parseCell(row, headerIndex, "campaignDelivery"),
         campaignStatus: parseCell(row, headerIndex, "campaignDelivery"),
@@ -99,6 +102,7 @@ export const parseMetaAdsSheetResults = (results) => {
         amountSpent,
         impressions,
         reach,
+        frequency: parseMetaAdsNumber(parseCell(row, headerIndex, "frequency")),
         adSetBudget: parseMetaAdsNumber(parseCell(row, headerIndex, "adSetBudget")),
         adSetBudgetType: parseCell(row, headerIndex, "adSetBudgetType"),
         ends: parseCell(row, headerIndex, "ends"),

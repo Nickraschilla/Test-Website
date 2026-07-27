@@ -1,14 +1,14 @@
-import { formatDateLabel, formatMetricValue } from "../../utils/metaAdsAnalytics";
+import { formatMetricValue } from "../../utils/metaAdsAnalytics";
 
 const columns = [
   { key: "campaignName", label: "Campaign", numeric: false },
+  { key: "campaignDelivery", label: "Delivery", numeric: false },
   { key: "amountSpent", label: "Spend", format: "currency", numeric: true },
   { key: "results", label: "Leads", numeric: true },
   { key: "costPerResult", label: "Cost / Lead", format: "currency", numeric: true },
   { key: "reach", label: "Reach", numeric: true },
   { key: "impressions", label: "Impressions", numeric: true },
-  { key: "reportingStarts", label: "Starts", numeric: false, date: true },
-  { key: "reportingEnds", label: "Ends", numeric: false, date: true },
+  { key: "frequency", label: "Frequency", format: "decimal", numeric: true },
 ];
 
 export function MetaAdsCampaignTable({
@@ -25,6 +25,17 @@ export function MetaAdsCampaignTable({
     if (/^actions:/i.test(row.resultIndicator)) return "";
     if (/^\d+\s+types$/i.test(row.resultIndicator)) return "Mixed result types";
     return row.resultIndicator;
+  };
+  const getWarnings = (row) => {
+    const warnings = [];
+
+    if (Number(row.amountSpent || 0) > 0 && Number(row.results || 0) === 0) {
+      warnings.push("Spend with zero leads");
+    }
+    if (row.campaignDelivery && !/active/i.test(row.campaignDelivery)) {
+      warnings.push("Not delivering");
+    }
+    return warnings;
   };
 
   return (
@@ -61,10 +72,14 @@ export function MetaAdsCampaignTable({
               <tr key={row.campaignName}>
                 {columns.map((column) => (
                   <td key={column.key}>
-                    {column.date
-                      ? formatDateLabel(row[column.key])
-                      : column.key === "campaignName"
+                    {column.key === "campaignName"
                         ? row.campaignName
+                        : column.key === "campaignDelivery"
+                          ? (
+                            <span className={`meta-ads-status-badge ${/active/i.test(row.campaignDelivery || "") ? "is-active" : "is-muted"}`}>
+                              {row.campaignDelivery || "—"}
+                            </span>
+                          )
                         : column.key === "results"
                           ? (
                             <>
@@ -79,6 +94,11 @@ export function MetaAdsCampaignTable({
                         : column.numeric
                           ? formatMetricValue(row[column.key], column.format)
                           : row[column.key] || "—"}
+                    {column.key === "campaignName" && getWarnings(row).length ? (
+                      <span className="analytics-row-note meta-ads-warning-note">
+                        {getWarnings(row).join(" · ")}
+                      </span>
+                    ) : null}
                   </td>
                 ))}
               </tr>

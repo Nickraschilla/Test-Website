@@ -1,17 +1,18 @@
 import { formatMetricValue, TREND_METRICS } from "../../utils/metaAdsAnalytics";
 
-export function MetaAdsTrendChart({ rows, metricKey }) {
-  const metric = TREND_METRICS.find((item) => item.key === metricKey) || TREND_METRICS[0];
-  const maxValue = Math.max(1, ...rows.map((row) => Number(row.value || 0)));
+function SingleTrendChart({ rows, metric }) {
+  const numericValues = rows
+    .map((row) => row.value)
+    .filter((value) => Number.isFinite(Number(value)));
+  const maxValue = Math.max(1, ...numericValues.map(Number));
 
   return (
-    <section className="analytics-chart-card meta-ads-chart-card">
+    <article className="analytics-chart-card meta-ads-chart-card">
       <div className="analytics-card-header">
-        <strong>Performance Trend</strong>
-        <span>{metric.label}</span>
+        <strong>{metric.label} over time</strong>
       </div>
       <div className="analytics-card-subheader">
-        {rows.length ? "Filtered campaign trend" : "No trend data for this selection"}
+        {rows.length ? "Filtered daily campaign data" : "No trend data for this selection"}
       </div>
       <div className="analytics-bar-chart">
         <div className="analytics-y-axis">
@@ -22,17 +23,18 @@ export function MetaAdsTrendChart({ rows, metricKey }) {
         </div>
         <div className="analytics-bars">
           {rows.map((row) => {
-            const value = Number(row.value || 0);
+            const hasValue = Number.isFinite(Number(row.value));
+            const value = hasValue ? Number(row.value) : 0;
 
             return (
               <div className="analytics-bar-group" key={row.key}>
                 <div className="analytics-bar-track">
                   <span
-                    className="analytics-bar analytics-bar-current"
+                    className={`analytics-bar analytics-bar-current${hasValue ? "" : " meta-ads-bar-empty"}`}
                     aria-label={`${row.label} ${metric.label}: ${formatMetricValue(row.value, metric.format)}`}
                     data-tooltip={`${row.label}: ${formatMetricValue(row.value, metric.format)}`}
                     tabIndex="0"
-                    style={{ "--bar-height": `${Math.max(2, (value / maxValue) * 100)}%` }}
+                    style={{ "--bar-height": hasValue ? `${Math.max(2, (value / maxValue) * 100)}%` : "0%" }}
                   />
                 </div>
                 <span>{row.label}</span>
@@ -41,9 +43,25 @@ export function MetaAdsTrendChart({ rows, metricKey }) {
           })}
         </div>
       </div>
-      <div className="analytics-chart-legend" aria-label="Chart legend">
-        <span><i className="analytics-legend-current" /> Current selection</span>
-        <em>{metric.label}</em>
+    </article>
+  );
+}
+
+export function MetaAdsTrendChart({ rowsByMetric, grouping }) {
+  return (
+    <section className="meta-ads-trend-section">
+      <div className="analytics-card-header meta-ads-section-header">
+        <strong>Performance charts</strong>
+        <span>{grouping}</span>
+      </div>
+      <div className="meta-ads-trend-grid">
+        {TREND_METRICS.map((metric) => (
+          <SingleTrendChart
+            key={metric.key}
+            metric={metric}
+            rows={rowsByMetric[metric.key] || []}
+          />
+        ))}
       </div>
     </section>
   );

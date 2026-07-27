@@ -1,12 +1,12 @@
 import {
   DATE_RANGE_OPTIONS,
   GROUPING_OPTIONS,
-  TREND_METRICS,
 } from "../../utils/metaAdsAnalytics";
 
 export function MetaAdsFilters({
   filters,
   options,
+  activePeriod,
   onChange,
   onReset,
 }) {
@@ -20,6 +20,7 @@ export function MetaAdsFilters({
           <h2>Meta Ads Reporting</h2>
         </div>
         <p>Campaign performance, lead generation and creative analysis.</p>
+        <small className="meta-ads-active-period">{activePeriod}</small>
       </div>
 
       <div className="analytics-filter-card meta-ads-filter-card">
@@ -35,6 +36,38 @@ export function MetaAdsFilters({
               </option>
             ))}
           </select>
+        </label>
+
+        {filters.dateRange === "custom" ? (
+          <>
+            <label>
+              <span>Start Date</span>
+              <input
+                type="date"
+                value={filters.customStart}
+                onChange={(event) => updateFilter("customStart", event.target.value)}
+              />
+            </label>
+            <label>
+              <span>End Date</span>
+              <input
+                type="date"
+                value={filters.customEnd}
+                min={filters.customStart || undefined}
+                onChange={(event) => updateFilter("customEnd", event.target.value)}
+              />
+            </label>
+          </>
+        ) : null}
+
+        <label>
+          <span>Search</span>
+          <input
+            type="search"
+            value={filters.search}
+            placeholder="Campaign name"
+            onChange={(event) => updateFilter("search", event.target.value)}
+          />
         </label>
 
         <label>
@@ -83,25 +116,12 @@ export function MetaAdsFilters({
         </label>
 
         <label>
-          <span>Metric</span>
-          <select
-            value={filters.trendMetric}
-            onChange={(event) => updateFilter("trendMetric", event.target.value)}
-          >
-            {TREND_METRICS.map((metric) => (
-              <option key={metric.key} value={metric.key}>
-                {metric.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
           <span>Group By</span>
           <select
             value={filters.grouping}
             onChange={(event) => updateFilter("grouping", event.target.value)}
           >
+            <option value="auto">Auto</option>
             {GROUPING_OPTIONS.map((grouping) => (
               <option key={grouping} value={grouping}>
                 {grouping}

@@ -23,7 +23,8 @@ export function MetaAdsKpiGrid({ summary, previousSummary, comparePrevious }) {
             <div>
               <span>{metric.label}</span>
               <strong>{formatMetricValue(value, metric.format)}</strong>
-              {comparePrevious ? (
+              {metric.note && summary.reachIsEstimate ? <em>{metric.note}</em> : null}
+              {comparePrevious && getComparisonLabel(metric, change) ? (
                 <small className={`meta-ads-comparison ${getComparisonClass(metric, change)}`}>
                   {getComparisonLabel(metric, change)}
                 </small>
