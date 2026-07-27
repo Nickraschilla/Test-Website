@@ -22,6 +22,7 @@ export function MetaAdsCampaignTable({
   };
   const getResultContext = (row) => {
     if (!row.resultIndicator || row.resultIndicator === "—") return "";
+    if (/^actions:/i.test(row.resultIndicator)) return "";
     if (/^\d+\s+types$/i.test(row.resultIndicator)) return "Mixed result types";
     return row.resultIndicator;
   };
