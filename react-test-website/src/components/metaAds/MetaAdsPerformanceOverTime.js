@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   buildCampaignTrendSummary,
 } from "../../utils/metaAdsCampaignReview";
@@ -9,59 +9,86 @@ import {
 } from "../../utils/metaAdsAnalytics";
 
 const metrics = [
-  { key: "results", label: "Leads", format: "number" },
-  { key: "amountSpent", label: "Amount Spent", format: "currency" },
-  { key: "costPerResult", label: "Cost Per Lead", format: "currency" },
+  { key: "results", label: "Leads", format: "number", className: "meta-ads-bar-leads" },
+  { key: "amountSpent", label: "Amount Spent", format: "currency", className: "meta-ads-bar-spend" },
+  { key: "costPerResult", label: "Cost Per Lead", format: "currency", className: "meta-ads-bar-cpl" },
 ];
 
 export function MetaAdsPerformanceOverTime({ rows }) {
-  const [metricKey, setMetricKey] = useState("results");
-  const metric = metrics.find((item) => item.key === metricKey) || metrics[0];
-  const trendRows = useMemo(
-    () => buildTrendRows(rows, "Daily", metric.key).filter((row) => hasNumber(row.value)),
-    [metric.key, rows]
-  );
+  const trendData = useMemo(() => {
+    const rowsByDate = new Map();
+    const maxByMetric = {};
+
+    metrics.forEach((metric) => {
+      const metricRows = buildTrendRows(rows, "Daily", metric.key);
+      const values = metricRows.map((row) => row.value).filter(hasNumber).map(Number);
+      maxByMetric[metric.key] = Math.max(1, ...values);
+
+      metricRows.forEach((row) => {
+        const group = rowsByDate.get(row.key) || {
+          key: row.key,
+          label: row.label,
+          values: {},
+        };
+        group.values[metric.key] = row.value;
+        rowsByDate.set(row.key, group);
+      });
+    });
+
+    return {
+      rows: [...rowsByDate.values()].sort((first, second) => first.key.localeCompare(second.key)),
+      maxByMetric,
+    };
+  }, [rows]);
   const trendSummary = useMemo(() => buildCampaignTrendSummary(rows), [rows]);
-  const maxValue = Math.max(1, ...trendRows.map((row) => Number(row.value)));
+  const hasTrendRows = trendData.rows.some((row) =>
+    metrics.some((metric) => hasNumber(row.values[metric.key]))
+  );
 
   return (
     <section className="analytics-chart-card meta-ads-chart-card meta-ads-review-chart">
       <div className="analytics-card-header">
         <strong>Performance over time</strong>
-        <div className="analytics-mode-toggle meta-ads-trend-toggle" aria-label="Performance metric">
+        <div className="analytics-chart-legend meta-ads-combined-legend">
           {metrics.map((item) => (
-            <button
-              className={item.key === metric.key ? "analytics-mode-active" : ""}
-              key={item.key}
-              type="button"
-              onClick={() => setMetricKey(item.key)}
-            >
-              {item.label}
-            </button>
+            <span key={item.key}>
+              <i className={item.className} />
+              <em>{item.label}</em>
+            </span>
           ))}
         </div>
       </div>
 
-      {trendRows.length === 0 ? (
+      {!hasTrendRows ? (
         <div className="meta-ads-state-card">No daily campaign data is available.</div>
       ) : (
         <div className="analytics-bar-chart meta-ads-review-bars">
           <div className="analytics-y-axis" aria-hidden="true">
-            <span>{formatMetricValue(maxValue, metric.format)}</span>
-            <span>{formatMetricValue(maxValue / 2, metric.format)}</span>
+            <span>High</span>
+            <span>Mid</span>
             <span>0</span>
           </div>
           <div className="analytics-bars">
-            {trendRows.map((row) => (
+            {trendData.rows.map((row) => (
               <div className="analytics-bar-group" key={row.key}>
                 <div className="analytics-bar-track">
-                  <span
-                    className="analytics-bar analytics-bar-current"
-                    data-tooltip={`${row.label}: ${formatMetricValue(row.value, metric.format)}`}
-                    style={{ "--bar-height": `${Math.max(4, (Number(row.value) / maxValue) * 100)}%` }}
-                    tabIndex="0"
-                    aria-label={`${row.label} ${metric.label}: ${formatMetricValue(row.value, metric.format)}`}
-                  />
+                  {metrics.map((metric) => {
+                    const value = row.values[metric.key];
+                    const height = hasNumber(value)
+                      ? Math.max(4, (Number(value) / trendData.maxByMetric[metric.key]) * 100)
+                      : 0;
+
+                    return (
+                      <span
+                        className={`analytics-bar meta-ads-combined-bar ${metric.className}${hasNumber(value) ? "" : " meta-ads-bar-empty"}`}
+                        data-tooltip={`${row.label} ${metric.label}: ${formatMetricValue(value, metric.format)}`}
+                        key={metric.key}
+                        style={{ "--bar-height": `${height}%` }}
+                        tabIndex="0"
+                        aria-label={`${row.label} ${metric.label}: ${formatMetricValue(value, metric.format)}`}
+                      />
+                    );
+                  })}
                 </div>
                 <span>{row.label}</span>
               </div>

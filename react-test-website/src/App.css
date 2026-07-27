@@ -1516,6 +1516,36 @@ select {
   min-height: 248px;
 }
 
+.meta-ads-review-bars .analytics-bar-track {
+  gap: 3px;
+}
+
+.meta-ads-combined-bar {
+  width: min(18px, 28%);
+}
+
+.meta-ads-bar-leads {
+  background: #ff173a;
+}
+
+.meta-ads-bar-spend {
+  background: #1f7bff;
+}
+
+.meta-ads-bar-cpl {
+  background: #14a66f;
+}
+
+.meta-ads-combined-legend {
+  margin-left: auto;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.meta-ads-combined-legend em {
+  color: #ffffff;
+}
+
 .meta-ads-trend-support,
 .meta-ads-pipeline-summary,
 .meta-ads-pipeline-metrics {
