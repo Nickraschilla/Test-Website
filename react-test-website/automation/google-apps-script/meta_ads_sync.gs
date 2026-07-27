@@ -16,20 +16,21 @@ var META_ADS_SHEET_HEADERS = [
   "Reach",
   "Campaign ID",
   "Frequency",
+  "Lead action source",
+  "All action types",
   "Last synced",
 ];
 
-var ACCEPTED_META_LEAD_ACTION_TYPES = [
-  "lead",
-  "omni_lead",
-  "onsite_conversion.lead_grouped",
-  "onsite_conversion.messaging_conversation_started_7d",
-  "onsite_conversion.lead",
-  "offsite_conversion.fb_pixel_lead",
-  "offsite_conversion.custom.lead",
+var META_LEAD_ACTION_TYPE_PRIORITY = [
   "leadgen.other",
   "onsite_conversion.leadgen_grouped",
   "onsite_conversion.leadgen.other",
+  "onsite_conversion.lead_grouped",
+  "onsite_conversion.lead",
+  "offsite_conversion.fb_pixel_lead",
+  "offsite_conversion.custom.lead",
+  "lead",
+  "omni_lead",
   "actions:leadgen.other",
 ];
 
@@ -301,7 +302,8 @@ function hasUsefulMetaInsightRecord_(insight) {
 
 function buildMetaAdsSheetRow_(insight, campaign, dateRange, lastSynced) {
   var spend = parseMetaNumber_(insight.spend);
-  var leads = extractAcceptedLeadActions_(insight.actions);
+  var leadAction = getLeadActionResult_(insight.actions);
+  var leads = leadAction.value;
   var costPerLead = calculateCostPerLead_(spend, leads);
 
   return [
@@ -317,6 +319,8 @@ function buildMetaAdsSheetRow_(insight, campaign, dateRange, lastSynced) {
     blankIfNull_(parseMetaNumber_(insight.reach)),
     insight.campaign_id || campaign.id || "",
     blankIfNull_(parseMetaNumber_(insight.frequency)),
+    leadAction.actionType,
+    summariseActionTypes_(insight.actions),
     lastSynced,
   ];
 }
@@ -348,8 +352,8 @@ function normaliseActionType_(value) {
 function isAcceptedLeadActionType_(actionType) {
   var normalised = normaliseActionType_(actionType);
 
-  for (var i = 0; i < ACCEPTED_META_LEAD_ACTION_TYPES.length; i += 1) {
-    if (normaliseActionType_(ACCEPTED_META_LEAD_ACTION_TYPES[i]) === normalised) {
+  for (var i = 0; i < META_LEAD_ACTION_TYPE_PRIORITY.length; i += 1) {
+    if (normaliseActionType_(META_LEAD_ACTION_TYPE_PRIORITY[i]) === normalised) {
       return true;
     }
   }
@@ -358,17 +362,54 @@ function isAcceptedLeadActionType_(actionType) {
 }
 
 function extractAcceptedLeadActions_(actions) {
-  if (!Array.isArray(actions)) return 0;
+  return getLeadActionResult_(actions).value;
+}
 
-  var total = 0;
-
-  for (var i = 0; i < actions.length; i += 1) {
-    if (!isAcceptedLeadActionType_(actions[i].action_type)) continue;
-
-    total += parseMetaNumber_(actions[i].value) || 0;
+function getLeadActionResult_(actions) {
+  if (!Array.isArray(actions)) {
+    return { value: 0, actionType: "" };
   }
 
-  return total;
+  var actionsByType = {};
+
+  for (var i = 0; i < actions.length; i += 1) {
+    var actionType = normaliseActionType_(actions[i].action_type);
+    if (!actionType) continue;
+
+    actionsByType[actionType] = {
+      originalActionType: actions[i].action_type || "",
+      value: parseMetaNumber_(actions[i].value) || 0,
+    };
+  }
+
+  for (var priorityIndex = 0; priorityIndex < META_LEAD_ACTION_TYPE_PRIORITY.length; priorityIndex += 1) {
+    var priorityType = normaliseActionType_(META_LEAD_ACTION_TYPE_PRIORITY[priorityIndex]);
+    var matchedAction = actionsByType[priorityType];
+
+    if (matchedAction) {
+      return {
+        value: matchedAction.value,
+        actionType: matchedAction.originalActionType || priorityType,
+      };
+    }
+  }
+
+  return { value: 0, actionType: "" };
+}
+
+function summariseActionTypes_(actions) {
+  if (!Array.isArray(actions) || actions.length === 0) return "";
+
+  var summaries = [];
+
+  for (var i = 0; i < actions.length; i += 1) {
+    var actionType = actions[i].action_type || "";
+    if (!actionType) continue;
+
+    summaries.push(actionType + ": " + (actions[i].value === undefined ? "" : actions[i].value));
+  }
+
+  return summaries.join(" | ");
 }
 
 function calculateCostPerLead_(spend, leads) {
@@ -384,5 +425,5 @@ function applyMetaAdsSheetFormats_(sheet, dataRowCount) {
   sheet.getRange(firstDataRow, 8, rowCount, 1).setNumberFormat("$#,##0.00");
   sheet.getRange(firstDataRow, 9, rowCount, 2).setNumberFormat("#,##0");
   sheet.getRange(firstDataRow, 12, rowCount, 1).setNumberFormat("0.00");
-  sheet.getRange(firstDataRow, 13, rowCount, 1).setNumberFormat("yyyy-mm-dd hh:mm:ss");
+  sheet.getRange(firstDataRow, 15, rowCount, 1).setNumberFormat("yyyy-mm-dd hh:mm:ss");
 }

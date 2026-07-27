@@ -1,10 +1,12 @@
 import {
   calculateCostPerLead,
   extractAcceptedLeadActions,
+  getLeadActionResult,
   isAcceptedLeadActionType,
   mapMetaCampaignRecordToSheetRow,
   normaliseMetaAdAccountId,
   parseMetaApiNumber,
+  summariseActionTypes,
 } from "./metaAdsApiHelpers";
 
 test("normalises Meta ad account IDs with or without act prefix", () => {
@@ -20,28 +22,44 @@ test("parses numbers, blanks, zeroes and malformed values safely", () => {
   expect(parseMetaApiNumber("not a number")).toBeNull();
 });
 
-test("counts valid Instant Form and website lead actions", () => {
+test("accepts valid Instant Form and website lead actions", () => {
   expect(isAcceptedLeadActionType("lead")).toBe(true);
   expect(isAcceptedLeadActionType("offsite_conversion.fb_pixel_lead")).toBe(true);
   expect(
-    extractAcceptedLeadActions([
-      { action_type: "lead", value: "4" },
-      { action_type: "offsite_conversion.fb_pixel_lead", value: "3" },
-    ])
-  ).toBe(7);
+    getLeadActionResult([{ action_type: "offsite_conversion.fb_pixel_lead", value: "3" }])
+  ).toEqual({ value: 3, actionType: "offsite_conversion.fb_pixel_lead" });
 });
 
-test("counts multiple accepted lead action types but ignores non-lead actions", () => {
+test("uses one lead source by priority to avoid double counting Meta action rows", () => {
+  const actions = [
+    { action_type: "lead", value: "2" },
+    { action_type: "leadgen.other", value: "5" },
+    { action_type: "link_click", value: "999" },
+    { action_type: "landing_page_view", value: "400" },
+    { action_type: "post_engagement", value: "200" },
+    { action_type: "unknown_custom_action", value: "100" },
+  ];
+
+  expect(extractAcceptedLeadActions(actions)).toBe(5);
+  expect(getLeadActionResult(actions)).toEqual({
+    value: 5,
+    actionType: "leadgen.other",
+  });
+  expect(summariseActionTypes(actions)).toContain("link_click: 999");
+});
+
+test("does not count messaging conversations as leads by default", () => {
+  expect(isAcceptedLeadActionType("onsite_conversion.messaging_conversation_started_7d")).toBe(
+    false
+  );
   expect(
     extractAcceptedLeadActions([
-      { action_type: "lead", value: "2" },
-      { action_type: "leadgen.other", value: "5" },
-      { action_type: "link_click", value: "999" },
-      { action_type: "landing_page_view", value: "400" },
-      { action_type: "post_engagement", value: "200" },
-      { action_type: "unknown_custom_action", value: "100" },
+      {
+        action_type: "onsite_conversion.messaging_conversation_started_7d",
+        value: "49",
+      },
     ])
-  ).toBe(7);
+  ).toBe(0);
 });
 
 test("handles zero leads, missing actions and zero spend", () => {
@@ -72,6 +90,8 @@ test("handles missing spend, malformed values and blank campaign status", () => 
   expect(row[7]).toBe("");
   expect(row[8]).toBe(1000);
   expect(row[9]).toBe(900);
+  expect(row[12]).toBe("lead");
+  expect(row[13]).toBe("lead: 3");
 });
 
 test("maps an API campaign record into the sheet row shape", () => {
@@ -112,6 +132,8 @@ test("maps an API campaign record into the sheet row shape", () => {
     8000,
     "cmp_123",
     1.25,
+    "lead",
+    "lead: 4 | link_click: 80",
     "2026-07-27T01:00:00Z",
   ]);
 });

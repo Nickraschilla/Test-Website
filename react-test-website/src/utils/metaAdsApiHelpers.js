@@ -11,20 +11,21 @@ export const META_ADS_SHEET_HEADERS = [
   "Reach",
   "Campaign ID",
   "Frequency",
+  "Lead action source",
+  "All action types",
   "Last synced",
 ];
 
-export const ACCEPTED_LEAD_ACTION_TYPES = [
-  "lead",
-  "omni_lead",
-  "onsite_conversion.lead_grouped",
-  "onsite_conversion.messaging_conversation_started_7d",
-  "onsite_conversion.lead",
-  "offsite_conversion.fb_pixel_lead",
-  "offsite_conversion.custom.lead",
+export const LEAD_ACTION_TYPE_PRIORITY = [
   "leadgen.other",
   "onsite_conversion.leadgen_grouped",
   "onsite_conversion.leadgen.other",
+  "onsite_conversion.lead_grouped",
+  "onsite_conversion.lead",
+  "offsite_conversion.fb_pixel_lead",
+  "offsite_conversion.custom.lead",
+  "lead",
+  "omni_lead",
   "actions:leadgen.other",
 ];
 
@@ -35,7 +36,7 @@ const normaliseActionType = (value) =>
     .replace(/^actions:/, "");
 
 const acceptedLeadActionSet = new Set(
-  ACCEPTED_LEAD_ACTION_TYPES.map(normaliseActionType)
+  LEAD_ACTION_TYPE_PRIORITY.map(normaliseActionType)
 );
 
 export const normaliseMetaAdAccountId = (value) => {
@@ -54,11 +55,52 @@ export const parseMetaApiNumber = (value) => {
 export const isAcceptedLeadActionType = (actionType) =>
   acceptedLeadActionSet.has(normaliseActionType(actionType));
 
+export const getLeadActionResult = (actions = []) => {
+  if (!Array.isArray(actions)) {
+    return { value: 0, actionType: "" };
+  }
+
+  const actionsByType = new Map();
+
+  actions.forEach((action) => {
+    const actionType = normaliseActionType(action?.action_type);
+    if (!actionType) return;
+
+    actionsByType.set(actionType, {
+      originalActionType: action?.action_type || "",
+      value: parseMetaApiNumber(action?.value) || 0,
+    });
+  });
+
+  for (const priorityType of LEAD_ACTION_TYPE_PRIORITY) {
+    const normalisedPriorityType = normaliseActionType(priorityType);
+    const matchedAction = actionsByType.get(normalisedPriorityType);
+
+    if (matchedAction) {
+      return {
+        value: matchedAction.value,
+        actionType: matchedAction.originalActionType || normalisedPriorityType,
+      };
+    }
+  }
+
+  return { value: 0, actionType: "" };
+};
+
 export const extractAcceptedLeadActions = (actions = []) =>
-  (Array.isArray(actions) ? actions : []).reduce((total, action) => {
-    if (!isAcceptedLeadActionType(action?.action_type)) return total;
-    return total + (parseMetaApiNumber(action.value) || 0);
-  }, 0);
+  getLeadActionResult(actions).value;
+
+export const summariseActionTypes = (actions = []) => {
+  if (!Array.isArray(actions) || actions.length === 0) return "";
+
+  return actions
+    .filter((action) => action?.action_type)
+    .map(
+      (action) =>
+        `${action.action_type}: ${action.value === undefined ? "" : action.value}`
+    )
+    .join(" | ");
+};
 
 export const calculateCostPerLead = (spend, leads) => {
   const parsedSpend = parseMetaApiNumber(spend);
@@ -76,7 +118,8 @@ export const mapMetaCampaignRecordToSheetRow = ({
   lastSynced,
 }) => {
   const spend = parseMetaApiNumber(insight?.spend);
-  const leads = extractAcceptedLeadActions(insight?.actions);
+  const leadAction = getLeadActionResult(insight?.actions);
+  const leads = leadAction.value;
   const costPerLead = calculateCostPerLead(spend, leads);
 
   return [
@@ -92,6 +135,8 @@ export const mapMetaCampaignRecordToSheetRow = ({
     parseMetaApiNumber(insight?.reach),
     insight?.campaign_id || campaign.id || "",
     parseMetaApiNumber(insight?.frequency),
+    leadAction.actionType,
+    summariseActionTypes(insight?.actions),
     lastSynced || "",
   ].map((value) => (value === null ? "" : value));
 };
