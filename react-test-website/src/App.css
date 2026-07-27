@@ -1582,7 +1582,39 @@ select {
 }
 
 .meta-ads-comparison-table {
-  min-width: 1240px;
+  min-width: 820px;
+  table-layout: fixed;
+}
+
+.meta-ads-comparison-table th:first-child,
+.meta-ads-comparison-table td:first-child {
+  width: 34%;
+}
+
+.meta-ads-comparison-table th:nth-child(2),
+.meta-ads-comparison-table td:nth-child(2),
+.meta-ads-comparison-table th:nth-child(3),
+.meta-ads-comparison-table td:nth-child(3) {
+  width: 14%;
+}
+
+.meta-ads-comparison-table th:not(:first-child),
+.meta-ads-comparison-table td:not(:first-child) {
+  text-align: right;
+}
+
+.meta-ads-comparison-table th:nth-child(3),
+.meta-ads-comparison-table td:nth-child(3) {
+  text-align: center;
+}
+
+.meta-ads-comparison-table tbody tr {
+  cursor: pointer;
+}
+
+.meta-ads-comparison-table tbody tr:hover td,
+.meta-ads-comparison-table tbody tr:focus-visible td {
+  background: rgba(13, 37, 71, 0.06);
 }
 
 .meta-ads-selected-row td {

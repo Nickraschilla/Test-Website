@@ -7,9 +7,6 @@ const columns = [
   { key: "amountSpent", label: "Amount Spent", format: "currency" },
   { key: "results", label: "Total Leads", sortKey: "results" },
   { key: "costPerResult", label: "Cost Per Lead", format: "currency", sortKey: "costPerResult" },
-  { key: "leadsPer100", label: "Leads Per $100", format: "decimal", sortKey: "leadsPer100" },
-  { key: "conversionRate", label: "Conversion Rate", format: "percent", sortKey: "conversionRate" },
-  { key: "costPerConvertedCustomer", label: "Cost Per Converted Customer", format: "currency", sortKey: "costPerConvertedCustomer" },
 ];
 
 export function MetaAdsCampaignComparison({
@@ -60,6 +57,13 @@ export function MetaAdsCampaignComparison({
                 className={row.isSelected ? "meta-ads-selected-row" : ""}
                 key={getCampaignIdentity(row)}
                 onClick={() => onSelectCampaign(getCampaignIdentity(row))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelectCampaign(getCampaignIdentity(row));
+                  }
+                }}
+                tabIndex="0"
               >
                 {columns.map((column) => (
                   <td key={column.key}>
