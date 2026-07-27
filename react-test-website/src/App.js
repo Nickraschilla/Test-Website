@@ -377,7 +377,7 @@ function InstagramContentPage({
   const [selectedAnalysisMonth, setSelectedAnalysisMonth] = useState("all");
   const [selectedAnalysisYear, setSelectedAnalysisYear] = useState(String(DISPLAY_YEAR));
   const [showYearComparison, setShowYearComparison] = useState(false);
-  const [contentTotalsMode, setContentTotalsMode] = useState("averages");
+  const [contentTotalsMode, setContentTotalsMode] = useState("totals");
   const [contentTotalsScope, setContentTotalsScope] = useState("premier");
   const [contentTotalsYear, setContentTotalsYear] = useState(String(DISPLAY_YEAR));
   const [interactionBreakdownMode, setInteractionBreakdownMode] = useState("averages");
