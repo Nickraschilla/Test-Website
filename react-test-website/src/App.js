@@ -4,6 +4,7 @@ import { ClipModal } from "./components/ClipModal";
 import { ContributorSummary } from "./components/ContributorSummary";
 import { DashboardHero } from "./components/DashboardHero";
 import { LeaderboardTable } from "./components/LeaderboardTable";
+import { MetaAdsReportingPage } from "./pages/MetaAdsReportingPage";
 import {
   BASE_INSTAGRAM_ANALYSIS_TABS,
   getContentTypeAvatar,
@@ -133,6 +134,13 @@ function SideTabBar({ activeTab, isOpen, onSelectTab, onToggle }) {
       iconType: "image",
       label: "Socials Reporting",
       description: "Leaderboard",
+    },
+    {
+      id: "meta-ads",
+      icon: "AD",
+      iconType: "text",
+      label: "Meta Ads Reporting",
+      description: "Paid campaigns",
     },
   ];
 
@@ -1531,15 +1539,15 @@ function App() {
     : null;
   const selectedMonthLabel =
     selectedMonth === "all" ? "All months" : formatMonthKey(selectedMonth);
-  const activePageTitle =
-    activeTab === "socials" ? "Socials Reporting" : "Instagram Reporting";
+  const activePageTitle = activeTab === "socials" ? "Socials Reporting" : "Instagram Reporting";
   const activePageSubtitle =
-    activeTab === "socials"
-      ? "Social performance leaderboard"
-      : "Instagram content performance";
-  const activeLoading = activeTab === "socials" ? loading : instagramLoading;
-  const activeRefreshing = activeTab === "socials" ? refreshing : instagramRefreshing;
-  const activeError = activeTab === "socials" ? error : instagramError;
+    activeTab === "socials" ? "Social performance leaderboard" : "Instagram content performance";
+  const activeLoading =
+    activeTab === "socials" ? loading : activeTab === "new-page" ? instagramLoading : false;
+  const activeRefreshing =
+    activeTab === "socials" ? refreshing : activeTab === "new-page" ? instagramRefreshing : false;
+  const activeError =
+    activeTab === "socials" ? error : activeTab === "new-page" ? instagramError : "";
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -1581,7 +1589,7 @@ function App() {
           onToggle={() => setSidebarOpen((currentValue) => !currentValue)}
         />
 
-        <div className={`dashboard-content ${activeTab === "new-page" ? "dashboard-content-analytics" : ""}`}>
+        <div className={`dashboard-content ${activeTab !== "socials" ? "dashboard-content-analytics" : ""}`}>
           {activeRefreshing ? (
             <div className="dashboard-refreshing-pill" role="status" aria-live="polite">
               <span aria-hidden="true" />
@@ -1767,6 +1775,8 @@ function App() {
           </div>
         </section>
             </main>
+          ) : activeTab === "meta-ads" ? (
+            <MetaAdsReportingPage />
           ) : (
             <InstagramContentPage
               reels={instagramRows}

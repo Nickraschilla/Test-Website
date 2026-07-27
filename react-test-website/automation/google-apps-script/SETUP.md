@@ -244,3 +244,210 @@ Try:
 7. Run `createHalfHourlyTrigger`
 
 That gets you the simplest near-live version without changing your frontend architecture.
+
+---
+
+# Meta Ads API to Google Sheets Sync
+
+This setup automates the Meta Ads data path while keeping the React website unchanged:
+
+```text
+Meta Marketing API -> Google Apps Script -> Google Sheet -> published CSV -> React website
+```
+
+The script writes automated campaign-level results to a separate test tab named
+`Meta Ads API Test` by default. This protects the existing manually maintained
+Meta Ads tab while you compare the API output against Meta Ads Manager.
+
+## Files
+
+- Script: [meta_ads_sync.gs](</Users/nickraschilla/Desktop/Test Website/Test-Website/react-test-website/automation/google-apps-script/meta_ads_sync.gs>)
+- Frontend parser: [metaAdsSheetParser.js](</Users/nickraschilla/Desktop/Test Website/Test-Website/react-test-website/src/utils/metaAdsSheetParser.js>)
+- Tested helper rules: [metaAdsApiHelpers.js](</Users/nickraschilla/Desktop/Test Website/Test-Website/react-test-website/src/utils/metaAdsApiHelpers.js>)
+
+## Sheet tab and headings
+
+The test sync writes to:
+
+```text
+Meta Ads API Test
+```
+
+The script writes these dashboard-compatible headings:
+
+```text
+Reporting starts | Reporting ends | Campaign name | Campaign delivery | Leads | Result type | Cost per lead | Amount spent (AUD) | Impressions | Reach | Campaign ID | Frequency | Last synced
+```
+
+Extra columns are safe because the React Meta Ads parser reads columns by header
+name and ignores unknown or missing export-only columns.
+
+## Required Meta permissions
+
+Your Meta token needs read access to the ad account and campaign insights.
+Common permissions/scopes are:
+
+```text
+ads_read
+read_insights
+```
+
+Depending on your Business Manager setup, Meta may also require appropriate
+business/ad-account access for the user or system user that generated the token.
+
+## 1. Open the Apps Script project
+
+1. Open the Google Sheet used by the website.
+2. Go to `Extensions -> Apps Script`.
+3. Add a new script file or replace your test project code with
+   [meta_ads_sync.gs](</Users/nickraschilla/Desktop/Test Website/Test-Website/react-test-website/automation/google-apps-script/meta_ads_sync.gs>).
+4. Save the project.
+
+Do not paste access tokens into the spreadsheet, React app, or GitHub.
+
+## 2. Add Script Properties
+
+In Apps Script, open:
+
+```text
+Project Settings -> Script Properties
+```
+
+Add:
+
+```text
+META_ACCESS_TOKEN = your Meta token
+META_AD_ACCOUNT_ID = your ad account ID, with or without act_
+META_API_VERSION = v23.0
+META_ADS_TEST_SHEET_NAME = Meta Ads API Test
+```
+
+`META_API_VERSION` can be changed later when Meta deprecates a version.
+`META_ADS_TEST_SHEET_NAME` is optional; the script uses `Meta Ads API Test`
+when it is missing.
+
+Never commit or publish these values.
+
+## 3. Run `testMetaConnection()`
+
+In Apps Script:
+
+1. Select `testMetaConnection`.
+2. Click `Run`.
+3. Approve permissions on first use.
+
+Google will ask for:
+
+- Spreadsheet access
+- External request access
+- Script execution permissions
+
+If the Meta request fails, the script throws an error containing the HTTP
+status, Meta error message, error type, and error code where Meta provides them.
+The access token is never logged.
+
+## 4. Run `syncMetaAdsData()` manually
+
+After `testMetaConnection()` succeeds:
+
+1. Select `syncMetaAdsData`.
+2. Click `Run`.
+3. Open the `Meta Ads API Test` sheet tab.
+
+The script fetches campaign-level insights with Meta's `maximum` date preset by
+default, matching the broadest available campaign reporting window. To override
+that later, add this optional script property:
+
+```text
+META_ADS_DATE_PRESET = maximum
+```
+
+The sync replaces the complete contents of the test tab only after the Meta API
+fetch and parsing complete successfully. A failed or partial fetch will not
+overwrite valid test-tab data.
+
+## 4a. Run the daily Meta Ads sync for dashboard filters
+
+The React Meta Ads dashboard needs daily campaign rows for honest date filters
+and trend charts. The aggregate sync above stays available, but the dashboard
+enhancement uses:
+
+```text
+syncMetaAdsDailyData
+```
+
+This writes to a separate tab by default:
+
+```text
+Meta Ads Daily
+```
+
+Each row represents one campaign on one reporting date. The expected published
+CSV headings are:
+
+```text
+Reporting starts | Reporting ends | Campaign name | Campaign ID | Campaign delivery | Results | Result indicator | Cost per results | Ad Set Budget | Ad Set Budget Type | Amount spent (AUD) | Impressions | Reach | Ends | Attribution Setting | Results (Initial) | Results (Initial) Indicator | Frequency | Last synced
+```
+
+Repeated runs fully refresh that tab and dedupe by Campaign ID plus reporting
+date before writing, so repeated syncs should produce deterministic output.
+
+## 5. Compare against Meta Ads Manager
+
+In Meta Ads Manager:
+
+1. Use the same date range as the script.
+2. View campaign-level reporting.
+3. Compare:
+   - Campaign name
+   - Amount spent
+   - Impressions
+   - Reach
+   - Leads
+   - Cost per lead
+
+The script counts only accepted lead/enquiry action types. It does not count
+link clicks, landing-page views, engagement, impressions, or reach as leads.
+Unknown action types are not silently counted.
+
+## 6. Create the six-hour trigger
+
+When the test tab matches expectations:
+
+1. Select `createMetaSyncTrigger`.
+2. Click `Run`.
+
+The function removes duplicate `syncMetaAdsData` triggers first, then creates
+one time-driven trigger that runs every six hours.
+
+## 7. Delete the trigger
+
+To stop automated syncing:
+
+1. Select `deleteMetaSyncTriggers`.
+2. Click `Run`.
+
+Only triggers whose handler is `syncMetaAdsData` are deleted. Instagram or other
+project triggers are left alone.
+
+## 8. Rotate or replace an expired token
+
+When a Meta token expires or is replaced:
+
+1. Generate a new valid token in Meta.
+2. Open Apps Script `Project Settings -> Script Properties`.
+3. Replace only `META_ACCESS_TOKEN`.
+4. Run `testMetaConnection()`.
+5. Run `syncMetaAdsData()` manually once before relying on the trigger.
+
+Do not publish the token in the sheet, React code, docs, GitHub issues, pull
+requests, screenshots, or chat messages.
+
+## Current limitations
+
+- Version one writes campaign-level rows, not ad-set or ad-level rows.
+- Export-only fields that the campaign insights API cannot reliably populate
+  are omitted from the test tab to keep the generated columns aligned and easy
+  to inspect.
+- The script writes to `Meta Ads API Test` first. Move the published CSV to this
+  tab only after you have compared the output and are happy with it.
