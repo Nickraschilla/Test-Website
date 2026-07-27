@@ -176,7 +176,12 @@ export const getMetaAdsFilterOptions = (rows) => ({
   resultIndicators: [...new Set(rows.map((row) => row.resultIndicator).filter(Boolean))].sort(),
 });
 
-const getCampaignIdentity = (row) => row.campaignId || row.campaignName || row.id || "campaign";
+export const getCampaignIdentity = (row) => row.campaignId || row.campaignName || row.id || "campaign";
+
+export const filterRowsByCampaign = (rows, campaign) => {
+  const campaignKey = getCampaignIdentity(campaign || {});
+  return dedupeMetaAdsRows(rows).filter((row) => getCampaignIdentity(row) === campaignKey);
+};
 
 export const dedupeMetaAdsRows = (rows) => {
   const rowsByKey = new Map();
@@ -413,6 +418,60 @@ export const buildDeliveryRows = (rows) => {
     ...group,
     ...buildMetaAdsSummary(group.rows),
   }));
+};
+
+export const buildComparisonRows = (currentSummary, previousSummary) => {
+  const metrics = [
+    { key: "amountSpent", label: "Amount spent", format: "currency", neutralComparison: true },
+    { key: "results", label: "Leads", format: "number" },
+    { key: "costPerResult", label: "Cost per lead", format: "currency", lowerIsBetter: true },
+    { key: "impressions", label: "Impressions", format: "number" },
+    { key: "reach", label: "Reach", format: "number" },
+  ];
+
+  return metrics.map((metric) => ({
+    ...metric,
+    currentValue: currentSummary[metric.key],
+    previousValue: previousSummary[metric.key],
+    change: getPercentageChange(currentSummary[metric.key], previousSummary[metric.key]),
+  }));
+};
+
+export const buildCampaignSummary = (currentSummary, previousSummary) => {
+  const points = [];
+
+  if (hasNumber(currentSummary.results) && hasNumber(currentSummary.costPerResult)) {
+    points.push(
+      `This campaign generated ${formatMetricValue(currentSummary.results)} leads at an average cost of ${formatMetricValue(currentSummary.costPerResult, "currency")} per lead.`
+    );
+  } else if (hasNumber(currentSummary.amountSpent) && Number(currentSummary.results || 0) === 0) {
+    points.push(
+      `This campaign spent ${formatMetricValue(currentSummary.amountSpent, "currency")} without recording a lead in this period.`
+    );
+  }
+
+  const leadChange = getPercentageChange(currentSummary.results, previousSummary.results);
+  const cplChange = getPercentageChange(currentSummary.costPerResult, previousSummary.costPerResult);
+
+  if (leadChange !== null) {
+    points.push(
+      `Lead volume ${leadChange >= 0 ? "increased" : "declined"} by ${Math.abs(leadChange).toFixed(1)}% compared with the previous period.`
+    );
+  }
+
+  if (cplChange !== null && leadChange !== null && cplChange > 0 && leadChange < 0) {
+    points.push("Cost per lead increased while lead volume declined.");
+  } else if (cplChange !== null) {
+    points.push(
+      `Cost per lead ${cplChange >= 0 ? "increased" : "decreased"} by ${Math.abs(cplChange).toFixed(1)}% compared with the previous period.`
+    );
+  }
+
+  if (points.length === 0) {
+    points.push("There is not enough previous-period data for a comparison.");
+  }
+
+  return points.slice(0, 3);
 };
 
 export const buildInsights = ({ campaigns, summary, previousSummary }) => {

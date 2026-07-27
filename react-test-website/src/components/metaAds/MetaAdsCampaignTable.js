@@ -1,4 +1,4 @@
-import { formatMetricValue } from "../../utils/metaAdsAnalytics";
+import { formatMetricValue, getCampaignIdentity } from "../../utils/metaAdsAnalytics";
 
 const columns = [
   { key: "campaignName", label: "Campaign", numeric: false },
@@ -15,6 +15,8 @@ export function MetaAdsCampaignTable({
   rows,
   sort,
   onSort,
+  onSelectCampaign,
+  selectedCampaignId,
 }) {
   const sortArrow = (key) => {
     if (sort.key !== key) return "";
@@ -68,11 +70,27 @@ export function MetaAdsCampaignTable({
                 </td>
               </tr>
             ) : null}
-            {rows.map((row) => (
-              <tr key={row.campaignName}>
-                {columns.map((column) => (
-                  <td key={column.key}>
-                    {column.key === "campaignName"
+            {rows.map((row) => {
+              const campaignKey = getCampaignIdentity(row);
+              const selected = selectedCampaignId === campaignKey;
+
+              return (
+                <tr
+                  key={campaignKey}
+                  className={selected ? "meta-ads-campaign-row-selected" : ""}
+                  tabIndex={onSelectCampaign ? 0 : undefined}
+                  aria-selected={selected}
+                  onClick={() => onSelectCampaign?.(row)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelectCampaign?.(row);
+                    }
+                  }}
+                >
+                  {columns.map((column) => (
+                    <td key={column.key}>
+                      {column.key === "campaignName"
                         ? row.campaignName
                         : column.key === "campaignDelivery"
                           ? (
@@ -94,15 +112,16 @@ export function MetaAdsCampaignTable({
                         : column.numeric
                           ? formatMetricValue(row[column.key], column.format)
                           : row[column.key] || "—"}
-                    {column.key === "campaignName" && getWarnings(row).length ? (
-                      <span className="analytics-row-note meta-ads-warning-note">
-                        {getWarnings(row).join(" · ")}
-                      </span>
-                    ) : null}
-                  </td>
-                ))}
-              </tr>
-            ))}
+                      {column.key === "campaignName" && getWarnings(row).length ? (
+                        <span className="analytics-row-note meta-ads-warning-note">
+                          {getWarnings(row).join(" · ")}
+                        </span>
+                      ) : null}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
