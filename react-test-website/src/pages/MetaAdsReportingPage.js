@@ -1,47 +1,52 @@
-import { useMemo, useState } from "react";
-import { MetaAdsCampaignTable } from "../components/metaAds/MetaAdsCampaignTable";
-import { MetaAdsDeliveryBreakdown } from "../components/metaAds/MetaAdsDeliveryBreakdown";
+import { useEffect, useMemo, useState } from "react";
+import { MetaAdsCampaignComparison } from "../components/metaAds/MetaAdsCampaignComparison";
+import { MetaAdsCampaignScore } from "../components/metaAds/MetaAdsCampaignScore";
 import { MetaAdsFilters } from "../components/metaAds/MetaAdsFilters";
-import { MetaAdsFunnel } from "../components/metaAds/MetaAdsFunnel";
-import { MetaAdsInsights } from "../components/metaAds/MetaAdsInsights";
-import { MetaAdsKpiGrid } from "../components/metaAds/MetaAdsKpiGrid";
-import { MetaAdsTrendChart } from "../components/metaAds/MetaAdsTrendChart";
+import { MetaAdsKeyTakeaways } from "../components/metaAds/MetaAdsKeyTakeaways";
+import { MetaAdsLeadPipeline } from "../components/metaAds/MetaAdsLeadPipeline";
+import { MetaAdsPerformanceOverTime } from "../components/metaAds/MetaAdsPerformanceOverTime";
+import { MetaAdsReviewKpis } from "../components/metaAds/MetaAdsReviewKpis";
 import { useMetaAdsData } from "../hooks/useMetaAdsData";
+import { useMetaAdsManualLeads } from "../hooks/useMetaAdsManualLeads";
 import {
-  aggregateByCampaign,
   buildDateWindows,
-  buildDeliveryRows,
-  buildInsights,
-  buildMetaAdsSummary,
-  buildTrendRows,
   describeDateWindow,
   filterMetaAdsRows,
-  getDefaultGrouping,
-  getMetaAdsFilterOptions,
-  sortRows,
 } from "../utils/metaAdsAnalytics";
+import {
+  buildCampaignComparisonRows,
+  buildCampaignOptions,
+  buildCampaignReviewMetrics,
+  buildCampaignTrendSummary,
+  buildKeyTakeaways,
+  calculateCampaignScore,
+  filterRowsByCampaignId,
+  getDefaultCampaignId,
+  getMetaCampaignId,
+  sortCampaignComparisonRows,
+} from "../utils/metaAdsCampaignReview";
 
 const DEFAULT_FILTERS = {
   dateRange: "30",
   campaign: "all",
   delivery: "all",
   resultIndicator: "all",
-  grouping: "auto",
-  comparePrevious: false,
-  search: "",
   customStart: "",
   customEnd: "",
 };
 
+const DEFAULT_SORT = {
+  key: "latestDate",
+  direction: "desc",
+};
+
 export function MetaAdsReportingPage() {
   const { rows, loading, refreshing, error, usingFallback } = useMetaAdsData();
+  const { leads, createLead, updateLead, deleteLead } = useMetaAdsManualLeads();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [campaignSort, setCampaignSort] = useState({
-    key: "amountSpent",
-    direction: "desc",
-  });
+  const [selectedCampaignId, setSelectedCampaignId] = useState("");
+  const [comparisonSort, setComparisonSort] = useState(DEFAULT_SORT);
 
-  const filterOptions = useMemo(() => getMetaAdsFilterOptions(rows), [rows]);
   const windows = useMemo(
     () =>
       buildDateWindows(filters.dateRange, rows, {
@@ -50,76 +55,94 @@ export function MetaAdsReportingPage() {
       }),
     [filters.customEnd, filters.customStart, filters.dateRange, rows]
   );
-  const activePeriod = useMemo(
-    () => describeDateWindow(windows.current),
-    [windows]
-  );
-  const chartGrouping = useMemo(
-    () =>
-      filters.grouping === "auto"
-        ? getDefaultGrouping(windows.current)
-        : filters.grouping,
-    [filters.grouping, windows]
-  );
-
-  const filteredRows = useMemo(
+  const activePeriod = useMemo(() => describeDateWindow(windows.current), [windows]);
+  const periodRows = useMemo(
     () => filterMetaAdsRows(rows, filters, windows.current),
     [filters, rows, windows]
   );
-  const previousRows = useMemo(
-    () => filterMetaAdsRows(rows, filters, windows.previous),
-    [filters, rows, windows]
-  );
+  const campaignOptions = useMemo(() => buildCampaignOptions(periodRows), [periodRows]);
 
-  const summary = useMemo(() => buildMetaAdsSummary(filteredRows), [filteredRows]);
-  const previousSummary = useMemo(() => buildMetaAdsSummary(previousRows), [previousRows]);
-  const trendRows = useMemo(
-    () => ({
-      amountSpent: buildTrendRows(filteredRows, chartGrouping, "amountSpent"),
-      results: buildTrendRows(filteredRows, chartGrouping, "results"),
-      costPerResult: buildTrendRows(filteredRows, chartGrouping, "costPerResult"),
-    }),
-    [chartGrouping, filteredRows]
-  );
-  const campaignRows = useMemo(() => {
-    const searchTerm = filters.search.trim().toLowerCase();
-    const groupedRows = aggregateByCampaign(filteredRows).filter((row) =>
-      searchTerm ? row.campaignName.toLowerCase().includes(searchTerm) : true
-    );
+  useEffect(() => {
+    if (periodRows.length === 0) return;
+    const selectedExists = campaignOptions.some((campaign) => campaign.id === selectedCampaignId);
+    if (!selectedExists) {
+      setSelectedCampaignId(getDefaultCampaignId(periodRows));
+    }
+  }, [campaignOptions, periodRows, selectedCampaignId]);
 
-    return sortRows(groupedRows, campaignSort.key, campaignSort.direction);
-  }, [campaignSort, filteredRows, filters.search]);
-  const deliveryRows = useMemo(() => buildDeliveryRows(filteredRows), [filteredRows]);
-  const insights = useMemo(
+  const leadsByCampaign = useMemo(
     () =>
-      buildInsights({
-        campaigns: aggregateByCampaign(filteredRows),
-        summary,
-        previousSummary,
+      leads.reduce((map, lead) => {
+        const campaignLeads = map[lead.campaignId] || [];
+        campaignLeads.push(lead);
+        map[lead.campaignId] = campaignLeads;
+        return map;
+      }, {}),
+    [leads]
+  );
+
+  const comparison = useMemo(
+    () => buildCampaignComparisonRows(periodRows, selectedCampaignId, leadsByCampaign),
+    [leadsByCampaign, periodRows, selectedCampaignId]
+  );
+  const comparisonRows = useMemo(
+    () => sortCampaignComparisonRows(comparison.rows, comparisonSort.key, comparisonSort.direction),
+    [comparison.rows, comparisonSort]
+  );
+  const selectedCampaign = useMemo(
+    () =>
+      comparison.rows.find((campaign) => getMetaCampaignId(campaign) === selectedCampaignId) ||
+      comparison.selectedCampaign,
+    [comparison.rows, comparison.selectedCampaign, selectedCampaignId]
+  );
+  const selectedRows = useMemo(
+    () => filterRowsByCampaignId(periodRows, getMetaCampaignId(selectedCampaign)),
+    [periodRows, selectedCampaign]
+  );
+  const selectedManualLeads = useMemo(
+    () => leadsByCampaign[getMetaCampaignId(selectedCampaign)] || [],
+    [leadsByCampaign, selectedCampaign]
+  );
+  const selectedReview = useMemo(
+    () => buildCampaignReviewMetrics({ ...selectedCampaign, rows: selectedRows }, selectedManualLeads),
+    [selectedCampaign, selectedManualLeads, selectedRows]
+  );
+  const campaignScore = useMemo(
+    () => calculateCampaignScore(selectedReview, comparison.comparableRows),
+    [comparison.comparableRows, selectedReview]
+  );
+  const trendSummary = useMemo(() => buildCampaignTrendSummary(selectedRows), [selectedRows]);
+  const takeaways = useMemo(
+    () =>
+      buildKeyTakeaways({
+        campaign: selectedReview,
+        comparableCampaigns: comparison.comparableRows,
+        trendSummary,
       }),
-    [filteredRows, previousSummary, summary]
+    [comparison.comparableRows, selectedReview, trendSummary]
   );
 
   const handleCampaignSort = (key) => {
-    setCampaignSort((currentSort) => ({
+    setComparisonSort((currentSort) => ({
       key,
-      direction:
-        currentSort.key === key && currentSort.direction === "desc" ? "asc" : "desc",
+      direction: currentSort.key === key && currentSort.direction === "desc" ? "asc" : "desc",
     }));
   };
 
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
-    setCampaignSort({ key: "amountSpent", direction: "desc" });
+    setComparisonSort(DEFAULT_SORT);
   };
 
   return (
     <main className="analytics-shell meta-ads-shell">
       <MetaAdsFilters
         filters={filters}
-        options={filterOptions}
+        campaigns={campaignOptions}
+        selectedCampaignId={selectedCampaignId}
         activePeriod={activePeriod}
         onChange={setFilters}
+        onSelectCampaign={setSelectedCampaignId}
         onReset={resetFilters}
       />
 
@@ -144,7 +167,7 @@ export function MetaAdsReportingPage() {
 
       {!loading && rows.length === 0 ? (
         <section className="analytics-breakdown-card meta-ads-state-card">
-          No Meta Ads rows are available from the published sheet yet.
+          No campaigns available from the published Meta Ads sheet yet.
         </section>
       ) : null}
 
@@ -154,33 +177,42 @@ export function MetaAdsReportingPage() {
         </section>
       ) : null}
 
-      {!loading && rows.length > 0 ? (
+      {!loading && rows.length > 0 && periodRows.length === 0 ? (
+        <section className="analytics-breakdown-card meta-ads-state-card">
+          Selected campaign has no data in this reporting period.
+        </section>
+      ) : null}
+
+      {!loading && periodRows.length > 0 && !selectedCampaign ? (
+        <section className="analytics-breakdown-card meta-ads-state-card">
+          Selected campaign not found.
+        </section>
+      ) : null}
+
+      {!loading && periodRows.length > 0 && selectedCampaign ? (
         <>
-          <MetaAdsKpiGrid
-            summary={summary}
-            previousSummary={previousSummary}
-            comparePrevious={filters.comparePrevious}
+          <MetaAdsCampaignScore
+            score={campaignScore}
+            comparisonReason={comparison.comparisonReason}
           />
-
-          {filteredRows.length === 0 ? (
-            <section className="analytics-breakdown-card meta-ads-state-card">
-              No Meta Ads rows match this reporting period.
-            </section>
-          ) : null}
-
-          <MetaAdsCampaignTable
-            rows={campaignRows}
-            sort={campaignSort}
+          <MetaAdsReviewKpis campaign={selectedReview} />
+          <MetaAdsPerformanceOverTime rows={selectedRows} />
+          <MetaAdsCampaignComparison
+            rows={comparisonRows}
+            sort={comparisonSort}
+            comparisonLimited={comparison.comparisonLimited}
             onSort={handleCampaignSort}
+            onSelectCampaign={setSelectedCampaignId}
           />
-
-          <MetaAdsTrendChart rowsByMetric={trendRows} grouping={chartGrouping} />
-
-          <section className="analytics-main-grid meta-ads-main-grid">
-            <MetaAdsFunnel summary={summary} />
-            <MetaAdsDeliveryBreakdown rows={deliveryRows} />
-            <MetaAdsInsights insights={insights} />
-          </section>
+          <MetaAdsLeadPipeline
+            campaignId={getMetaCampaignId(selectedCampaign)}
+            leads={leads}
+            campaignSpend={selectedReview.amountSpent || 0}
+            onCreateLead={createLead}
+            onUpdateLead={updateLead}
+            onDeleteLead={deleteLead}
+          />
+          <MetaAdsKeyTakeaways takeaways={takeaways} />
         </>
       ) : null}
     </main>

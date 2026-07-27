@@ -1,13 +1,12 @@
-import {
-  DATE_RANGE_OPTIONS,
-  GROUPING_OPTIONS,
-} from "../../utils/metaAdsAnalytics";
+import { DATE_RANGE_OPTIONS } from "../../utils/metaAdsAnalytics";
 
 export function MetaAdsFilters({
   filters,
-  options,
+  campaigns,
+  selectedCampaignId,
   activePeriod,
   onChange,
+  onSelectCampaign,
   onReset,
 }) {
   const updateFilter = (key, value) => onChange({ ...filters, [key]: value });
@@ -19,11 +18,26 @@ export function MetaAdsFilters({
         <div className="analytics-title-row">
           <h2>Meta Ads Reporting</h2>
         </div>
-        <p>Campaign performance, lead generation and creative analysis.</p>
+        <p>Campaign review, lead quality and practical performance analysis.</p>
         <small className="meta-ads-active-period">{activePeriod}</small>
       </div>
 
-      <div className="analytics-filter-card meta-ads-filter-card">
+      <div className="analytics-filter-card meta-ads-filter-card meta-ads-review-selector">
+        <label>
+          <span>Campaign</span>
+          <select
+            value={selectedCampaignId}
+            onChange={(event) => onSelectCampaign(event.target.value)}
+          >
+            {campaigns.length === 0 ? <option value="">No campaigns available</option> : null}
+            {campaigns.map((campaign) => (
+              <option key={campaign.id} value={campaign.id}>
+                {campaign.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label>
           <span>Date Range</span>
           <select
@@ -60,87 +74,9 @@ export function MetaAdsFilters({
           </>
         ) : null}
 
-        <label>
-          <span>Search</span>
-          <input
-            type="search"
-            value={filters.search}
-            placeholder="Campaign name"
-            onChange={(event) => updateFilter("search", event.target.value)}
-          />
-        </label>
-
-        <label>
-          <span>Campaign</span>
-          <select
-            value={filters.campaign}
-            onChange={(event) => updateFilter("campaign", event.target.value)}
-          >
-            <option value="all">All campaigns</option>
-            {options.campaigns.map((campaign) => (
-              <option key={campaign} value={campaign}>
-                {campaign}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Delivery</span>
-          <select
-            value={filters.delivery}
-            onChange={(event) => updateFilter("delivery", event.target.value)}
-          >
-            <option value="all">All delivery</option>
-            {options.deliveries.map((delivery) => (
-              <option key={delivery} value={delivery}>
-                {delivery}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Result Type</span>
-          <select
-            value={filters.resultIndicator}
-            onChange={(event) => updateFilter("resultIndicator", event.target.value)}
-          >
-            <option value="all">All lead types</option>
-            {options.resultIndicators.map((indicator) => (
-              <option key={indicator} value={indicator}>
-                {indicator}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Group By</span>
-          <select
-            value={filters.grouping}
-            onChange={(event) => updateFilter("grouping", event.target.value)}
-          >
-            <option value="auto">Auto</option>
-            {GROUPING_OPTIONS.map((grouping) => (
-              <option key={grouping} value={grouping}>
-                {grouping}
-              </option>
-            ))}
-          </select>
-        </label>
-
         <div className="analytics-filter-meta meta-ads-filter-meta">
-          <button
-            type="button"
-            className={filters.comparePrevious ? "meta-ads-filter-active" : ""}
-            aria-pressed={filters.comparePrevious}
-            onClick={() => updateFilter("comparePrevious", !filters.comparePrevious)}
-          >
-            Compare previous period
-          </button>
           <button type="button" onClick={onReset}>
-            Reset Filters
+            Reset
           </button>
         </div>
       </div>

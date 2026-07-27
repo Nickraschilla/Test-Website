@@ -176,7 +176,7 @@ export const getMetaAdsFilterOptions = (rows) => ({
   resultIndicators: [...new Set(rows.map((row) => row.resultIndicator).filter(Boolean))].sort(),
 });
 
-const getCampaignIdentity = (row) => row.campaignId || row.campaignName || row.id || "campaign";
+export const getCampaignIdentity = (row) => row.campaignId || row.campaignName || row.id || "campaign";
 
 export const dedupeMetaAdsRows = (rows) => {
   const rowsByKey = new Map();
@@ -211,26 +211,20 @@ export const sumMetaAdsRows = (rows) =>
       results: addMetric(total.results, row.results),
       impressions: addMetric(total.impressions, row.impressions),
       reach: addMetric(total.reach, row.reach),
-      frequencyWeightedReach: hasNumber(row.frequency) && hasNumber(row.reach)
-        ? total.frequencyWeightedReach + Number(row.frequency) * Number(row.reach)
-        : total.frequencyWeightedReach,
       amountSpentCount: total.amountSpentCount + (hasNumber(row.amountSpent) ? 1 : 0),
       resultsCount: total.resultsCount + (hasNumber(row.results) ? 1 : 0),
       impressionsCount: total.impressionsCount + (hasNumber(row.impressions) ? 1 : 0),
       reachCount: total.reachCount + (hasNumber(row.reach) ? 1 : 0),
-      frequencyReachCount: total.frequencyReachCount + (hasNumber(row.frequency) && hasNumber(row.reach) ? Number(row.reach) : 0),
     }),
     {
       amountSpent: 0,
       results: 0,
       impressions: 0,
       reach: 0,
-      frequencyWeightedReach: 0,
       amountSpentCount: 0,
       resultsCount: 0,
       impressionsCount: 0,
       reachCount: 0,
-      frequencyReachCount: 0,
     }
   );
 
@@ -244,7 +238,7 @@ export const buildMetaAdsSummary = (rows) => {
     costPerResult: safeDivide(totals.amountSpent, totals.results),
     resultRateByReach: safeDivide(totals.results, totals.reach, 100),
     resultRateByImpressions: safeDivide(totals.results, totals.impressions, 100),
-    frequency: safeDivide(totals.frequencyWeightedReach, totals.frequencyReachCount),
+    frequency: safeDivide(totals.impressions, totals.reach),
     amountSpent: totals.amountSpentCount ? totals.amountSpent : null,
     results: totals.resultsCount ? totals.results : null,
     impressions: totals.impressionsCount ? totals.impressions : null,
@@ -311,10 +305,14 @@ export const aggregateByCampaign = (rows) => {
     const group = groups.get(key) || {
       campaignId: row.campaignId,
       campaignName: row.campaignName,
+      campaignObjective: row.campaignObjective,
+      resultIndicator: row.resultIndicator,
       rows: [],
     };
     group.rows.push(row);
     group.campaignName = row.campaignName || group.campaignName;
+    group.campaignObjective = row.campaignObjective || group.campaignObjective;
+    group.resultIndicator = row.resultIndicator || group.resultIndicator;
     groups.set(key, group);
   });
 
@@ -324,7 +322,8 @@ export const aggregateByCampaign = (rows) => {
       ...group,
       ...summary,
       campaignDelivery: getLatestDelivery(group.rows),
-      resultIndicator: "Leads",
+      campaignObjective: group.campaignObjective || "",
+      resultIndicator: group.resultIndicator || "Leads",
       reportingStarts: group.rows.map((row) => row.reportingStarts).filter(Boolean).sort()[0],
       reportingEnds: group.rows.map((row) => row.reportingEnds).filter(Boolean).sort().at(-1),
     };
@@ -377,7 +376,7 @@ export const buildTrendRows = (rows, grouping, metricKey) => {
   return [...groups.values()]
     .map((group) => {
       const summary = buildMetaAdsSummary(group.rows);
-      return { key: group.key, label: group.label, value: summary[metricKey], summary };
+      return { key: group.key, label: group.label, value: summary[metricKey], summary, rows: group.rows };
     })
     .sort((a, b) => a.key.localeCompare(b.key));
 };
