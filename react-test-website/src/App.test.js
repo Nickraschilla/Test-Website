@@ -1,20 +1,38 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import App from './App';
 
+let mockSocialsData;
+let mockInstagramData;
+
 jest.mock('./hooks/useReelsData', () => ({
-  useReelsData: () => ({
+  useReelsData: () => mockSocialsData || ({
     reels: [],
     loading: false,
     refreshing: false,
     error: '',
   }),
-  useInstagramData: () => ({
+  useInstagramData: () => mockInstagramData || ({
     reels: [],
     loading: false,
     refreshing: false,
     error: '',
   }),
 }));
+
+beforeEach(() => {
+  mockSocialsData = {
+    reels: [],
+    loading: false,
+    refreshing: false,
+    error: '',
+  };
+  mockInstagramData = {
+    reels: [],
+    loading: false,
+    refreshing: false,
+    error: '',
+  };
+});
 
 test('renders the reporting dashboard tabs', () => {
   render(<App />);
@@ -54,4 +72,26 @@ test('renders the reporting dashboard tabs', () => {
     'aria-pressed',
     'true'
   );
+});
+
+test('uses Instagram loading state for the default page', () => {
+  mockSocialsData.loading = false;
+  mockInstagramData.loading = true;
+
+  render(<App />);
+
+  expect(screen.getByRole('status')).toHaveTextContent(/syncing live data/i);
+});
+
+test('shows only the active tab error message', () => {
+  mockSocialsData.error = 'Could not load Socials Reporting data.';
+  mockInstagramData.error = '';
+
+  render(<App />);
+
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /socials reporting leaderboard/i }));
+
+  expect(screen.getByRole('alert')).toHaveTextContent(/could not load socials reporting data/i);
 });

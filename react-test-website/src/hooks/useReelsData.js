@@ -8,7 +8,12 @@ const SOCIALS_SHEET_URL =
 const INSTAGRAM_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSKyQK4e7j5RzWKVaRuyiMG6lw4zwsvE_Klrohk_xf1sUKUOHzLLojyCk2TLgAESkWkN87PZUHfE6Rb/pub?gid=681449072&single=true&output=csv";
 
-const parseSheetResults = (results) => {
+const hasCellValue = (value) => String(value ?? "").trim() !== "";
+
+const firstCellValue = (...values) =>
+  values.find((value) => hasCellValue(value)) ?? "";
+
+export const parseSheetResults = (results) => {
   const [rawHeaders = [], ...rows] = results.data;
   const headerMap = rawHeaders.reduce((map, value, index) => {
     const key = String(value || "").trim().toLowerCase();
@@ -26,7 +31,7 @@ const parseSheetResults = (results) => {
     return fallbackIndex >= 0 ? row[fallbackIndex] : "";
   };
 
-  return rows.map((row) => {
+  return rows.filter((row) => row.some(hasCellValue)).map((row) => {
     const igViews = toNumber(getByHeader(row, "igViews", 4));
     const igLikes = toNumber(getByHeader(row, "igLikes", 5));
     const igComments = toNumber(getByHeader(row, "igComments", 6));
@@ -53,6 +58,11 @@ const parseSheetResults = (results) => {
     const totalComments = igComments + fbComments + ttComments;
     const totalShares = igShares + fbShares + ttShares;
     const totalSaves = igSaves + fbSaves + ttSaves;
+    const totalViewsCell = getByHeader(row, "totalViews", 21);
+    const totalLikesCell = getByHeader(row, "totalLikes", 22);
+    const totalCommentsCell = getByHeader(row, "totalComments", 23);
+    const totalSharesCell = getByHeader(row, "totalShares", 24);
+    const totalSavesCell = getByHeader(row, "totalSaves", 25);
 
     return {
       name: getByHeader(row, "name", 0) || "",
@@ -69,16 +79,17 @@ const parseSheetResults = (results) => {
       clipUrl: getByHeader(row, "clipUrl", 2) || getByHeader(row, "permalink") || "",
       igMediaId: getByHeader(row, "igMediaId", 3) || "",
       publishedAt:
-        getByHeader(row, "publishedAt") ||
-        getByHeader(row, "postDate") ||
-        getByHeader(row, "date") ||
-        getByHeader(row, "timestamp") ||
-        "",
-      views: toNumber(getByHeader(row, "totalViews", 21)) || totalViews,
-      likes: toNumber(getByHeader(row, "totalLikes", 22)) || totalLikes,
-      comments: toNumber(getByHeader(row, "totalComments", 23)) || totalComments,
-      reshares: toNumber(getByHeader(row, "totalShares", 24)) || totalShares,
-      saves: toNumber(getByHeader(row, "totalSaves", 25)) || totalSaves,
+        firstCellValue(
+          getByHeader(row, "publishedAt"),
+          getByHeader(row, "postDate"),
+          getByHeader(row, "date"),
+          getByHeader(row, "timestamp")
+        ),
+      views: hasCellValue(totalViewsCell) ? toNumber(totalViewsCell) : totalViews,
+      likes: hasCellValue(totalLikesCell) ? toNumber(totalLikesCell) : totalLikes,
+      comments: hasCellValue(totalCommentsCell) ? toNumber(totalCommentsCell) : totalComments,
+      reshares: hasCellValue(totalSharesCell) ? toNumber(totalSharesCell) : totalShares,
+      saves: hasCellValue(totalSavesCell) ? toNumber(totalSavesCell) : totalSaves,
       lastSyncedAt: getByHeader(row, "lastSyncedAt", 9) || "",
       igViews,
       igLikes,
@@ -124,6 +135,15 @@ function useSheetData(sheetUrl, errorMessage) {
         skipEmptyLines: true,
         complete: (results) => {
           if (!isActive) return;
+
+          if (results.errors?.length) {
+            console.error("Papa parse errors:", results.errors);
+            setError(errorMessage);
+            setLoading(false);
+            setRefreshing(false);
+            return;
+          }
+
           const cleaned = parseSheetResults(results);
 
           startTransition(() => {

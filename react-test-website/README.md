@@ -17,6 +17,10 @@ npm test -- --watchAll=false
 npm run build
 ```
 
+## Project Documentation
+
+See [PROJECT.md](./PROJECT.md) for architecture, data flow, metric rules, coding standards, known technical debt, and the future housekeeping roadmap.
+
 ## Data Source
 
 The frontend loads the published Google Sheet CSV in `src/hooks/useReelsData.js`. The expected sheet headers are documented in `automation/google-apps-script/SETUP.md`.
