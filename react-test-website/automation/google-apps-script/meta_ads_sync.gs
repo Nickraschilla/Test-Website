@@ -1,9 +1,9 @@
-const META_ADS_REPORTING_LOOKBACK_DAYS = 90;
-const DEFAULT_META_ADS_TEST_SHEET_NAME = "Meta Ads API Test";
-const DEFAULT_META_API_VERSION = "v23.0";
-const META_GRAPH_BASE_URL = "https://graph.facebook.com";
+var META_ADS_REPORTING_LOOKBACK_DAYS = 90;
+var DEFAULT_META_ADS_TEST_SHEET_NAME = "Meta Ads API Test";
+var DEFAULT_META_API_VERSION = "v23.0";
+var META_GRAPH_BASE_URL = "https://graph.facebook.com";
 
-const META_ADS_SHEET_HEADERS = [
+var META_ADS_SHEET_HEADERS = [
   "Reporting starts",
   "Reporting ends",
   "Campaign name",
@@ -25,7 +25,7 @@ const META_ADS_SHEET_HEADERS = [
   "Last synced",
 ];
 
-const ACCEPTED_META_LEAD_ACTION_TYPES = [
+var ACCEPTED_META_LEAD_ACTION_TYPES = [
   "lead",
   "omni_lead",
   "onsite_conversion.lead_grouped",
@@ -40,18 +40,14 @@ const ACCEPTED_META_LEAD_ACTION_TYPES = [
 ];
 
 function testMetaConnection() {
-  const config = getMetaAdsConfig_();
-  const url = buildMetaApiUrl_(
-    config,
-    "/" + config.adAccountId + "/insights",
-    {
-      level: "campaign",
-      limit: 1,
-      fields: "campaign_id,campaign_name,spend,actions",
-      date_preset: "last_7d",
-    }
-  );
-  const response = fetchMetaJson_(url);
+  var config = getMetaAdsConfig_();
+  var url = buildMetaApiUrl_(config, "/" + config.adAccountId + "/insights", {
+    level: "campaign",
+    limit: 1,
+    fields: "campaign_id,campaign_name,spend,actions",
+    date_preset: "last_7d",
+  });
+  var response = fetchMetaJson_(url);
 
   Logger.log(
     "Meta connection successful. Read campaign insights for " +
@@ -62,9 +58,9 @@ function testMetaConnection() {
 }
 
 function syncMetaAdsData() {
-  const config = getMetaAdsConfig_();
-  const dateRange = getMetaAdsDateRange_();
-  const lastSynced = new Date();
+  var config = getMetaAdsConfig_();
+  var dateRange = getMetaAdsDateRange_();
+  var lastSynced = new Date();
 
   Logger.log(
     "Fetching Meta Ads campaign insights for " +
@@ -74,11 +70,15 @@ function syncMetaAdsData() {
       "."
   );
 
-  const campaignMetadataById = fetchMetaCampaignMetadata_(config);
-  const insights = fetchMetaCampaignInsights_(config, dateRange);
-  const rows = insights
-    .filter(hasUsefulMetaInsightRecord_)
-    .map((insight) =>
+  var campaignMetadataById = fetchMetaCampaignMetadata_(config);
+  var insights = fetchMetaCampaignInsights_(config, dateRange);
+  var rows = [];
+
+  for (var i = 0; i < insights.length; i += 1) {
+    var insight = insights[i];
+    if (!hasUsefulMetaInsightRecord_(insight)) continue;
+
+    rows.push(
       buildMetaAdsSheetRow_(
         insight,
         campaignMetadataById[insight.campaign_id] || {},
@@ -86,20 +86,25 @@ function syncMetaAdsData() {
         lastSynced
       )
     );
-
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  if (!spreadsheet) {
-    throw new Error("No active spreadsheet found. Use this script from the spreadsheet Apps Script project.");
   }
 
-  const sheet =
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) {
+    throw new Error(
+      "No active spreadsheet found. Use this script from the spreadsheet Apps Script project."
+    );
+  }
+
+  var sheet =
     spreadsheet.getSheetByName(config.sheetName) ||
     spreadsheet.insertSheet(config.sheetName);
-  const output = [META_ADS_SHEET_HEADERS].concat(rows);
+  var output = [META_ADS_SHEET_HEADERS].concat(rows);
 
   sheet.clearContents();
   sheet.clearFormats();
-  sheet.getRange(1, 1, output.length, META_ADS_SHEET_HEADERS.length).setValues(output);
+  sheet
+    .getRange(1, 1, output.length, META_ADS_SHEET_HEADERS.length)
+    .setValues(output);
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, META_ADS_SHEET_HEADERS.length);
   applyMetaAdsSheetFormats_(sheet, Math.max(rows.length, 1));
@@ -116,39 +121,38 @@ function syncMetaAdsData() {
 function createMetaSyncTrigger() {
   deleteMetaSyncTriggers();
 
-  ScriptApp.newTrigger("syncMetaAdsData")
-    .timeBased()
-    .everyHours(6)
-    .create();
+  ScriptApp.newTrigger("syncMetaAdsData").timeBased().everyHours(6).create();
 
   Logger.log("Created six-hour Meta Ads sync trigger for syncMetaAdsData().");
 }
 
 function deleteMetaSyncTriggers() {
-  const triggers = ScriptApp.getProjectTriggers();
-  let deletedCount = 0;
+  var triggers = ScriptApp.getProjectTriggers();
+  var deletedCount = 0;
 
-  triggers.forEach((trigger) => {
-    if (trigger.getHandlerFunction() === "syncMetaAdsData") {
-      ScriptApp.deleteTrigger(trigger);
+  for (var i = 0; i < triggers.length; i += 1) {
+    if (triggers[i].getHandlerFunction() === "syncMetaAdsData") {
+      ScriptApp.deleteTrigger(triggers[i]);
       deletedCount += 1;
     }
-  });
+  }
 
   Logger.log("Deleted " + deletedCount + " Meta Ads sync trigger(s).");
 }
 
 function getMetaAdsConfig_() {
-  const props = PropertiesService.getScriptProperties();
-  const config = {
+  var props = PropertiesService.getScriptProperties();
+  var config = {
     accessToken: props.getProperty("META_ACCESS_TOKEN"),
-    adAccountId: normaliseMetaAdAccountId_(props.getProperty("META_AD_ACCOUNT_ID")),
+    adAccountId: normaliseMetaAdAccountId_(
+      props.getProperty("META_AD_ACCOUNT_ID")
+    ),
     apiVersion: props.getProperty("META_API_VERSION") || DEFAULT_META_API_VERSION,
     sheetName:
       props.getProperty("META_ADS_TEST_SHEET_NAME") ||
       DEFAULT_META_ADS_TEST_SHEET_NAME,
   };
-  const missing = [];
+  var missing = [];
 
   if (!config.accessToken) missing.push("META_ACCESS_TOKEN");
   if (!config.adAccountId) missing.push("META_AD_ACCOUNT_ID");
@@ -161,15 +165,15 @@ function getMetaAdsConfig_() {
 }
 
 function normaliseMetaAdAccountId_(value) {
-  const cleaned = String(value || "").trim();
+  var cleaned = String(value || "").trim();
   if (!cleaned) return "";
   return "act_" + cleaned.replace(/^act_/i, "");
 }
 
 function getMetaAdsDateRange_() {
-  const timeZone = Session.getScriptTimeZone() || "Australia/Melbourne";
-  const until = new Date();
-  const since = new Date(until);
+  var timeZone = Session.getScriptTimeZone() || "Australia/Melbourne";
+  var until = new Date();
+  var since = new Date(until);
 
   since.setDate(since.getDate() - (META_ADS_REPORTING_LOOKBACK_DAYS - 1));
 
@@ -180,50 +184,44 @@ function getMetaAdsDateRange_() {
 }
 
 function fetchMetaCampaignInsights_(config, dateRange) {
-  const url = buildMetaApiUrl_(
-    config,
-    "/" + config.adAccountId + "/insights",
-    {
-      level: "campaign",
-      limit: 500,
-      fields:
-        "date_start,date_stop,campaign_id,campaign_name,spend,impressions,reach,frequency,actions,cost_per_action_type,attribution_setting",
-      time_range: JSON.stringify({
-        since: dateRange.since,
-        until: dateRange.until,
-      }),
-    }
-  );
+  var url = buildMetaApiUrl_(config, "/" + config.adAccountId + "/insights", {
+    level: "campaign",
+    limit: 500,
+    fields:
+      "date_start,date_stop,campaign_id,campaign_name,spend,impressions,reach,frequency,actions,cost_per_action_type,attribution_setting",
+    time_range: JSON.stringify({
+      since: dateRange.since,
+      until: dateRange.until,
+    }),
+  });
 
   return fetchAllMetaPages_(url);
 }
 
 function fetchMetaCampaignMetadata_(config) {
-  const url = buildMetaApiUrl_(
-    config,
-    "/" + config.adAccountId + "/campaigns",
-    {
-      limit: 500,
-      fields: "id,name,status,effective_status,stop_time",
-    }
-  );
-  const campaigns = fetchAllMetaPages_(url);
+  var url = buildMetaApiUrl_(config, "/" + config.adAccountId + "/campaigns", {
+    limit: 500,
+    fields: "id,name,status,effective_status,stop_time",
+  });
+  var campaigns = fetchAllMetaPages_(url);
+  var campaignMap = {};
 
-  return campaigns.reduce((map, campaign) => {
-    if (campaign.id) {
-      map[campaign.id] = campaign;
+  for (var i = 0; i < campaigns.length; i += 1) {
+    if (campaigns[i].id) {
+      campaignMap[campaigns[i].id] = campaigns[i];
     }
-    return map;
-  }, {});
+  }
+
+  return campaignMap;
 }
 
 function fetchAllMetaPages_(initialUrl) {
-  const rows = [];
-  let nextUrl = initialUrl;
+  var rows = [];
+  var nextUrl = initialUrl;
 
   while (nextUrl) {
-    const response = fetchMetaJson_(nextUrl);
-    const pageRows = Array.isArray(response.data) ? response.data : [];
+    var response = fetchMetaJson_(nextUrl);
+    var pageRows = Array.isArray(response.data) ? response.data : [];
 
     rows.push.apply(rows, pageRows);
     nextUrl = response.paging && response.paging.next ? response.paging.next : "";
@@ -233,13 +231,13 @@ function fetchAllMetaPages_(initialUrl) {
 }
 
 function fetchMetaJson_(url) {
-  const response = UrlFetchApp.fetch(url, {
+  var response = UrlFetchApp.fetch(url, {
     method: "get",
     muteHttpExceptions: true,
   });
-  const status = response.getResponseCode();
-  const body = response.getContentText();
-  let parsed;
+  var status = response.getResponseCode();
+  var body = response.getContentText();
+  var parsed;
 
   try {
     parsed = body ? JSON.parse(body) : {};
@@ -248,7 +246,7 @@ function fetchMetaJson_(url) {
   }
 
   if (status < 200 || status >= 300) {
-    const metaError = parsed.error || {};
+    var metaError = parsed.error || {};
     throw new Error(
       "Meta API request failed. HTTP status: " +
         status +
@@ -265,9 +263,13 @@ function fetchMetaJson_(url) {
 }
 
 function buildMetaApiUrl_(config, path, params) {
-  const queryParts = Object.keys(params || {}).map((key) => {
-    return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
-  });
+  var queryParts = [];
+
+  for (var key in params) {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      queryParts.push(encodeURIComponent(key) + "=" + encodeURIComponent(params[key]));
+    }
+  }
 
   queryParts.push("access_token=" + encodeURIComponent(config.accessToken));
 
@@ -283,23 +285,30 @@ function buildMetaApiUrl_(config, path, params) {
 
 function hasUsefulMetaInsightRecord_(insight) {
   if (!insight) return false;
-  return [
+
+  var values = [
     insight.campaign_id,
     insight.campaign_name,
     insight.spend,
     insight.impressions,
     insight.reach,
     insight.actions,
-  ].some((value) => {
-    if (Array.isArray(value)) return value.length > 0;
-    return String(value === undefined || value === null ? "" : value).trim() !== "";
-  });
+  ];
+
+  for (var i = 0; i < values.length; i += 1) {
+    if (Array.isArray(values[i]) && values[i].length > 0) return true;
+    if (String(values[i] === undefined || values[i] === null ? "" : values[i]).trim() !== "") {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function buildMetaAdsSheetRow_(insight, campaign, dateRange, lastSynced) {
-  const spend = parseMetaNumber_(insight.spend);
-  const leads = extractAcceptedLeadActions_(insight.actions);
-  const costPerLead = calculateCostPerLead_(spend, leads);
+  var spend = parseMetaNumber_(insight.spend);
+  var leads = extractAcceptedLeadActions_(insight.actions);
+  var costPerLead = calculateCostPerLead_(spend, leads);
 
   return [
     insight.date_start || dateRange.since || "",
@@ -327,7 +336,7 @@ function buildMetaAdsSheetRow_(insight, campaign, dateRange, lastSynced) {
 function parseMetaNumber_(value) {
   if (value === "" || value === null || value === undefined) return null;
 
-  const number = Number(
+  var number = Number(
     String(value)
       .replace(/[$,%]/g, "")
       .replace(/,/g, "")
@@ -349,21 +358,29 @@ function normaliseActionType_(value) {
 }
 
 function isAcceptedLeadActionType_(actionType) {
-  const normalised = normaliseActionType_(actionType);
+  var normalised = normaliseActionType_(actionType);
 
-  return ACCEPTED_META_LEAD_ACTION_TYPES.some((acceptedType) => {
-    return normaliseActionType_(acceptedType) === normalised;
-  });
+  for (var i = 0; i < ACCEPTED_META_LEAD_ACTION_TYPES.length; i += 1) {
+    if (normaliseActionType_(ACCEPTED_META_LEAD_ACTION_TYPES[i]) === normalised) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function extractAcceptedLeadActions_(actions) {
   if (!Array.isArray(actions)) return 0;
 
-  return actions.reduce((total, action) => {
-    if (!isAcceptedLeadActionType_(action.action_type)) return total;
+  var total = 0;
 
-    return total + (parseMetaNumber_(action.value) || 0);
-  }, 0);
+  for (var i = 0; i < actions.length; i += 1) {
+    if (!isAcceptedLeadActionType_(actions[i].action_type)) continue;
+
+    total += parseMetaNumber_(actions[i].value) || 0;
+  }
+
+  return total;
 }
 
 function calculateCostPerLead_(spend, leads) {
@@ -372,8 +389,8 @@ function calculateCostPerLead_(spend, leads) {
 }
 
 function applyMetaAdsSheetFormats_(sheet, dataRowCount) {
-  const firstDataRow = 2;
-  const rowCount = Math.max(dataRowCount, 1);
+  var firstDataRow = 2;
+  var rowCount = Math.max(dataRowCount, 1);
 
   sheet.getRange(firstDataRow, 7, rowCount, 1).setNumberFormat("$#,##0.00");
   sheet.getRange(firstDataRow, 10, rowCount, 1).setNumberFormat("$#,##0.00");
