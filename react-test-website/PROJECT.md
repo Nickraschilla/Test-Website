@@ -2,10 +2,11 @@
 
 ## Purpose
 
-This project is a Create React App dashboard for Premier Data social reporting. It has two report surfaces:
+This project is a Create React App dashboard for Premier Data social reporting. It has three report surfaces:
 
 - `Instagram Reporting`: the default page, focused on Instagram post/content-type performance.
 - `Socials Reporting`: a leaderboard for reel performance across Instagram, Facebook, TikTok, or selected platform combinations.
+- `Meta Ads Reporting`: campaign-level paid social reporting sourced from a published Google Sheet CSV.
 
 The app is read-only from the browser. It pulls published Google Sheets CSV data, normalises the rows, calculates summary metrics in the client, and renders dashboard tables/charts.
 
@@ -26,9 +27,24 @@ src/
   hooks/useReelsData.js
     Google Sheets CSV loading, parsing, refresh polling, and loading/error state.
 
+  hooks/useMetaAdsData.js
+    Meta Ads Google Sheets CSV loading, refresh polling, loading/error state,
+    and development fallback handling.
+
   utils/reels.js
     Shared metric utilities: number parsing, platform metric selection, totals,
     date/month helpers, momentum score, sorting, and clip URL presentation.
+
+  utils/metaAdsSheetParser.js
+    Header-tolerant parser for the published Meta Ads CSV.
+
+  utils/metaAdsAnalytics.js
+    Meta Ads dashboard calculations, filters, trend rows, campaign aggregation,
+    and insight rules.
+
+  utils/metaAdsApiHelpers.js
+    Pure helper rules for Meta Marketing API -> sheet row mapping. These mirror
+    the Apps Script lead-action and cost-per-lead behaviour for test coverage.
 
   config/instagramContent.js
     Canonical Instagram content tabs, content-label normalisation, profile images,
@@ -39,7 +55,8 @@ src/
     leaderboard table, mini stat cards, and clip modal.
 
 automation/google-apps-script/
-  Apps Script used to bootstrap/sync Instagram metrics into Google Sheets.
+  Apps Script used to bootstrap/sync Instagram metrics and sync Meta Ads
+  campaign insights into Google Sheets.
 ```
 
 ## Data Flow
@@ -54,6 +71,24 @@ automation/google-apps-script/
    - Instagram Reporting builds month summaries, content-type totals, interaction breakdown rows, KPI cards, and trend bars.
 5. The UI refreshes sheet data every 60 seconds and reloads immediately when the browser tab becomes visible again.
 
+Meta Ads automation follows this path:
+
+```text
+Meta Marketing API -> Google Apps Script -> Google Sheet -> published CSV -> React website
+```
+
+The test automation writes to `Meta Ads API Test` first, using Script
+Properties for all private values:
+
+```text
+META_ACCESS_TOKEN
+META_AD_ACCOUNT_ID
+META_API_VERSION
+META_ADS_TEST_SHEET_NAME
+```
+
+No Meta credentials belong in React, the spreadsheet, or this repository.
+
 ## Metric Rules
 
 - `views`, `likes`, `comments`, `shares`, and `saves` come from the sheet parser.
@@ -61,6 +96,12 @@ automation/google-apps-script/
 - `interactions = likes + comments + shares + saves`.
 - `profileVisits` is currently approximated as `comments + shares` because no dedicated profile-visit field exists in the sheet feed.
 - Averages divide by `postCount`; totals use raw sums.
+- Meta Ads lead results are calculated from accepted Meta lead/enquiry action
+  types only. Link clicks, landing-page views, engagement, impressions, and
+  reach are not counted as leads.
+- Meta Ads cost per lead is calculated as `amount spent / accepted leads`; when
+  leads are zero or unavailable, cost per lead is left unavailable rather than
+  forced to `0` or `Infinity`.
 - Momentum score for Socials Reporting is time-adjusted:
 
 ```text
@@ -94,6 +135,11 @@ Current test coverage includes:
 - App tab/default-page behaviour, active loading state, and active error state.
 - Sheet parser handling of explicit zero totals, blank total fallback, and empty rows.
 - Core metric utilities for number parsing, platform selection, sorting, live-day scoring, and clip URL handling.
+- Meta Ads parser handling of currency/comma values, blanks, zeroes, and legacy
+  header fallbacks.
+- Meta Ads API helper handling of ad account ID normalisation, accepted lead
+  action extraction, non-lead exclusion, cost-per-lead calculation, and sheet row
+  mapping.
 
 ## Reliability Notes
 
@@ -101,6 +147,8 @@ Current test coverage includes:
 - Blank total columns fall back to summed platform metrics.
 - CSV parse errors surface through the existing dashboard error state.
 - The active tab controls which loading and error states are shown, preventing hidden Socials Reporting failures from blocking Instagram Reporting.
+- Meta Ads automation writes to a separate test tab first and only replaces that
+  tab after a complete successful API fetch and row mapping.
 
 ## Known Technical Debt
 
@@ -110,6 +158,9 @@ Current test coverage includes:
 - Profile visits are estimated, not sourced from a first-class sheet/API field.
 - The app has no checked-in deployment configuration, so live hosting depends on external GitHub/Vercel/Netlify settings.
 - Google Apps Script and frontend header expectations must be kept in sync manually.
+- Meta Ads automation is campaign-level only in version one; ad-set budget and
+  export-only initial-result fields are intentionally blank until a reliable API
+  source is added.
 
 ## Future Roadmap
 
@@ -121,3 +172,7 @@ Next housekeeping candidates:
 - Add deployment documentation once the live host and URL are confirmed.
 - Add a typed schema or runtime validator for sheet rows to make sheet changes safer.
 - Split `App.css` into report/page/component styles after the component extraction.
+- Promote the `Meta Ads API Test` tab to the published CSV source after manual
+  comparison against Meta Ads Manager.
+- Extend Meta Ads automation to ad-set or creative-level reporting if the
+  dashboard later needs those views.
