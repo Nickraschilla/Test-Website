@@ -151,13 +151,17 @@ function backfillMediaIdsFromSheet() {
 
 function getConfig_() {
   const props = PropertiesService.getScriptProperties();
+  const sheetName = props.getProperty("TARGET_SHEET_NAME") || DEFAULT_SHEET_NAME;
 
   const config = {
     accessToken: props.getProperty("META_IG_ACCESS_TOKEN"),
     instagramUserId: props.getProperty("META_IG_USER_ID"),
     creatorName: props.getProperty("META_CREATOR_NAME") || "",
     sheetId: props.getProperty("TARGET_SHEET_ID"),
-    sheetName: props.getProperty("TARGET_SHEET_NAME") || DEFAULT_SHEET_NAME,
+    sheetName,
+    mediaMode:
+      props.getProperty("INSTAGRAM_MEDIA_MODE") ||
+      (sheetName === DEFAULT_SHEET_NAME ? "reels" : "all"),
   };
 
   const missing = Object.entries({
@@ -342,7 +346,20 @@ function fetchMedia_(config) {
     throw new Error("Meta media fetch failed: " + response.getContentText());
   }
 
-  return payload.data || [];
+  const mediaItems = payload.data || [];
+
+  if (String(config.mediaMode || "").toLowerCase() === "reels") {
+    return mediaItems.filter(isReelMedia_);
+  }
+
+  return mediaItems;
+}
+
+function isReelMedia_(media) {
+  const productType = String(media.media_product_type || "").toUpperCase();
+  const permalink = String(media.permalink || "").toLowerCase();
+
+  return productType === "REELS" || permalink.indexOf("/reel/") !== -1;
 }
 
 function fetchFollowerCount_(config) {
