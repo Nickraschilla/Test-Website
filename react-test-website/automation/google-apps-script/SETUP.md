@@ -276,7 +276,7 @@ Meta Ads API Test
 The script writes these existing dashboard-compatible headings exactly:
 
 ```text
-Reporting starts | Reporting ends | Campaign name | Campaign delivery | Results | Result indicator | Cost per results | Ad set budget | Ad set budget type | Amount spent (AUD) | Impressions | Reach | Ends | Attribution setting | Results (initial) | Results (initial) indicator
+Reporting starts | Reporting ends | Campaign name | Campaign delivery | Leads | Result type | Cost per lead | Ad set budget | Ad set budget type | Amount spent (AUD) | Impressions | Reach | Ends | Attribution setting | Results (initial) | Results (initial) indicator
 ```
 
 It also appends these safe extra columns:
