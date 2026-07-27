@@ -216,6 +216,8 @@ export const sumMetaAdsRows = (rows) =>
       results: addMetric(total.results, row.results),
       impressions: addMetric(total.impressions, row.impressions),
       reach: addMetric(total.reach, row.reach),
+      clicks: addMetric(total.clicks, row.clicks),
+      linkClicks: addMetric(total.linkClicks, row.linkClicks),
       frequencyWeightedReach: hasNumber(row.frequency) && hasNumber(row.reach)
         ? total.frequencyWeightedReach + Number(row.frequency) * Number(row.reach)
         : total.frequencyWeightedReach,
@@ -223,6 +225,8 @@ export const sumMetaAdsRows = (rows) =>
       resultsCount: total.resultsCount + (hasNumber(row.results) ? 1 : 0),
       impressionsCount: total.impressionsCount + (hasNumber(row.impressions) ? 1 : 0),
       reachCount: total.reachCount + (hasNumber(row.reach) ? 1 : 0),
+      clicksCount: total.clicksCount + (hasNumber(row.clicks) ? 1 : 0),
+      linkClicksCount: total.linkClicksCount + (hasNumber(row.linkClicks) ? 1 : 0),
       frequencyReachCount: total.frequencyReachCount + (hasNumber(row.frequency) && hasNumber(row.reach) ? Number(row.reach) : 0),
     }),
     {
@@ -230,11 +234,15 @@ export const sumMetaAdsRows = (rows) =>
       results: 0,
       impressions: 0,
       reach: 0,
+      clicks: 0,
+      linkClicks: 0,
       frequencyWeightedReach: 0,
       amountSpentCount: 0,
       resultsCount: 0,
       impressionsCount: 0,
       reachCount: 0,
+      clicksCount: 0,
+      linkClicksCount: 0,
       frequencyReachCount: 0,
     }
   );
@@ -249,11 +257,18 @@ export const buildMetaAdsSummary = (rows) => {
     costPerResult: safeDivide(totals.amountSpent, totals.results),
     resultRateByReach: safeDivide(totals.results, totals.reach, 100),
     resultRateByImpressions: safeDivide(totals.results, totals.impressions, 100),
-    frequency: safeDivide(totals.frequencyWeightedReach, totals.frequencyReachCount),
+    frequency:
+      safeDivide(totals.frequencyWeightedReach, totals.frequencyReachCount) ||
+      safeDivide(totals.impressions, totals.reach),
+    ctr: safeDivide(totals.linkClicks || totals.clicks, totals.impressions, 100),
+    cpc: safeDivide(totals.amountSpent, totals.linkClicks || totals.clicks),
+    cpm: safeDivide(totals.amountSpent, totals.impressions, 1000),
     amountSpent: totals.amountSpentCount ? totals.amountSpent : null,
     results: totals.resultsCount ? totals.results : null,
     impressions: totals.impressionsCount ? totals.impressions : null,
     reach: totals.reachCount ? totals.reach : null,
+    clicks: totals.clicksCount ? totals.clicks : null,
+    linkClicks: totals.linkClicksCount ? totals.linkClicks : null,
     reachIsEstimate: totals.reachCount > 1,
   };
 };
@@ -316,10 +331,14 @@ export const aggregateByCampaign = (rows) => {
     const group = groups.get(key) || {
       campaignId: row.campaignId,
       campaignName: row.campaignName,
+      campaignObjective: row.campaignObjective,
+      resultIndicator: row.resultIndicator,
       rows: [],
     };
     group.rows.push(row);
     group.campaignName = row.campaignName || group.campaignName;
+    group.campaignObjective = row.campaignObjective || group.campaignObjective;
+    group.resultIndicator = row.resultIndicator || group.resultIndicator;
     groups.set(key, group);
   });
 
@@ -329,7 +348,8 @@ export const aggregateByCampaign = (rows) => {
       ...group,
       ...summary,
       campaignDelivery: getLatestDelivery(group.rows),
-      resultIndicator: "Leads",
+      campaignObjective: group.campaignObjective || "",
+      resultIndicator: group.resultIndicator || "Leads",
       reportingStarts: group.rows.map((row) => row.reportingStarts).filter(Boolean).sort()[0],
       reportingEnds: group.rows.map((row) => row.reportingEnds).filter(Boolean).sort().at(-1),
     };
@@ -382,7 +402,7 @@ export const buildTrendRows = (rows, grouping, metricKey) => {
   return [...groups.values()]
     .map((group) => {
       const summary = buildMetaAdsSummary(group.rows);
-      return { key: group.key, label: group.label, value: summary[metricKey], summary };
+      return { key: group.key, label: group.label, value: summary[metricKey], summary, rows: group.rows };
     })
     .sort((a, b) => a.key.localeCompare(b.key));
 };

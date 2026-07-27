@@ -210,6 +210,7 @@ export function MetaAdsReportingPage() {
             campaign={selectedCampaign}
             campaigns={campaignOptions}
             selectedCampaignId={selectedCampaignKey}
+            allRows={rows}
             currentRows={filteredRows}
             previousRows={previousRows}
             activePeriod={activePeriod}

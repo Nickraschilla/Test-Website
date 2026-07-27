@@ -5,6 +5,8 @@ const METRICS = [
   { key: "results", label: "Leads", format: "number" },
   { key: "amountSpent", label: "Amount spent", format: "currency" },
   { key: "costPerResult", label: "Cost per lead", format: "currency" },
+  { key: "impressions", label: "Impressions", format: "number" },
+  { key: "reach", label: "Reach", format: "number" },
 ];
 
 export function CampaignTrendChart({ rows }) {

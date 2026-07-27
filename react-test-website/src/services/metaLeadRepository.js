@@ -29,6 +29,10 @@ export const metaLeadRepository = {
 
   // Temporary local browser storage only. Replace with an authenticated private
   // data service before storing sensitive contact details or shared team data.
+  getAllLeads() {
+    return readLeads();
+  },
+
   getLeadsByCampaign(campaignId) {
     return readLeads().filter((lead) => lead.campaignId === campaignId);
   },
@@ -85,8 +89,10 @@ export const buildManualLeadSummary = (leads, amountSpent) => {
     contacted: counts.Contacted,
     converted: counts.Converted,
     failed: counts.Failed,
+    requiringAction: counts.New,
     contactRate: total ? (contactedTotal / total) * 100 : null,
     conversionRate: total ? (counts.Converted / total) * 100 : null,
+    failedRate: total ? (counts.Failed / total) * 100 : null,
     costPerConvertedLead: counts.Converted ? amountSpent / counts.Converted : null,
   };
 };

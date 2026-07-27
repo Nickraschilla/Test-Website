@@ -21,8 +21,10 @@ function LeadSummary({ leads, amountSpent }) {
     ["Contacted", summary.contacted],
     ["Converted", summary.converted],
     ["Failed", summary.failed],
+    ["Requiring action", summary.requiringAction],
     ["Contact rate", summary.contactRate],
     ["Conversion rate", summary.conversionRate],
+    ["Failed rate", summary.failedRate],
     ["Cost per converted lead", summary.costPerConvertedLead],
   ];
 
@@ -171,13 +173,15 @@ function LeadTable({ leads, onEdit, onDelete, onStatusChange }) {
   );
 }
 
-export function LeadTrackingSection({ campaignId, amountSpent }) {
+export function LeadTrackingSection({ campaignId, amountSpent, onLeadsChange }) {
   const [leads, setLeads] = useState([]);
   const [editingLead, setEditingLead] = useState(null);
 
   const reloadLeads = useCallback(() => {
-    setLeads(metaLeadRepository.getLeadsByCampaign(campaignId));
-  }, [campaignId]);
+    const nextLeads = metaLeadRepository.getLeadsByCampaign(campaignId);
+    setLeads(nextLeads);
+    onLeadsChange?.(nextLeads);
+  }, [campaignId, onLeadsChange]);
 
   useEffect(() => {
     reloadLeads();

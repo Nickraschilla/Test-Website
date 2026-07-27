@@ -60,5 +60,7 @@ test("calculates manual lead summary rates and cost per converted lead", () => {
   expect(summary.total).toBe(4);
   expect(summary.contactRate).toBe(75);
   expect(summary.conversionRate).toBe(25);
+  expect(summary.failedRate).toBe(25);
+  expect(summary.requiringAction).toBe(1);
   expect(summary.costPerConvertedLead).toBe(200);
 });

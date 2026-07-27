@@ -1700,8 +1700,32 @@ select {
   font-weight: 900;
 }
 
+.meta-campaign-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: #111d31;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.meta-campaign-verdict strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #061424;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.66rem;
+}
+
 .meta-campaign-kpi-grid {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(9, minmax(0, 1fr));
 }
 
 .meta-campaign-detail-grid {
@@ -1710,8 +1734,86 @@ select {
   gap: 12px;
 }
 
+.meta-campaign-findings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.meta-campaign-finding-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 18px 16px 30px;
+  color: #111d31;
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
 .meta-campaign-comparison-table {
   min-width: 620px;
+}
+
+.meta-campaign-funnel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  padding: 14px;
+}
+
+.meta-campaign-funnel article,
+.meta-campaign-assessment-list article {
+  display: grid;
+  gap: 4px;
+  min-height: 76px;
+  align-content: center;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f6f8fb;
+}
+
+.meta-campaign-funnel span,
+.meta-campaign-assessment-list span,
+.meta-campaign-rate-row span {
+  color: #60718a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.meta-campaign-funnel strong,
+.meta-campaign-assessment-list strong {
+  color: #111d31;
+  font-size: 1.08rem;
+  font-weight: 950;
+}
+
+.meta-campaign-rate-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.meta-campaign-rate-row span {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #eef3f8;
+}
+
+.meta-campaign-assessment-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.meta-campaign-leaderboard-table {
+  min-width: 1120px;
 }
 
 .meta-lead-storage-note {
@@ -4379,6 +4481,7 @@ select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .meta-campaign-findings-grid,
   .meta-campaign-detail-grid,
   .meta-lead-form {
     grid-template-columns: 1fr;
