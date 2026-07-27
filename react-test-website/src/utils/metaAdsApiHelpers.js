@@ -59,7 +59,7 @@ export const parseMetaApiNumber = (value) => {
 export const isAcceptedLeadActionType = (actionType) =>
   acceptedLeadActionSet.has(normaliseActionType(actionType));
 
-export const getLeadActionResult = (actions = []) => {
+export const getLeadActionResult = (actions = [], preferredActionType = "") => {
   if (!Array.isArray(actions)) {
     return { value: 0, actionType: "" };
   }
@@ -75,6 +75,18 @@ export const getLeadActionResult = (actions = []) => {
       value: parseMetaApiNumber(action?.value) || 0,
     });
   });
+
+  const preferredType = normaliseActionType(preferredActionType);
+  if (preferredType) {
+    const preferredAction = actionsByType.get(preferredType);
+
+    return {
+      value: preferredAction ? preferredAction.value : 0,
+      actionType: preferredAction
+        ? preferredAction.originalActionType || preferredType
+        : preferredActionType,
+    };
+  }
 
   for (const priorityType of LEAD_ACTION_TYPE_PRIORITY) {
     const normalisedPriorityType = normaliseActionType(priorityType);

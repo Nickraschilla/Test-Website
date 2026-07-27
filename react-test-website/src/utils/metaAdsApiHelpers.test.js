@@ -60,6 +60,21 @@ test("does not count messaging conversations as leads by default", () => {
   ).toBe(0);
 });
 
+test("can use a configured Meta action type instead of the default lead priority", () => {
+  expect(
+    getLeadActionResult(
+      [
+        { action_type: "leadgen.other", value: "49" },
+        { action_type: "onsite_conversion.lead", value: "6" },
+      ],
+      "onsite_conversion.lead"
+    )
+  ).toEqual({
+    value: 6,
+    actionType: "onsite_conversion.lead",
+  });
+});
+
 test("handles zero leads, missing actions and zero spend", () => {
   expect(extractAcceptedLeadActions()).toBe(0);
   expect(calculateCostPerLead(100, 0)).toBeNull();

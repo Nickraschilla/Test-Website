@@ -1,5 +1,6 @@
 var META_ADS_REPORTING_LOOKBACK_DAYS = 90;
 var DEFAULT_META_ADS_TEST_SHEET_NAME = "Meta Ads API Test";
+var DEFAULT_META_ADS_ACTION_AUDIT_SHEET_NAME = "Meta Ads Action Audit";
 var DEFAULT_META_API_VERSION = "v23.0";
 var META_GRAPH_BASE_URL = "https://graph.facebook.com";
 
@@ -36,6 +37,21 @@ var META_LEAD_ACTION_TYPE_PRIORITY = [
   "lead",
   "omni_lead",
   "actions:leadgen.other",
+];
+
+var META_ADS_ACTION_AUDIT_HEADERS = [
+  "Reporting starts",
+  "Reporting ends",
+  "Campaign name",
+  "Campaign ID",
+  "Campaign delivery",
+  "Action type",
+  "Action value",
+  "Would be selected",
+  "Amount spent (AUD)",
+  "Impressions",
+  "Reach",
+  "Last synced",
 ];
 
 function testMetaConnection() {
@@ -82,6 +98,7 @@ function syncMetaAdsData() {
         insight,
         campaignMetadataById[insight.campaign_id] || {},
         dateRange,
+        config,
         lastSynced
       )
     );
@@ -113,6 +130,64 @@ function syncMetaAdsData() {
       rows.length +
       " campaign rows to '" +
       config.sheetName +
+      "'."
+  );
+}
+
+function auditMetaAdsActionTypes() {
+  var config = getMetaAdsConfig_();
+  var dateRange = getMetaAdsDateRange_();
+  var lastSynced = new Date();
+  var campaignMetadataById = fetchMetaCampaignMetadata_(config);
+  var insights = fetchMetaCampaignInsights_(config, dateRange);
+  var rows = [];
+
+  for (var i = 0; i < insights.length; i += 1) {
+    var insight = insights[i];
+    if (!hasUsefulMetaInsightRecord_(insight)) continue;
+
+    var campaign = campaignMetadataById[insight.campaign_id] || {};
+    var selectedLeadAction = getLeadActionResult_(
+      insight.actions,
+      config.leadActionType
+    );
+    var actionRows = buildMetaActionAuditRows_(
+      insight,
+      campaign,
+      dateRange,
+      selectedLeadAction,
+      lastSynced
+    );
+
+    rows.push.apply(rows, actionRows);
+  }
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) {
+    throw new Error(
+      "No active spreadsheet found. Use this script from the spreadsheet Apps Script project."
+    );
+  }
+
+  var sheet =
+    spreadsheet.getSheetByName(config.actionAuditSheetName) ||
+    spreadsheet.insertSheet(config.actionAuditSheetName);
+  var output = [META_ADS_ACTION_AUDIT_HEADERS].concat(rows);
+
+  sheet.clearContents();
+  sheet.clearFormats();
+  sheet
+    .getRange(1, 1, output.length, META_ADS_ACTION_AUDIT_HEADERS.length)
+    .setValues(output);
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, META_ADS_ACTION_AUDIT_HEADERS.length);
+  applyMetaAdsActionAuditFormats_(sheet, Math.max(rows.length, 1));
+
+  Logger.log(
+    "Meta Ads action audit complete. Wrote " +
+      rows.length +
+      " action rows to '" +
+      config.actionAuditSheetName +
       "'."
   );
 }
@@ -150,6 +225,10 @@ function getMetaAdsConfig_() {
     sheetName:
       props.getProperty("META_ADS_TEST_SHEET_NAME") ||
       DEFAULT_META_ADS_TEST_SHEET_NAME,
+    actionAuditSheetName:
+      props.getProperty("META_ADS_ACTION_AUDIT_SHEET_NAME") ||
+      DEFAULT_META_ADS_ACTION_AUDIT_SHEET_NAME,
+    leadActionType: props.getProperty("META_LEAD_ACTION_TYPE") || "",
   };
   var missing = [];
 
@@ -304,9 +383,9 @@ function hasUsefulMetaInsightRecord_(insight) {
   return false;
 }
 
-function buildMetaAdsSheetRow_(insight, campaign, dateRange, lastSynced) {
+function buildMetaAdsSheetRow_(insight, campaign, dateRange, config, lastSynced) {
   var spend = parseMetaNumber_(insight.spend);
-  var leadAction = getLeadActionResult_(insight.actions);
+  var leadAction = getLeadActionResult_(insight.actions, config.leadActionType);
   var leads = leadAction.value;
   var costPerLead = calculateCostPerLead_(spend, leads);
 
@@ -370,10 +449,10 @@ function isAcceptedLeadActionType_(actionType) {
 }
 
 function extractAcceptedLeadActions_(actions) {
-  return getLeadActionResult_(actions).value;
+  return getLeadActionResult_(actions, "").value;
 }
 
-function getLeadActionResult_(actions) {
+function getLeadActionResult_(actions, preferredActionType) {
   if (!Array.isArray(actions)) {
     return { value: 0, actionType: "" };
   }
@@ -387,6 +466,18 @@ function getLeadActionResult_(actions) {
     actionsByType[actionType] = {
       originalActionType: actions[i].action_type || "",
       value: parseMetaNumber_(actions[i].value) || 0,
+    };
+  }
+
+  var preferredType = normaliseActionType_(preferredActionType);
+  if (preferredType) {
+    var preferredAction = actionsByType[preferredType];
+
+    return {
+      value: preferredAction ? preferredAction.value : 0,
+      actionType: preferredAction
+        ? preferredAction.originalActionType || preferredType
+        : preferredActionType,
     };
   }
 
@@ -410,6 +501,39 @@ function calculateCostPerLead_(spend, leads) {
   return spend / leads;
 }
 
+function buildMetaActionAuditRows_(insight, campaign, dateRange, selectedLeadAction, lastSynced) {
+  var actions = Array.isArray(insight.actions) ? insight.actions : [];
+  var rows = [];
+
+  if (actions.length === 0) {
+    actions = [{ action_type: "(no actions returned)", value: "" }];
+  }
+
+  for (var i = 0; i < actions.length; i += 1) {
+    var actionType = actions[i].action_type || "";
+    var actionValue = parseMetaNumber_(actions[i].value);
+
+    rows.push([
+      insight.date_start || dateRange.since || "",
+      insight.date_stop || dateRange.until || "",
+      insight.campaign_name || campaign.name || "",
+      insight.campaign_id || campaign.id || "",
+      campaign.effective_status || campaign.status || "",
+      actionType,
+      actionValue === null ? actions[i].value || "" : actionValue,
+      normaliseActionType_(actionType) === normaliseActionType_(selectedLeadAction.actionType)
+        ? "Yes"
+        : "",
+      blankIfNull_(parseMetaNumber_(insight.spend)),
+      blankIfNull_(parseMetaNumber_(insight.impressions)),
+      blankIfNull_(parseMetaNumber_(insight.reach)),
+      lastSynced,
+    ]);
+  }
+
+  return rows;
+}
+
 function applyMetaAdsSheetFormats_(sheet, dataRowCount) {
   var firstDataRow = 2;
   var rowCount = Math.max(dataRowCount, 1);
@@ -420,4 +544,14 @@ function applyMetaAdsSheetFormats_(sheet, dataRowCount) {
   sheet.getRange(firstDataRow, 11, rowCount, 2).setNumberFormat("#,##0");
   sheet.getRange(firstDataRow, 18, rowCount, 1).setNumberFormat("0.00");
   sheet.getRange(firstDataRow, 19, rowCount, 1).setNumberFormat("yyyy-mm-dd hh:mm:ss");
+}
+
+function applyMetaAdsActionAuditFormats_(sheet, dataRowCount) {
+  var firstDataRow = 2;
+  var rowCount = Math.max(dataRowCount, 1);
+
+  sheet.getRange(firstDataRow, 7, rowCount, 1).setNumberFormat("#,##0.##");
+  sheet.getRange(firstDataRow, 9, rowCount, 1).setNumberFormat("$#,##0.00");
+  sheet.getRange(firstDataRow, 10, rowCount, 2).setNumberFormat("#,##0");
+  sheet.getRange(firstDataRow, 12, rowCount, 1).setNumberFormat("yyyy-mm-dd hh:mm:ss");
 }
