@@ -1,11 +1,7 @@
-import {
-  DATE_RANGE_OPTIONS,
-  GROUPING_OPTIONS,
-} from "../../utils/metaAdsAnalytics";
+import { DATE_RANGE_OPTIONS } from "../../utils/metaAdsAnalytics";
 
 export function MetaAdsFilters({
   filters,
-  options,
   activePeriod,
   onChange,
   onReset,
@@ -19,7 +15,7 @@ export function MetaAdsFilters({
         <div className="analytics-title-row">
           <h2>Meta Ads Reporting</h2>
         </div>
-        <p>Campaign performance, lead generation and creative analysis.</p>
+        <p>Baseline campaign data view while the report structure is being rebuilt.</p>
         <small className="meta-ads-active-period">{activePeriod}</small>
       </div>
 
@@ -70,77 +66,9 @@ export function MetaAdsFilters({
           />
         </label>
 
-        <label>
-          <span>Campaign</span>
-          <select
-            value={filters.campaign}
-            onChange={(event) => updateFilter("campaign", event.target.value)}
-          >
-            <option value="all">All campaigns</option>
-            {options.campaigns.map((campaign) => (
-              <option key={campaign} value={campaign}>
-                {campaign}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Delivery</span>
-          <select
-            value={filters.delivery}
-            onChange={(event) => updateFilter("delivery", event.target.value)}
-          >
-            <option value="all">All delivery</option>
-            {options.deliveries.map((delivery) => (
-              <option key={delivery} value={delivery}>
-                {delivery}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Result Type</span>
-          <select
-            value={filters.resultIndicator}
-            onChange={(event) => updateFilter("resultIndicator", event.target.value)}
-          >
-            <option value="all">All lead types</option>
-            {options.resultIndicators.map((indicator) => (
-              <option key={indicator} value={indicator}>
-                {indicator}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Group By</span>
-          <select
-            value={filters.grouping}
-            onChange={(event) => updateFilter("grouping", event.target.value)}
-          >
-            <option value="auto">Auto</option>
-            {GROUPING_OPTIONS.map((grouping) => (
-              <option key={grouping} value={grouping}>
-                {grouping}
-              </option>
-            ))}
-          </select>
-        </label>
-
         <div className="analytics-filter-meta meta-ads-filter-meta">
-          <button
-            type="button"
-            className={filters.comparePrevious ? "meta-ads-filter-active" : ""}
-            aria-pressed={filters.comparePrevious}
-            onClick={() => updateFilter("comparePrevious", !filters.comparePrevious)}
-          >
-            Compare previous period
-          </button>
           <button type="button" onClick={onReset}>
-            Reset Filters
+            Reset View
           </button>
         </div>
       </div>

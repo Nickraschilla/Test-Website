@@ -148,95 +148,28 @@ test('opens the Meta Ads Reporting tab', () => {
   expect(
     screen.getByRole('heading', { name: /meta ads reporting/i })
   ).toBeInTheDocument();
-  expect(screen.getByText(/campaign performance, lead generation and creative analysis/i)).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /compare previous period/i })).toBeInTheDocument();
-  expect(screen.getByLabelText(/campaign review/i)).toHaveValue('cmp_meta_test');
+  expect(screen.getByText(/baseline campaign data view/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/date range/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/search/i)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /reset view/i })).toBeInTheDocument();
+  expect(screen.getByText('Meta Test Campaign')).toBeInTheDocument();
+  expect(screen.queryByLabelText(/campaign review/i)).not.toBeInTheDocument();
 });
 
-test('selects a Meta Ads campaign row by mouse and preserves the date range', () => {
+test('filters the stripped Meta Ads baseline table by campaign search', () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
-  fireEvent.click(screen.getAllByText('Meta Test Campaign').find((node) => node.tagName === 'TD'));
-
-  expect(screen.getByRole('button', { name: /back to campaigns/i })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: /meta test campaign/i })).toBeInTheDocument();
-  expect(screen.getAllByText(/03 June 2026 to 02 July 2026/i).length).toBeGreaterThanOrEqual(2);
-  expect(screen.getByText(/last synced 27 July 2026/i)).toBeInTheDocument();
-});
-
-test('changes the campaign review with the dropdown and updates URL state', () => {
-  render(<App />);
-
-  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
-  fireEvent.change(screen.getByLabelText(/campaign review/i), {
-    target: { value: 'cmp_second' },
+  fireEvent.change(screen.getByLabelText(/search/i), {
+    target: { value: 'second' },
   });
 
-  expect(screen.getByRole('heading', { name: /second meta campaign/i })).toBeInTheDocument();
-  expect(window.location.search).toContain('campaign=cmp_second');
-});
+  expect(screen.getByText('Second Meta Campaign')).toBeInTheDocument();
+  expect(screen.queryByText('Meta Test Campaign')).not.toBeInTheDocument();
 
-test('uses a valid campaign query parameter selection', () => {
-  window.history.replaceState(null, '', '/?campaign=cmp_second');
+  fireEvent.click(screen.getByRole('button', { name: /reset view/i }));
 
-  render(<App />);
-
-  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
-
-  expect(screen.getByLabelText(/campaign review/i)).toHaveValue('cmp_second');
-});
-
-test('falls back from an invalid campaign query parameter', () => {
-  window.history.replaceState(null, '', '/?campaign=missing');
-
-  render(<App />);
-
-  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
-
-  expect(screen.getByLabelText(/campaign review/i)).toHaveValue('cmp_meta_test');
-});
-
-test('selects a Meta Ads campaign row by keyboard', () => {
-  render(<App />);
-
-  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
-  const row = screen.getAllByText('Meta Test Campaign').find((node) => node.tagName === 'TD').closest('tr');
-
-  fireEvent.keyDown(row, { key: 'Enter' });
-
-  expect(screen.getByRole('button', { name: /back to campaigns/i })).toBeInTheDocument();
-});
-
-test('adds, edits and deletes a manual campaign lead', () => {
-  render(<App />);
-
-  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
-  fireEvent.click(screen.getAllByText('Meta Test Campaign').find((node) => node.tagName === 'TD'));
-
-  fireEvent.change(screen.getByPlaceholderText(/lead name/i), {
-    target: { value: 'Sam Lead' },
-  });
-  fireEvent.change(screen.getByPlaceholderText(/short note/i), {
-    target: { value: 'Follow up tomorrow' },
-  });
-  fireEvent.click(screen.getByRole('button', { name: /add lead/i }));
-
-  expect(screen.getByText('Sam Lead')).toBeInTheDocument();
-  expect(screen.getByText('Follow up tomorrow')).toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole('button', { name: /edit/i }));
-  fireEvent.change(screen.getByPlaceholderText(/lead name/i), {
-    target: { value: 'Sam Updated' },
-  });
-  fireEvent.click(screen.getByRole('button', { name: /save lead/i }));
-
-  expect(screen.getByText('Sam Updated')).toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-
-  expect(screen.queryByText('Sam Updated')).not.toBeInTheDocument();
-  expect(screen.getByText(/no manually entered leads/i)).toBeInTheDocument();
+  expect(screen.getByText('Meta Test Campaign')).toBeInTheDocument();
 });
 
 test('uses Instagram loading state for the default page', () => {
