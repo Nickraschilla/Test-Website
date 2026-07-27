@@ -273,20 +273,14 @@ The test sync writes to:
 Meta Ads API Test
 ```
 
-The script writes these existing dashboard-compatible headings exactly:
+The script writes these dashboard-compatible headings:
 
 ```text
-Reporting starts | Reporting ends | Campaign name | Campaign delivery | Leads | Result type | Cost per lead | Ad set budget | Ad set budget type | Amount spent (AUD) | Impressions | Reach | Ends | Attribution setting | Results (initial) | Results (initial) indicator
-```
-
-It also appends these safe extra columns:
-
-```text
-Campaign ID | Frequency | Last synced
+Reporting starts | Reporting ends | Campaign name | Campaign delivery | Leads | Result type | Cost per lead | Amount spent (AUD) | Impressions | Reach | Campaign ID | Frequency | Last synced
 ```
 
 Extra columns are safe because the React Meta Ads parser reads columns by header
-name and ignores unknown columns.
+name and ignores unknown or missing export-only columns.
 
 ## Required Meta permissions
 
@@ -425,10 +419,8 @@ requests, screenshots, or chat messages.
 ## Current limitations
 
 - Version one writes campaign-level rows, not ad-set or ad-level rows.
-- `Ad set budget` and `Ad set budget type` are left blank because the campaign
-  insights request does not provide a reliable campaign-level value for those
-  export columns.
-- `Results (initial)` columns are left blank because the API response does not
-  provide the same export-only initial-result fields.
+- Export-only fields that the campaign insights API cannot reliably populate
+  are omitted from the test tab to keep the generated columns aligned and easy
+  to inspect.
 - The script writes to `Meta Ads API Test` first. Move the published CSV to this
   tab only after you have compared the output and are happy with it.

@@ -69,9 +69,9 @@ test("handles missing spend, malformed values and blank campaign status", () => 
 
   expect(row[3]).toBe("");
   expect(row[6]).toBe("");
-  expect(row[9]).toBe("");
-  expect(row[10]).toBe(1000);
-  expect(row[11]).toBe(900);
+  expect(row[7]).toBe("");
+  expect(row[8]).toBe(1000);
+  expect(row[9]).toBe(900);
 });
 
 test("maps an API campaign record into the sheet row shape", () => {
@@ -107,15 +107,9 @@ test("maps an API campaign record into the sheet row shape", () => {
     4,
     "Leads",
     50,
-    "",
-    "",
     200,
     10000,
     8000,
-    "2026-08-01",
-    "7-day click",
-    "",
-    "",
     "cmp_123",
     1.25,
     "2026-07-27T01:00:00Z",
