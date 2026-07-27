@@ -1441,7 +1441,7 @@ function App() {
     error: instagramError,
   } = useInstagramData();
   const [activeTab, setActiveTab] = useState("new-page");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [contentGroups] = useState(() => {
     try {
       return JSON.parse(window.localStorage.getItem(CONTENT_GROUP_STORAGE_KEY)) || {};

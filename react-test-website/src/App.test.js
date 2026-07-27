@@ -202,7 +202,7 @@ test('opens the Meta Ads Reporting tab', () => {
   expect(screen.getByText(/performance over time/i)).toBeInTheDocument();
   expect(screen.getByText(/campaign comparison/i)).toBeInTheDocument();
   expect(screen.getByText(/lead pipeline/i)).toBeInTheDocument();
-  expect(screen.getByText(/key takeaways/i)).toBeInTheDocument();
+  expect(screen.queryByText(/key takeaways/i)).not.toBeInTheDocument();
   expect(screen.getAllByText('$180.00').length).toBeGreaterThan(0);
   expect(screen.getAllByText('18').length).toBeGreaterThan(0);
 });

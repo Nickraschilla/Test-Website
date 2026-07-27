@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { MetaAdsCampaignComparison } from "../components/metaAds/MetaAdsCampaignComparison";
 import { MetaAdsFilters } from "../components/metaAds/MetaAdsFilters";
-import { MetaAdsKeyTakeaways } from "../components/metaAds/MetaAdsKeyTakeaways";
 import { MetaAdsLeadPipeline } from "../components/metaAds/MetaAdsLeadPipeline";
 import { MetaAdsPerformanceOverTime } from "../components/metaAds/MetaAdsPerformanceOverTime";
 import { MetaAdsReviewKpis } from "../components/metaAds/MetaAdsReviewKpis";
@@ -15,8 +14,6 @@ import {
   buildCampaignComparisonRows,
   buildCampaignOptions,
   buildCampaignReviewMetrics,
-  buildCampaignTrendSummary,
-  buildKeyTakeaways,
   filterRowsByCampaignId,
   getDefaultCampaignId,
   getMetaCampaignId,
@@ -114,16 +111,6 @@ export function MetaAdsReportingPage() {
     () => buildCampaignReviewMetrics({ ...selectedCampaign, rows: selectedRows }, selectedManualLeads),
     [selectedCampaign, selectedManualLeads, selectedRows]
   );
-  const trendSummary = useMemo(() => buildCampaignTrendSummary(selectedRows), [selectedRows]);
-  const takeaways = useMemo(
-    () =>
-      buildKeyTakeaways({
-        campaign: selectedReview,
-        comparableCampaigns: comparison.comparableRows,
-        trendSummary,
-      }),
-    [comparison.comparableRows, selectedReview, trendSummary]
-  );
 
   const handleCampaignSort = (key) => {
     setComparisonSort((currentSort) => ({
@@ -204,7 +191,6 @@ export function MetaAdsReportingPage() {
             error={leadsError}
             campaignSpend={selectedReview.amountSpent || 0}
           />
-          <MetaAdsKeyTakeaways takeaways={takeaways} />
         </>
       ) : null}
     </main>

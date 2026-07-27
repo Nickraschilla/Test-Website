@@ -184,16 +184,19 @@ select {
 }
 
 .side-tabs {
-  position: relative;
+  position: sticky;
+  top: 16px;
   z-index: 4;
   width: 232px;
-  min-height: 100vh;
+  max-height: calc(100vh - 32px);
   display: grid;
   align-content: start;
-  align-self: stretch;
+  align-self: start;
   gap: 18px;
   padding: 18px 14px;
+  overflow: hidden;
   border-right: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0 14px 14px 0;
   background:
     linear-gradient(180deg, rgba(8, 20, 38, 0.94), rgba(12, 28, 51, 0.92)),
     var(--brand-navy-deep);
@@ -260,6 +263,7 @@ select {
 .side-tabs-list {
   display: grid;
   gap: 8px;
+  overflow-y: auto;
 }
 
 .side-tab {
