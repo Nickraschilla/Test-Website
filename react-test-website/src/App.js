@@ -121,18 +121,18 @@ function PageHeader({ title, subtitle }) {
 function SideTabBar({ activeTab, isOpen, onSelectTab, onToggle }) {
   const tabs = [
     {
-      id: "socials",
-      icon: "/Logo App.png",
-      iconType: "image",
-      label: "Socials Reporting",
-      description: "Leaderboard",
-    },
-    {
       id: "new-page",
       icon: "/Instagram.svg",
       iconType: "image",
       label: "Instagram Reporting",
       description: "Content groups",
+    },
+    {
+      id: "socials",
+      icon: "/Logo App.png",
+      iconType: "image",
+      label: "Socials Reporting",
+      description: "Leaderboard",
     },
   ];
 
@@ -1476,7 +1476,7 @@ function App() {
     refreshing: instagramRefreshing,
     error: instagramError,
   } = useInstagramData();
-  const [activeTab, setActiveTab] = useState("socials");
+  const [activeTab, setActiveTab] = useState("new-page");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [contentGroups] = useState(() => {
     try {

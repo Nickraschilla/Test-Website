@@ -16,8 +16,14 @@ jest.mock('./hooks/useReelsData', () => ({
   }),
 }));
 
-test('renders the social leaderboard dashboard', () => {
+test('renders the reporting dashboard tabs', () => {
   render(<App />);
+  expect(
+    screen.getByRole('heading', { name: /instagram reporting/i })
+  ).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /socials reporting leaderboard/i }));
+
   expect(
     screen.getByText(/board totals/i)
   ).toBeInTheDocument();
