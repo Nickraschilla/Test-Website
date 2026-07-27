@@ -4,77 +4,144 @@ import {
   formatMetricValue,
   getComparisonClass,
 } from "./metaAdsAnalytics";
+import { parseMetaAdsSheetResults } from "./metaAdsSheetParser";
 
-test("aggregates raw totals before calculating rates", () => {
+test("aggregates raw totals before calculating cost per result", () => {
   const summary = buildMetaAdsSummary([
-    {
-      amountSpent: 100,
-      impressions: 100,
-      reach: 80,
-      linkClicks: 10,
-      landingPageViews: 5,
-      leads: 1,
-      purchases: 0,
-      purchaseValue: 0,
-    },
-    {
-      amountSpent: 100,
-      impressions: 900,
-      reach: 600,
-      linkClicks: 90,
-      landingPageViews: 45,
-      leads: 9,
-      purchases: 0,
-      purchaseValue: 0,
-    },
+    { amountSpent: 100, results: 4, impressions: 1000, reach: 800 },
+    { amountSpent: 50, results: 6, impressions: 500, reach: 350 },
   ]);
 
-  expect(summary.clickThroughRate).toBe(10);
-  expect(summary.costPerLead).toBe(20);
-  expect(summary.costPerClick).toBe(2);
+  expect(summary.amountSpent).toBe(150);
+  expect(summary.results).toBe(10);
+  expect(summary.costPerResult).toBe(15);
 });
 
-test("formats zero-divisor metrics as an em dash", () => {
+test("formats unavailable zero-divisor metrics as an em dash", () => {
   const summary = buildMetaAdsSummary([
-    {
-      amountSpent: 50,
-      impressions: 0,
-      reach: 0,
-      linkClicks: 0,
-      landingPageViews: 0,
-      leads: 0,
-      purchases: 0,
-      purchaseValue: 0,
-    },
+    { amountSpent: 50, results: 0, impressions: 0, reach: 0 },
   ]);
 
-  expect(summary.clickThroughRate).toBeNull();
-  expect(summary.costPerLead).toBeNull();
-  expect(formatMetricValue(summary.costPerLead, "currency")).toBe("—");
+  expect(summary.costPerResult).toBeNull();
+  expect(formatMetricValue(summary.costPerResult, "currency")).toBe("—");
 });
 
-test("filters by campaign and platform", () => {
+test("filters by campaign, delivery and result indicator", () => {
   const rows = [
-    { date: "2026-07-01", campaignName: "A", campaignObjective: "Lead", campaignStatus: "Active", platform: "Instagram" },
-    { date: "2026-07-01", campaignName: "A", campaignObjective: "Lead", campaignStatus: "Active", platform: "Facebook" },
-    { date: "2026-07-01", campaignName: "B", campaignObjective: "Traffic", campaignStatus: "Paused", platform: "Instagram" },
+    {
+      reportingStarts: "2026-07-01",
+      campaignName: "A",
+      campaignDelivery: "Active",
+      resultIndicator: "Meta leads",
+    },
+    {
+      reportingStarts: "2026-07-01",
+      campaignName: "A",
+      campaignDelivery: "Paused",
+      resultIndicator: "Landing page views",
+    },
+    {
+      reportingStarts: "2026-07-01",
+      campaignName: "B",
+      campaignDelivery: "Active",
+      resultIndicator: "Meta leads",
+    },
   ];
 
   expect(
-    filterMetaAdsRows(
-      rows,
-      {
-        campaign: "A",
-        objective: "all",
-        status: "all",
-        platform: "Instagram",
-      }
-    )
+    filterMetaAdsRows(rows, {
+      dateRange: "all",
+      campaign: "A",
+      delivery: "Active",
+      resultIndicator: "Meta leads",
+    })
   ).toHaveLength(1);
 });
 
 test("treats lower cost metrics as improved", () => {
   expect(
-    getComparisonClass({ key: "costPerLead", lowerIsBetter: true }, -12)
+    getComparisonClass({ key: "costPerResult", lowerIsBetter: true }, -12)
   ).toBe("meta-ads-comparison-positive");
+});
+
+test("parses representative Meta Ads sheet rows", () => {
+  const parsedRows = parseMetaAdsSheetResults({
+    data: [
+      [
+        " Reporting Starts ",
+        "Reporting Ends",
+        "Campaign Name",
+        "Campaign Delivery",
+        "Results",
+        "Result Indicator",
+        "Cost Per Results",
+        "Amount Spent (AUD)",
+        "Impressions",
+        "Reach",
+      ],
+      [
+        "2026-07-01",
+        "2026-07-07",
+        "Normal Campaign",
+        "Active",
+        "1,240",
+        "Meta leads",
+        "$12.40",
+        "$1,240.50",
+        "10,000",
+        "8,500",
+      ],
+      [
+        "2026-07-08",
+        "2026-07-14",
+        "Blank Results",
+        "Active",
+        "",
+        "Lead forms",
+        "",
+        "$0.00",
+        "0",
+        "0",
+      ],
+      [
+        "2026-07-15",
+        "2026-07-21",
+        "No Delivery",
+        "",
+        "0",
+        "Meta leads",
+        "",
+        "$25.00",
+        "1,000",
+        "900",
+      ],
+      ["", "", "", "", "", "", "", "", "", ""],
+    ],
+  });
+
+  expect(parsedRows).toHaveLength(3);
+  expect(parsedRows[0]).toMatchObject({
+    campaignName: "Normal Campaign",
+    campaignDelivery: "Active",
+    results: 1240,
+    resultIndicator: "Meta leads",
+    costPerResult: 12.4,
+    amountSpent: 1240.5,
+    impressions: 10000,
+    reach: 8500,
+  });
+  expect(parsedRows[1]).toMatchObject({
+    campaignName: "Blank Results",
+    results: null,
+    costPerResult: null,
+    amountSpent: 0,
+    impressions: 0,
+    reach: 0,
+  });
+  expect(parsedRows[2]).toMatchObject({
+    campaignName: "No Delivery",
+    campaignDelivery: "",
+    results: 0,
+    costPerResult: null,
+  });
 });

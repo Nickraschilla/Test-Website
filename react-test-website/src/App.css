@@ -1448,7 +1448,7 @@ select {
 }
 
 .meta-ads-kpi-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .meta-ads-kpi-card {
@@ -1509,12 +1509,12 @@ select {
   min-width: 1120px;
 }
 
-.meta-ads-creative-table {
-  min-width: 1080px;
+.meta-ads-delivery-table {
+  min-width: 760px;
 }
 
 .meta-ads-campaign-table tbody tr,
-.meta-ads-creative-table tbody tr {
+.meta-ads-delivery-table tbody tr {
   cursor: default;
 }
 
@@ -1537,35 +1537,6 @@ select {
   color: #111d31;
   font-size: 0.76rem;
   font-weight: 800;
-}
-
-.meta-ads-status {
-  min-height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 9px;
-  border-radius: 999px;
-  background: #edf2f7;
-  color: #334155;
-  font-size: 0.66rem;
-  font-weight: 950;
-  text-transform: uppercase;
-}
-
-.meta-ads-status-active {
-  background: #e9f8f0;
-  color: #0f7a51;
-}
-
-.meta-ads-status-paused {
-  background: #fff4df;
-  color: #9a5b00;
-}
-
-.meta-ads-status-learning {
-  background: #eaf2ff;
-  color: #1f5fbf;
 }
 
 .meta-ads-funnel {
@@ -1634,22 +1605,6 @@ select {
   font-weight: 900;
 }
 
-.meta-ads-creative-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-width: 220px;
-}
-
-.meta-ads-creative-cell img {
-  width: 52px;
-  height: 30px;
-  flex: 0 0 auto;
-  border-radius: 6px;
-  object-fit: cover;
-  box-shadow: inset 0 0 0 1px rgba(13, 37, 71, 0.12);
-}
-
 .meta-ads-insights-card {
   min-height: 430px;
   overflow: hidden;
@@ -1695,6 +1650,27 @@ select {
 .meta-ads-empty-copy {
   padding: 18px;
   color: #60718a;
+}
+
+.meta-ads-refreshing {
+  position: sticky;
+  top: 10px;
+  justify-self: end;
+}
+
+.meta-ads-warning {
+  margin: 0;
+}
+
+.meta-ads-state-card {
+  min-height: 92px;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  color: #60718a;
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-align: center;
 }
 
 .fresh-page-shell,

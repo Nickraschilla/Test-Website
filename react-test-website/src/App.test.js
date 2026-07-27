@@ -3,6 +3,7 @@ import App from './App';
 
 let mockSocialsData;
 let mockInstagramData;
+let mockMetaAdsData;
 
 jest.mock('./hooks/useReelsData', () => ({
   useReelsData: () => mockSocialsData || ({
@@ -19,6 +20,16 @@ jest.mock('./hooks/useReelsData', () => ({
   }),
 }));
 
+jest.mock('./hooks/useMetaAdsData', () => ({
+  useMetaAdsData: () => mockMetaAdsData || ({
+    rows: [],
+    loading: false,
+    refreshing: false,
+    error: '',
+    usingFallback: false,
+  }),
+}));
+
 beforeEach(() => {
   mockSocialsData = {
     reels: [],
@@ -31,6 +42,27 @@ beforeEach(() => {
     loading: false,
     refreshing: false,
     error: '',
+  };
+  mockMetaAdsData = {
+    rows: [
+      {
+        id: 'campaign-1',
+        reportingStarts: '2026-07-01',
+        reportingEnds: '2026-07-07',
+        campaignName: 'Meta Test Campaign',
+        campaignDelivery: 'Active',
+        results: 12,
+        resultIndicator: 'Meta leads',
+        costPerResult: 10,
+        amountSpent: 120,
+        impressions: 1000,
+        reach: 800,
+      },
+    ],
+    loading: false,
+    refreshing: false,
+    error: '',
+    usingFallback: false,
   };
 });
 

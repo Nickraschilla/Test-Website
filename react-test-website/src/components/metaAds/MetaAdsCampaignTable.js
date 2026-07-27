@@ -1,15 +1,16 @@
-import { formatMetricValue } from "../../utils/metaAdsAnalytics";
+import { formatDateLabel, formatMetricValue } from "../../utils/metaAdsAnalytics";
 
 const columns = [
   { key: "campaignName", label: "Campaign", numeric: false },
+  { key: "campaignDelivery", label: "Delivery", numeric: false },
+  { key: "resultIndicator", label: "Result Type", numeric: false },
   { key: "amountSpent", label: "Spend", format: "currency", numeric: true },
-  { key: "leads", label: "Leads", numeric: true },
-  { key: "costPerLead", label: "CPL", format: "currency", numeric: true },
-  { key: "linkClicks", label: "Link Clicks", numeric: true },
-  { key: "clickThroughRate", label: "CTR", format: "percent", numeric: true },
-  { key: "costPerClick", label: "CPC", format: "currency", numeric: true },
+  { key: "results", label: "Results", numeric: true },
+  { key: "costPerResult", label: "Cost / Result", format: "currency", numeric: true },
   { key: "reach", label: "Reach", numeric: true },
   { key: "impressions", label: "Impressions", numeric: true },
+  { key: "reportingStarts", label: "Starts", numeric: false, date: true },
+  { key: "reportingEnds", label: "Ends", numeric: false, date: true },
 ];
 
 export function MetaAdsCampaignTable({
@@ -53,33 +54,29 @@ export function MetaAdsCampaignTable({
                   )}
                 </th>
               ))}
-              <th>Status</th>
-              <th>Objective</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td className="analytics-empty-row" colSpan="11">
+                <td className="analytics-empty-row" colSpan={columns.length}>
                   No campaigns match this selection.
                 </td>
               </tr>
             ) : null}
             {rows.map((row) => (
-              <tr key={row.campaignId}>
+              <tr key={row.campaignName}>
                 {columns.map((column) => (
                   <td key={column.key}>
-                    {column.key === "campaignName"
-                      ? row.campaignName
-                      : formatMetricValue(row[column.key], column.format)}
+                    {column.date
+                      ? formatDateLabel(row[column.key])
+                      : column.key === "campaignName"
+                        ? row.campaignName
+                        : column.numeric
+                          ? formatMetricValue(row[column.key], column.format)
+                          : row[column.key] || "—"}
                   </td>
                 ))}
-                <td>
-                  <span className={`meta-ads-status meta-ads-status-${row.campaignStatus.toLowerCase()}`}>
-                    {row.campaignStatus}
-                  </span>
-                </td>
-                <td>{row.campaignObjective}</td>
               </tr>
             ))}
           </tbody>

@@ -1,16 +1,16 @@
 import { useMemo, useState } from "react";
 import { MetaAdsCampaignTable } from "../components/metaAds/MetaAdsCampaignTable";
-import { MetaAdsCreativePerformance } from "../components/metaAds/MetaAdsCreativePerformance";
+import { MetaAdsDeliveryBreakdown } from "../components/metaAds/MetaAdsDeliveryBreakdown";
 import { MetaAdsFilters } from "../components/metaAds/MetaAdsFilters";
 import { MetaAdsFunnel } from "../components/metaAds/MetaAdsFunnel";
 import { MetaAdsInsights } from "../components/metaAds/MetaAdsInsights";
 import { MetaAdsKpiGrid } from "../components/metaAds/MetaAdsKpiGrid";
 import { MetaAdsTrendChart } from "../components/metaAds/MetaAdsTrendChart";
-import { metaAdsFixtures } from "../data/metaAdsFixtures";
+import { useMetaAdsData } from "../hooks/useMetaAdsData";
 import {
   aggregateByCampaign,
-  aggregateByCreative,
   buildDateWindows,
+  buildDeliveryRows,
   buildInsights,
   buildMetaAdsSummary,
   buildTrendRows,
@@ -22,41 +22,35 @@ import {
 const DEFAULT_FILTERS = {
   dateRange: "30",
   campaign: "all",
-  objective: "all",
-  status: "all",
-  platform: "Combined",
+  delivery: "all",
+  resultIndicator: "all",
   trendMetric: "amountSpent",
   grouping: "Daily",
   comparePrevious: false,
 };
 
 export function MetaAdsReportingPage() {
+  const { rows, loading, refreshing, error, usingFallback } = useMetaAdsData();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [campaignSearch, setCampaignSearch] = useState("");
   const [campaignSort, setCampaignSort] = useState({
     key: "amountSpent",
     direction: "desc",
   });
-  const [creativeSortKey, setCreativeSortKey] = useState("leads");
 
-  const filterOptions = useMemo(
-    () => getMetaAdsFilterOptions(metaAdsFixtures),
-    []
-  );
-
+  const filterOptions = useMemo(() => getMetaAdsFilterOptions(rows), [rows]);
   const windows = useMemo(
-    () => buildDateWindows(filters.dateRange, metaAdsFixtures),
-    [filters.dateRange]
+    () => buildDateWindows(filters.dateRange, rows),
+    [filters.dateRange, rows]
   );
 
   const filteredRows = useMemo(
-    () => filterMetaAdsRows(metaAdsFixtures, filters, windows.current),
-    [filters, windows]
+    () => filterMetaAdsRows(rows, filters, windows.current),
+    [filters, rows, windows]
   );
-
   const previousRows = useMemo(
-    () => filterMetaAdsRows(metaAdsFixtures, filters, windows.previous),
-    [filters, windows]
+    () => filterMetaAdsRows(rows, filters, windows.previous),
+    [filters, rows, windows]
   );
 
   const summary = useMemo(() => buildMetaAdsSummary(filteredRows), [filteredRows]);
@@ -67,21 +61,17 @@ export function MetaAdsReportingPage() {
   );
   const campaignRows = useMemo(() => {
     const search = campaignSearch.trim().toLowerCase();
-    const rows = aggregateByCampaign(filteredRows).filter((row) =>
+    const groupedRows = aggregateByCampaign(filteredRows).filter((row) =>
       search ? row.campaignName.toLowerCase().includes(search) : true
     );
 
-    return sortRows(rows, campaignSort.key, campaignSort.direction);
+    return sortRows(groupedRows, campaignSort.key, campaignSort.direction);
   }, [campaignSearch, campaignSort, filteredRows]);
-  const creativeRows = useMemo(() => {
-    const direction = creativeSortKey === "costPerLead" ? "asc" : "desc";
-    return sortRows(aggregateByCreative(filteredRows), creativeSortKey, direction);
-  }, [creativeSortKey, filteredRows]);
+  const deliveryRows = useMemo(() => buildDeliveryRows(filteredRows), [filteredRows]);
   const insights = useMemo(
     () =>
       buildInsights({
         campaigns: aggregateByCampaign(filteredRows),
-        creatives: aggregateByCreative(filteredRows),
         summary,
       }),
     [filteredRows, summary]
@@ -95,47 +85,79 @@ export function MetaAdsReportingPage() {
     }));
   };
 
+  const resetFilters = () => {
+    setFilters(DEFAULT_FILTERS);
+    setCampaignSearch("");
+    setCampaignSort({ key: "amountSpent", direction: "desc" });
+  };
+
   return (
     <main className="analytics-shell meta-ads-shell">
       <MetaAdsFilters
         filters={filters}
         options={filterOptions}
         onChange={setFilters}
-        onReset={() => {
-          setFilters(DEFAULT_FILTERS);
-          setCampaignSearch("");
-          setCampaignSort({ key: "amountSpent", direction: "desc" });
-          setCreativeSortKey("leads");
-        }}
+        onReset={resetFilters}
       />
 
-      <MetaAdsKpiGrid
-        summary={summary}
-        previousSummary={previousSummary}
-        comparePrevious={filters.comparePrevious}
-      />
+      {refreshing ? (
+        <div className="dashboard-refreshing-pill meta-ads-refreshing" role="status" aria-live="polite">
+          <span aria-hidden="true" />
+          Refreshing...
+        </div>
+      ) : null}
 
-      <section className="analytics-main-grid meta-ads-main-grid">
-        <MetaAdsTrendChart rows={trendRows} metricKey={filters.trendMetric} />
-        <MetaAdsFunnel summary={summary} />
-      </section>
+      {error ? (
+        <div className="dashboard-warning meta-ads-warning" role="alert">
+          {error}
+        </div>
+      ) : null}
 
-      <MetaAdsCampaignTable
-        rows={campaignRows}
-        search={campaignSearch}
-        sort={campaignSort}
-        onSearch={setCampaignSearch}
-        onSort={handleCampaignSort}
-      />
+      {loading ? (
+        <section className="analytics-breakdown-card meta-ads-state-card" role="status" aria-live="polite">
+          Loading Meta Ads data...
+        </section>
+      ) : null}
 
-      <section className="analytics-main-grid meta-ads-main-grid">
-        <MetaAdsCreativePerformance
-          rows={creativeRows}
-          sortKey={creativeSortKey}
-          onSortKeyChange={setCreativeSortKey}
-        />
-        <MetaAdsInsights insights={insights} />
-      </section>
+      {!loading && rows.length === 0 ? (
+        <section className="analytics-breakdown-card meta-ads-state-card">
+          No Meta Ads rows are available from the published sheet yet.
+        </section>
+      ) : null}
+
+      {!loading && usingFallback ? (
+        <section className="analytics-breakdown-card meta-ads-state-card">
+          Development fallback data is currently being displayed.
+        </section>
+      ) : null}
+
+      {!loading && rows.length > 0 ? (
+        <>
+          <MetaAdsKpiGrid
+            summary={summary}
+            previousSummary={previousSummary}
+            comparePrevious={filters.comparePrevious}
+          />
+
+          <section className="analytics-main-grid meta-ads-main-grid">
+            <MetaAdsTrendChart rows={trendRows} metricKey={filters.trendMetric} />
+            <MetaAdsFunnel summary={summary} />
+          </section>
+
+          <MetaAdsCampaignTable
+            rows={campaignRows}
+            search={campaignSearch}
+            sort={campaignSort}
+            onSearch={setCampaignSearch}
+            onSort={handleCampaignSort}
+          />
+
+          <section className="analytics-main-grid meta-ads-main-grid">
+            <MetaAdsDeliveryBreakdown rows={deliveryRows} />
+            <MetaAdsInsights insights={insights} />
+          </section>
+        </>
+      ) : null}
     </main>
   );
 }

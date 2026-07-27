@@ -1,7 +1,6 @@
 import {
   DATE_RANGE_OPTIONS,
   GROUPING_OPTIONS,
-  PLATFORM_OPTIONS,
   TREND_METRICS,
 } from "../../utils/metaAdsAnalytics";
 
@@ -54,44 +53,30 @@ export function MetaAdsFilters({
         </label>
 
         <label>
-          <span>Objective</span>
+          <span>Delivery</span>
           <select
-            value={filters.objective}
-            onChange={(event) => updateFilter("objective", event.target.value)}
+            value={filters.delivery}
+            onChange={(event) => updateFilter("delivery", event.target.value)}
           >
-            <option value="all">All objectives</option>
-            {options.objectives.map((objective) => (
-              <option key={objective} value={objective}>
-                {objective}
+            <option value="all">All delivery</option>
+            {options.deliveries.map((delivery) => (
+              <option key={delivery} value={delivery}>
+                {delivery}
               </option>
             ))}
           </select>
         </label>
 
         <label>
-          <span>Status</span>
+          <span>Result Type</span>
           <select
-            value={filters.status}
-            onChange={(event) => updateFilter("status", event.target.value)}
+            value={filters.resultIndicator}
+            onChange={(event) => updateFilter("resultIndicator", event.target.value)}
           >
-            <option value="all">All statuses</option>
-            {options.statuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>Platform</span>
-          <select
-            value={filters.platform}
-            onChange={(event) => updateFilter("platform", event.target.value)}
-          >
-            {PLATFORM_OPTIONS.map((platform) => (
-              <option key={platform} value={platform}>
-                {platform}
+            <option value="all">All results</option>
+            {options.resultIndicators.map((indicator) => (
+              <option key={indicator} value={indicator}>
+                {indicator}
               </option>
             ))}
           </select>
