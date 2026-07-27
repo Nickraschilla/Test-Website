@@ -1,11 +1,7 @@
 import {
-  buildCampaignAssessment,
   buildCampaignComparisonReport,
-  buildCampaignFindings,
-  buildCampaignFunnel,
   buildCampaignOutcome,
-  buildCampaignTrendAnalysis,
-  buildCampaignVerdict,
+  buildCampaignTimeBreakdownRows,
   rankCampaigns,
 } from "./metaAdsCampaignReview";
 import { parseMetaAdsSheetResults } from "./metaAdsSheetParser";
@@ -102,22 +98,6 @@ test("calculates campaign duration, lead efficiency and aggregate frequency", ()
   expect(outcome.costPerConvertedLead).toBe(100);
 });
 
-test("builds funnel stages and hides unavailable optional fields", () => {
-  const outcome = buildCampaignOutcome(rows.filter((row) => row.campaignId === "selected"), leadsByCampaign.selected);
-  const funnel = buildCampaignFunnel(outcome);
-  const withoutClicks = buildCampaignFunnel(buildCampaignOutcome([{ campaignId: "x", impressions: 100, reach: 50, results: 2 }]));
-
-  expect(funnel.stages.map((stage) => stage.key)).toEqual([
-    "impressions",
-    "reach",
-    "linkClicks",
-    "results",
-    "contacted",
-    "converted",
-  ]);
-  expect(withoutClicks.stages.map((stage) => stage.key)).toEqual(["impressions", "reach", "results", "contacted", "converted"]);
-});
-
 test("filters comparable campaigns by objective and calculates averages, best campaign and rank direction", () => {
   const comparison = buildCampaignComparisonReport({
     selectedCampaign: { campaignId: "selected", campaignObjective: "Leads", resultIndicator: "Meta leads" },
@@ -150,30 +130,20 @@ test("ranks lower-is-better and higher-is-better metrics correctly", () => {
   expect(rankCampaigns([{ id: "a", leads: 3 }, { id: "b", leads: 1 }], "leads", false)[0].campaign.id).toBe("a");
 });
 
-test("creates transparent verdicts, supported findings and final assessment", () => {
+test("builds daily, monthly and yearly campaign time breakdowns", () => {
   const selectedRows = rows.filter((row) => row.campaignId === "selected");
-  const outcome = buildCampaignOutcome(selectedRows, leadsByCampaign.selected);
-  const comparison = buildCampaignComparisonReport({
-    selectedCampaign: { campaignId: "selected", campaignObjective: "Leads", resultIndicator: "Meta leads" },
-    allRows: rows,
-    getLeadsByCampaign: (campaignId) => leadsByCampaign[campaignId] || [],
+  const daily = buildCampaignTimeBreakdownRows(selectedRows, "Daily");
+  const monthly = buildCampaignTimeBreakdownRows(selectedRows, "Monthly");
+  const yearly = buildCampaignTimeBreakdownRows(selectedRows, "Yearly");
+
+  expect(daily).toHaveLength(2);
+  expect(monthly).toHaveLength(1);
+  expect(yearly).toHaveLength(1);
+  expect(monthly[0]).toMatchObject({
+    results: 10,
+    amountSpent: 200,
+    costPerResult: 20,
   });
-  const trendAnalysis = buildCampaignTrendAnalysis(selectedRows);
-  const verdict = buildCampaignVerdict(outcome, comparison);
-  const findings = buildCampaignFindings({ outcome, comparisonReport: comparison, trendAnalysis });
-  const assessment = buildCampaignAssessment({ verdict, outcome, findings });
-
-  expect(verdict.label).toBe("Excellent");
-  expect(findings.worked.some((finding) => finding.includes("Cost per lead"))).toBe(true);
-  expect(findings.attention.some((finding) => finding.includes("require contact"))).toBe(true);
-  expect(assessment.recommendedNextAction).toMatch(/outstanding leads/i);
-});
-
-test("does not create unsupported trend claims with too few daily points", () => {
-  const analysis = buildCampaignTrendAnalysis(rows.filter((row) => row.campaignId === "selected"));
-
-  expect(analysis.enoughData).toBe(false);
-  expect(analysis.leadDirection).toBeNull();
 });
 
 test("parses optional future Meta fields without requiring them", () => {

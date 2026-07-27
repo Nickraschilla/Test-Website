@@ -5,27 +5,17 @@ import {
 } from "../../../utils/metaAdsAnalytics";
 import { metaLeadRepository } from "../../../services/metaLeadRepository";
 import {
-  buildCampaignAssessment,
   buildCampaignComparisonReport,
-  buildCampaignFindings,
   buildCampaignOutcome,
-  buildCampaignTrendAnalysis,
-  buildCampaignVerdict,
   buildLeaderboardRows,
-  buildPreviousComparableCampaign,
 } from "../../../utils/metaAdsCampaignReview";
-import { CampaignAssessment } from "./CampaignAssessment";
 import { CampaignBenchmarkTable } from "./CampaignBenchmarkTable";
-import { CampaignComparison } from "./CampaignComparison";
 import { CampaignDetailHeader } from "./CampaignDetailHeader";
-import { CampaignFindings } from "./CampaignFindings";
-import { CampaignFunnel } from "./CampaignFunnel";
 import { CampaignKpiGrid } from "./CampaignKpiGrid";
 import { CampaignLeaderboard } from "./CampaignLeaderboard";
-import { CampaignSummary } from "./CampaignSummary";
+import { CampaignTimeBreakdown } from "./CampaignTimeBreakdown";
 import { CampaignTrendChart } from "./CampaignTrendChart";
 import { LeadTrackingSection } from "./LeadTrackingSection";
-import { PreviousCampaignComparison } from "./PreviousCampaignComparison";
 
 export function CampaignDetailPanel({
   campaign,
@@ -33,7 +23,6 @@ export function CampaignDetailPanel({
   selectedCampaignId,
   allRows,
   currentRows,
-  previousRows,
   activePeriod,
   onSelectCampaign,
   onBack,
@@ -51,17 +40,9 @@ export function CampaignDetailPanel({
     () => (campaign ? filterRowsByCampaign(currentRows, campaign) : []),
     [campaign, currentRows]
   );
-  const campaignPreviousRows = useMemo(
-    () => (campaign ? filterRowsByCampaign(previousRows, campaign) : []),
-    [campaign, previousRows]
-  );
   const currentSummary = useMemo(
     () => buildCampaignOutcome(campaignCurrentRows, manualLeads),
     [campaignCurrentRows, manualLeads]
-  );
-  const previousSummary = useMemo(
-    () => buildCampaignOutcome(campaignPreviousRows),
-    [campaignPreviousRows]
   );
   const comparisonReport = useMemo(
     () =>
@@ -72,29 +53,9 @@ export function CampaignDetailPanel({
       }),
     [allRows, campaign]
   );
-  const trendAnalysis = useMemo(
-    () => buildCampaignTrendAnalysis(campaignCurrentRows),
-    [campaignCurrentRows]
-  );
-  const verdict = useMemo(
-    () => buildCampaignVerdict(currentSummary, comparisonReport),
-    [comparisonReport, currentSummary]
-  );
-  const findings = useMemo(
-    () => buildCampaignFindings({ outcome: currentSummary, comparisonReport, trendAnalysis }),
-    [comparisonReport, currentSummary, trendAnalysis]
-  );
-  const assessment = useMemo(
-    () => buildCampaignAssessment({ verdict, outcome: currentSummary, findings }),
-    [currentSummary, findings, verdict]
-  );
   const leaderboardRows = useMemo(
     () => buildLeaderboardRows(comparisonReport),
     [comparisonReport]
-  );
-  const previousComparableCampaign = useMemo(
-    () => buildPreviousComparableCampaign(currentSummary, comparisonReport),
-    [comparisonReport, currentSummary]
   );
   const lastSynced = campaignCurrentRows
     .map((row) => row.lastSynced)
@@ -128,7 +89,6 @@ export function CampaignDetailPanel({
         selectedCampaignId={selectedCampaignId}
         activePeriod={activePeriod}
         outcome={currentSummary}
-        verdict={verdict}
         lastSynced={lastSynced}
         onSelectCampaign={onSelectCampaign}
         onBack={onBack}
@@ -141,25 +101,16 @@ export function CampaignDetailPanel({
       ) : null}
 
       <CampaignKpiGrid summary={currentSummary} />
-      <CampaignFindings findings={findings} />
       <CampaignTrendChart rows={campaignCurrentRows} />
-      <CampaignFunnel outcome={currentSummary} />
+      <CampaignTimeBreakdown rows={campaignCurrentRows} />
 
       <section className="meta-campaign-detail-grid">
-        <CampaignComparison
-          currentSummary={currentSummary}
-          previousSummary={previousSummary}
-        />
         <CampaignBenchmarkTable comparison={comparisonReport} />
-        <PreviousCampaignComparison
-          current={currentSummary}
-          previousCampaign={previousComparableCampaign}
+        <LeadTrackingSection
+          campaignId={campaignId}
+          amountSpent={currentSummary.amountSpent}
+          onLeadsChange={setManualLeads}
         />
-        <CampaignSummary
-          currentSummary={currentSummary}
-          previousSummary={previousSummary}
-        />
-        <CampaignAssessment assessment={assessment} />
       </section>
 
       <CampaignLeaderboard
@@ -168,11 +119,6 @@ export function CampaignDetailPanel({
         onSelectCampaign={onSelectCampaign}
       />
 
-      <LeadTrackingSection
-        campaignId={campaignId}
-        amountSpent={currentSummary.amountSpent}
-        onLeadsChange={setManualLeads}
-      />
     </section>
   );
 }

@@ -14,9 +14,7 @@ const columns = [
   { key: "results", label: "Leads", numeric: true },
   { key: "costPerResult", label: "Cost / lead", format: "currency", numeric: true },
   { key: "leadsPer100", label: "Leads / $100", format: "decimal", numeric: true },
-  { key: "conversionRate", label: "Conversion", format: "percent", numeric: true },
-  { key: "costPerConvertedLead", label: "Cost / converted", format: "currency", numeric: true },
-  { key: "overallResult", label: "Overall result" },
+  { key: "reach", label: "Reach", format: "number", numeric: true },
 ];
 
 export function CampaignLeaderboard({ rows, selectedCampaignId, onSelectCampaign }) {

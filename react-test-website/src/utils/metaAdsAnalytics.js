@@ -382,6 +382,13 @@ const getTrendBucket = (dateValue, grouping) => {
     };
   }
 
+  if (grouping === "Yearly") {
+    return {
+      key: `${date.getFullYear()}`,
+      label: `${date.getFullYear()}`,
+    };
+  }
+
   return {
     key: formatDateKey(date),
     label: new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short" }).format(date),

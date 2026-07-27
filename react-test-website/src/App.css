@@ -1725,7 +1725,7 @@ select {
 }
 
 .meta-campaign-kpi-grid {
-  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .meta-campaign-detail-grid {
@@ -1752,6 +1752,17 @@ select {
 
 .meta-campaign-comparison-table {
   min-width: 620px;
+}
+
+.meta-campaign-time-table {
+  min-width: 760px;
+}
+
+.meta-campaign-trend-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .meta-campaign-funnel {
@@ -1813,7 +1824,7 @@ select {
 }
 
 .meta-campaign-leaderboard-table {
-  min-width: 1120px;
+  min-width: 860px;
 }
 
 .meta-lead-storage-note {
