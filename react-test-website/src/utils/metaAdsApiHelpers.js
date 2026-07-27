@@ -6,13 +6,17 @@ export const META_ADS_SHEET_HEADERS = [
   "Leads",
   "Result type",
   "Cost per lead",
+  "Ad Set Budget",
+  "Ad Set Budget Type",
   "Amount spent (AUD)",
   "Impressions",
   "Reach",
+  "Ends",
+  "Attribution Setting",
+  "Results (Initial)",
+  "Results (Initial) Indicator",
   "Campaign ID",
   "Frequency",
-  "Lead action source",
-  "All action types",
   "Last synced",
 ];
 
@@ -90,18 +94,6 @@ export const getLeadActionResult = (actions = []) => {
 export const extractAcceptedLeadActions = (actions = []) =>
   getLeadActionResult(actions).value;
 
-export const summariseActionTypes = (actions = []) => {
-  if (!Array.isArray(actions) || actions.length === 0) return "";
-
-  return actions
-    .filter((action) => action?.action_type)
-    .map(
-      (action) =>
-        `${action.action_type}: ${action.value === undefined ? "" : action.value}`
-    )
-    .join(" | ");
-};
-
 export const calculateCostPerLead = (spend, leads) => {
   const parsedSpend = parseMetaApiNumber(spend);
   const parsedLeads = parseMetaApiNumber(leads);
@@ -130,13 +122,17 @@ export const mapMetaCampaignRecordToSheetRow = ({
     leads,
     "Leads",
     costPerLead === null ? "" : costPerLead,
+    "",
+    "",
     spend === null ? "" : spend,
     parseMetaApiNumber(insight?.impressions),
     parseMetaApiNumber(insight?.reach),
+    campaign.stop_time || "",
+    insight?.attribution_setting || "",
+    "",
+    "",
     insight?.campaign_id || campaign.id || "",
     parseMetaApiNumber(insight?.frequency),
-    leadAction.actionType,
-    summariseActionTypes(insight?.actions),
     lastSynced || "",
   ].map((value) => (value === null ? "" : value));
 };

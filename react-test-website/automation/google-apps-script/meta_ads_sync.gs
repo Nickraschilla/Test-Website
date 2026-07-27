@@ -11,13 +11,17 @@ var META_ADS_SHEET_HEADERS = [
   "Leads",
   "Result type",
   "Cost per lead",
+  "Ad Set Budget",
+  "Ad Set Budget Type",
   "Amount spent (AUD)",
   "Impressions",
   "Reach",
+  "Ends",
+  "Attribution Setting",
+  "Results (Initial)",
+  "Results (Initial) Indicator",
   "Campaign ID",
   "Frequency",
-  "Lead action source",
-  "All action types",
   "Last synced",
 ];
 
@@ -314,13 +318,17 @@ function buildMetaAdsSheetRow_(insight, campaign, dateRange, lastSynced) {
     leads,
     "Leads",
     costPerLead === null ? "" : costPerLead,
+    "",
+    "",
     spend === null ? "" : spend,
     blankIfNull_(parseMetaNumber_(insight.impressions)),
     blankIfNull_(parseMetaNumber_(insight.reach)),
+    campaign.stop_time || "",
+    insight.attribution_setting || "",
+    "",
+    "",
     insight.campaign_id || campaign.id || "",
     blankIfNull_(parseMetaNumber_(insight.frequency)),
-    leadAction.actionType,
-    summariseActionTypes_(insight.actions),
     lastSynced,
   ];
 }
@@ -397,21 +405,6 @@ function getLeadActionResult_(actions) {
   return { value: 0, actionType: "" };
 }
 
-function summariseActionTypes_(actions) {
-  if (!Array.isArray(actions) || actions.length === 0) return "";
-
-  var summaries = [];
-
-  for (var i = 0; i < actions.length; i += 1) {
-    var actionType = actions[i].action_type || "";
-    if (!actionType) continue;
-
-    summaries.push(actionType + ": " + (actions[i].value === undefined ? "" : actions[i].value));
-  }
-
-  return summaries.join(" | ");
-}
-
 function calculateCostPerLead_(spend, leads) {
   if (spend === null || spend === undefined || !leads) return null;
   return spend / leads;
@@ -423,7 +416,8 @@ function applyMetaAdsSheetFormats_(sheet, dataRowCount) {
 
   sheet.getRange(firstDataRow, 7, rowCount, 1).setNumberFormat("$#,##0.00");
   sheet.getRange(firstDataRow, 8, rowCount, 1).setNumberFormat("$#,##0.00");
-  sheet.getRange(firstDataRow, 9, rowCount, 2).setNumberFormat("#,##0");
-  sheet.getRange(firstDataRow, 12, rowCount, 1).setNumberFormat("0.00");
-  sheet.getRange(firstDataRow, 15, rowCount, 1).setNumberFormat("yyyy-mm-dd hh:mm:ss");
+  sheet.getRange(firstDataRow, 10, rowCount, 1).setNumberFormat("$#,##0.00");
+  sheet.getRange(firstDataRow, 11, rowCount, 2).setNumberFormat("#,##0");
+  sheet.getRange(firstDataRow, 18, rowCount, 1).setNumberFormat("0.00");
+  sheet.getRange(firstDataRow, 19, rowCount, 1).setNumberFormat("yyyy-mm-dd hh:mm:ss");
 }

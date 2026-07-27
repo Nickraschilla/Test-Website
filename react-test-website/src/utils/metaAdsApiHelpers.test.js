@@ -6,7 +6,6 @@ import {
   mapMetaCampaignRecordToSheetRow,
   normaliseMetaAdAccountId,
   parseMetaApiNumber,
-  summariseActionTypes,
 } from "./metaAdsApiHelpers";
 
 test("normalises Meta ad account IDs with or without act prefix", () => {
@@ -45,7 +44,6 @@ test("uses one lead source by priority to avoid double counting Meta action rows
     value: 5,
     actionType: "leadgen.other",
   });
-  expect(summariseActionTypes(actions)).toContain("link_click: 999");
 });
 
 test("does not count messaging conversations as leads by default", () => {
@@ -87,14 +85,12 @@ test("handles missing spend, malformed values and blank campaign status", () => 
 
   expect(row[3]).toBe("");
   expect(row[6]).toBe("");
-  expect(row[7]).toBe("");
-  expect(row[8]).toBe(1000);
-  expect(row[9]).toBe(900);
-  expect(row[12]).toBe("lead");
-  expect(row[13]).toBe("lead: 3");
+  expect(row[9]).toBe("");
+  expect(row[10]).toBe(1000);
+  expect(row[11]).toBe(900);
 });
 
-test("maps an API campaign record into the sheet row shape", () => {
+test("maps an API campaign record into the existing Meta Ads sheet column order", () => {
   const row = mapMetaCampaignRecordToSheetRow({
     insight: {
       date_start: "2026-07-01",
@@ -127,13 +123,17 @@ test("maps an API campaign record into the sheet row shape", () => {
     4,
     "Leads",
     50,
+    "",
+    "",
     200,
     10000,
     8000,
+    "2026-08-01",
+    "7-day click",
+    "",
+    "",
     "cmp_123",
     1.25,
-    "lead",
-    "lead: 4 | link_click: 80",
     "2026-07-27T01:00:00Z",
   ]);
 });
