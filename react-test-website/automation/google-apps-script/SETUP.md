@@ -354,11 +354,12 @@ After `testMetaConnection()` succeeds:
 2. Click `Run`.
 3. Open the `Meta Ads API Test` sheet tab.
 
-The script fetches campaign-level insights for the previous 90 days. To change
-that window, edit this clearly named constant in the script:
+The script fetches campaign-level insights with Meta's `maximum` date preset by
+default, matching the broadest available campaign reporting window. To override
+that later, add this optional script property:
 
-```javascript
-const META_ADS_REPORTING_LOOKBACK_DAYS = 90;
+```text
+META_ADS_DATE_PRESET = maximum
 ```
 
 The sync replaces the complete contents of the test tab only after the Meta API

@@ -1,4 +1,4 @@
-var META_ADS_REPORTING_LOOKBACK_DAYS = 90;
+var META_ADS_DATE_PRESET = "maximum";
 var DEFAULT_META_ADS_TEST_SHEET_NAME = "Meta Ads API Test";
 var DEFAULT_META_ADS_ACTION_AUDIT_SHEET_NAME = "Meta Ads Action Audit";
 var DEFAULT_META_API_VERSION = "v23.0";
@@ -74,19 +74,16 @@ function testMetaConnection() {
 
 function syncMetaAdsData() {
   var config = getMetaAdsConfig_();
-  var dateRange = getMetaAdsDateRange_();
   var lastSynced = new Date();
 
   Logger.log(
-    "Fetching Meta Ads campaign insights for " +
-      dateRange.since +
-      " to " +
-      dateRange.until +
+    "Fetching Meta Ads campaign insights using date preset '" +
+      config.datePreset +
       "."
   );
 
   var campaignMetadataById = fetchMetaCampaignMetadata_(config);
-  var insights = fetchMetaCampaignInsights_(config, dateRange);
+  var insights = fetchMetaCampaignInsights_(config);
   var rows = [];
 
   for (var i = 0; i < insights.length; i += 1) {
@@ -97,7 +94,6 @@ function syncMetaAdsData() {
       buildMetaAdsSheetRow_(
         insight,
         campaignMetadataById[insight.campaign_id] || {},
-        dateRange,
         config,
         lastSynced
       )
@@ -136,10 +132,9 @@ function syncMetaAdsData() {
 
 function auditMetaAdsActionTypes() {
   var config = getMetaAdsConfig_();
-  var dateRange = getMetaAdsDateRange_();
   var lastSynced = new Date();
   var campaignMetadataById = fetchMetaCampaignMetadata_(config);
-  var insights = fetchMetaCampaignInsights_(config, dateRange);
+  var insights = fetchMetaCampaignInsights_(config);
   var rows = [];
 
   for (var i = 0; i < insights.length; i += 1) {
@@ -154,7 +149,6 @@ function auditMetaAdsActionTypes() {
     var actionRows = buildMetaActionAuditRows_(
       insight,
       campaign,
-      dateRange,
       selectedLeadAction,
       lastSynced
     );
@@ -229,6 +223,7 @@ function getMetaAdsConfig_() {
       props.getProperty("META_ADS_ACTION_AUDIT_SHEET_NAME") ||
       DEFAULT_META_ADS_ACTION_AUDIT_SHEET_NAME,
     leadActionType: props.getProperty("META_LEAD_ACTION_TYPE") || "",
+    datePreset: props.getProperty("META_ADS_DATE_PRESET") || META_ADS_DATE_PRESET,
   };
   var missing = [];
 
@@ -248,29 +243,13 @@ function normaliseMetaAdAccountId_(value) {
   return "act_" + cleaned.replace(/^act_/i, "");
 }
 
-function getMetaAdsDateRange_() {
-  var timeZone = Session.getScriptTimeZone() || "Australia/Melbourne";
-  var until = new Date();
-  var since = new Date(until);
-
-  since.setDate(since.getDate() - (META_ADS_REPORTING_LOOKBACK_DAYS - 1));
-
-  return {
-    since: Utilities.formatDate(since, timeZone, "yyyy-MM-dd"),
-    until: Utilities.formatDate(until, timeZone, "yyyy-MM-dd"),
-  };
-}
-
-function fetchMetaCampaignInsights_(config, dateRange) {
+function fetchMetaCampaignInsights_(config) {
   var url = buildMetaApiUrl_(config, "/" + config.adAccountId + "/insights", {
     level: "campaign",
     limit: 500,
     fields:
       "date_start,date_stop,campaign_id,campaign_name,spend,impressions,reach,frequency,actions,cost_per_action_type,attribution_setting",
-    time_range: JSON.stringify({
-      since: dateRange.since,
-      until: dateRange.until,
-    }),
+    date_preset: config.datePreset,
   });
 
   return fetchAllMetaPages_(url);
@@ -383,15 +362,15 @@ function hasUsefulMetaInsightRecord_(insight) {
   return false;
 }
 
-function buildMetaAdsSheetRow_(insight, campaign, dateRange, config, lastSynced) {
+function buildMetaAdsSheetRow_(insight, campaign, config, lastSynced) {
   var spend = parseMetaNumber_(insight.spend);
   var leadAction = getLeadActionResult_(insight.actions, config.leadActionType);
   var leads = leadAction.value;
   var costPerLead = calculateCostPerLead_(spend, leads);
 
   return [
-    insight.date_start || dateRange.since || "",
-    insight.date_stop || dateRange.until || "",
+    insight.date_start || "",
+    insight.date_stop || "",
     insight.campaign_name || campaign.name || "",
     campaign.effective_status || campaign.status || "",
     leads,
@@ -501,7 +480,7 @@ function calculateCostPerLead_(spend, leads) {
   return spend / leads;
 }
 
-function buildMetaActionAuditRows_(insight, campaign, dateRange, selectedLeadAction, lastSynced) {
+function buildMetaActionAuditRows_(insight, campaign, selectedLeadAction, lastSynced) {
   var actions = Array.isArray(insight.actions) ? insight.actions : [];
   var rows = [];
 
@@ -514,8 +493,8 @@ function buildMetaActionAuditRows_(insight, campaign, dateRange, selectedLeadAct
     var actionValue = parseMetaNumber_(actions[i].value);
 
     rows.push([
-      insight.date_start || dateRange.since || "",
-      insight.date_stop || dateRange.until || "",
+      insight.date_start || "",
+      insight.date_stop || "",
       insight.campaign_name || campaign.name || "",
       insight.campaign_id || campaign.id || "",
       campaign.effective_status || campaign.status || "",
