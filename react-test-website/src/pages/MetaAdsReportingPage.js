@@ -1,79 +1,78 @@
-import { useMemo, useState } from "react";
-import { MetaAdsCampaignTable } from "../components/metaAds/MetaAdsCampaignTable";
+import { useEffect, useMemo, useState } from "react";
+import { MetaAdsDailyCampaignTable } from "../components/metaAds/MetaAdsDailyCampaignTable";
 import { MetaAdsFilters } from "../components/metaAds/MetaAdsFilters";
+import { MetaAdsSelectedCampaignKpis } from "../components/metaAds/MetaAdsSelectedCampaignKpis";
 import { useMetaAdsData } from "../hooks/useMetaAdsData";
 import {
   aggregateByCampaign,
-  buildDateWindows,
+  buildMetaAdsCampaignOptions,
+  buildMetaAdsSummary,
   describeDateWindow,
-  filterMetaAdsRows,
-  sortRows,
+  filterRowsByCampaign,
+  getDefaultMetaAdsCampaignId,
+  getCampaignIdentity,
+  parseDate,
 } from "../utils/metaAdsAnalytics";
 
-const DEFAULT_FILTERS = {
-  dateRange: "30",
-  campaign: "all",
-  delivery: "all",
-  resultIndicator: "all",
-  search: "",
-  customStart: "",
-  customEnd: "",
+const describeRowsPeriod = (rows) => {
+  const dates = rows
+    .flatMap((row) => [row.reportingStarts || row.date, row.reportingEnds])
+    .map(parseDate)
+    .filter(Boolean)
+    .sort((first, second) => first - second);
+
+  if (dates.length === 0) return "No reporting dates";
+
+  return describeDateWindow({
+    startDate: dates[0],
+    endDate: dates.at(-1),
+  });
 };
 
 export function MetaAdsReportingPage() {
   const { rows, loading, refreshing, error, usingFallback } = useMetaAdsData();
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [campaignSort, setCampaignSort] = useState({
-    key: "amountSpent",
-    direction: "desc",
-  });
+  const [selectedCampaignId, setSelectedCampaignId] = useState("");
 
-  const windows = useMemo(
+  const campaignOptions = useMemo(
+    () => buildMetaAdsCampaignOptions(rows),
+    [rows]
+  );
+  const selectedCampaign = useMemo(
     () =>
-      buildDateWindows(filters.dateRange, rows, {
-        start: filters.customStart,
-        end: filters.customEnd,
-      }),
-    [filters.customEnd, filters.customStart, filters.dateRange, rows]
+      aggregateByCampaign(rows).find(
+        (campaign) => getCampaignIdentity(campaign) === selectedCampaignId
+      ) || null,
+    [rows, selectedCampaignId]
   );
-  const activePeriod = useMemo(
-    () => describeDateWindow(windows.current),
-    [windows]
+  const selectedRows = useMemo(
+    () => (selectedCampaign ? filterRowsByCampaign(rows, selectedCampaign) : []),
+    [rows, selectedCampaign]
+  );
+  const selectedSummary = useMemo(
+    () => buildMetaAdsSummary(selectedRows),
+    [selectedRows]
+  );
+  const selectedPeriod = useMemo(
+    () => describeRowsPeriod(selectedRows),
+    [selectedRows]
   );
 
-  const filteredRows = useMemo(
-    () => filterMetaAdsRows(rows, filters, windows.current),
-    [filters, rows, windows]
-  );
-  const campaignRows = useMemo(() => {
-    const searchTerm = filters.search.trim().toLowerCase();
-    const groupedRows = aggregateByCampaign(filteredRows).filter((row) =>
-      searchTerm ? row.campaignName.toLowerCase().includes(searchTerm) : true
-    );
-
-    return sortRows(groupedRows, campaignSort.key, campaignSort.direction);
-  }, [campaignSort, filteredRows, filters.search]);
-
-  const handleCampaignSort = (key) => {
-    setCampaignSort((currentSort) => ({
-      key,
-      direction:
-        currentSort.key === key && currentSort.direction === "desc" ? "asc" : "desc",
-    }));
-  };
-
-  const resetFilters = () => {
-    setFilters(DEFAULT_FILTERS);
-    setCampaignSort({ key: "amountSpent", direction: "desc" });
-  };
+  useEffect(() => {
+    if (rows.length === 0) return;
+    const campaignExists = campaignOptions.some((campaign) => campaign.id === selectedCampaignId);
+    if (!campaignExists) {
+      setSelectedCampaignId(getDefaultMetaAdsCampaignId(rows));
+    }
+  }, [campaignOptions, rows, selectedCampaignId]);
 
   return (
     <main className="analytics-shell meta-ads-shell">
       <MetaAdsFilters
-        filters={filters}
-        activePeriod={activePeriod}
-        onChange={setFilters}
-        onReset={resetFilters}
+        campaigns={campaignOptions}
+        selectedCampaignId={selectedCampaignId}
+        selectedCampaign={selectedCampaign}
+        selectedPeriod={selectedPeriod}
+        onSelectCampaign={setSelectedCampaignId}
       />
 
       {refreshing ? (
@@ -109,17 +108,16 @@ export function MetaAdsReportingPage() {
 
       {!loading && rows.length > 0 ? (
         <>
-          {filteredRows.length === 0 ? (
+          {!selectedCampaign ? (
             <section className="analytics-breakdown-card meta-ads-state-card">
-              No Meta Ads rows match this reporting period.
+              Select a campaign to view Meta Ads performance.
             </section>
-          ) : null}
-
-          <MetaAdsCampaignTable
-            rows={campaignRows}
-            sort={campaignSort}
-            onSort={handleCampaignSort}
-          />
+          ) : (
+            <>
+              <MetaAdsSelectedCampaignKpis summary={selectedSummary} />
+              <MetaAdsDailyCampaignTable rows={selectedRows} />
+            </>
+          )}
         </>
       ) : null}
     </main>

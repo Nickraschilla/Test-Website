@@ -148,28 +148,26 @@ test('opens the Meta Ads Reporting tab', () => {
   expect(
     screen.getByRole('heading', { name: /meta ads reporting/i })
   ).toBeInTheDocument();
-  expect(screen.getByText(/baseline campaign data view/i)).toBeInTheDocument();
-  expect(screen.getByLabelText(/date range/i)).toBeInTheDocument();
-  expect(screen.getByLabelText(/search/i)).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /reset view/i })).toBeInTheDocument();
+  expect(screen.getByRole('combobox', { name: /^campaign$/i })).toHaveValue('cmp_meta_test');
   expect(screen.getByText('Meta Test Campaign')).toBeInTheDocument();
-  expect(screen.queryByLabelText(/campaign review/i)).not.toBeInTheDocument();
+  expect(screen.getByText(/15 June 2026 to 01 July 2026/i)).toBeInTheDocument();
+  expect(screen.getByText(/daily performance/i)).toBeInTheDocument();
+  expect(screen.getByText('$180.00')).toBeInTheDocument();
+  expect(screen.getAllByText('18').length).toBeGreaterThan(0);
 });
 
-test('filters the stripped Meta Ads baseline table by campaign search', () => {
+test('switches the selected Meta Ads campaign with the dropdown', () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
-  fireEvent.change(screen.getByLabelText(/search/i), {
-    target: { value: 'second' },
+  fireEvent.change(screen.getByRole('combobox', { name: /^campaign$/i }), {
+    target: { value: 'cmp_second' },
   });
 
   expect(screen.getByText('Second Meta Campaign')).toBeInTheDocument();
-  expect(screen.queryByText('Meta Test Campaign')).not.toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole('button', { name: /reset view/i }));
-
-  expect(screen.getByText('Meta Test Campaign')).toBeInTheDocument();
+  expect(screen.getByText(/02 July 2026 to 02 July 2026/i)).toBeInTheDocument();
+  expect(screen.getAllByText('$90.00').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('3').length).toBeGreaterThan(0);
 });
 
 test('uses Instagram loading state for the default page', () => {

@@ -178,6 +178,48 @@ export const getMetaAdsFilterOptions = (rows) => ({
 
 export const getCampaignIdentity = (row) => row.campaignId || row.campaignName || row.id || "campaign";
 
+const ACTIVE_DELIVERY_PATTERN = /(active|live|delivering)/i;
+
+export const isActiveMetaAdsCampaign = (campaign) =>
+  ACTIVE_DELIVERY_PATTERN.test(campaign?.campaignDelivery || "");
+
+const getMostRecentCampaignDate = (rows) => {
+  const dates = rows
+    .flatMap((row) => [row.reportingEnds, row.reportingStarts, row.date, row.ends, row.lastSynced])
+    .map(parseDate)
+    .filter(Boolean)
+    .sort((a, b) => b - a);
+
+  return dates[0] || null;
+};
+
+export const buildMetaAdsCampaignOptions = (rows) =>
+  aggregateByCampaign(rows)
+    .map((campaign) => {
+      const campaignRows = filterRowsByCampaign(rows, campaign);
+      const latestDate = getMostRecentCampaignDate(campaignRows);
+
+      return {
+        id: getCampaignIdentity(campaign),
+        name: campaign.campaignName || "Untitled Campaign",
+        status: campaign.campaignDelivery || "No status",
+        active: isActiveMetaAdsCampaign(campaign),
+        latestDate,
+        latestTime: latestDate ? latestDate.getTime() : Number.NEGATIVE_INFINITY,
+        label: `${campaign.campaignName || "Untitled Campaign"}${campaign.campaignDelivery ? ` · ${campaign.campaignDelivery}` : ""}`,
+      };
+    })
+    .sort((first, second) => {
+      if (Number(second.active) !== Number(first.active)) {
+        return Number(second.active) - Number(first.active);
+      }
+      if (second.latestTime !== first.latestTime) return second.latestTime - first.latestTime;
+      return first.name.localeCompare(second.name) || first.id.localeCompare(second.id);
+    });
+
+export const getDefaultMetaAdsCampaignId = (rows) =>
+  buildMetaAdsCampaignOptions(rows)[0]?.id || "";
+
 export const filterRowsByCampaign = (rows, campaign) => {
   const campaignKey = getCampaignIdentity(campaign || {});
   return dedupeMetaAdsRows(rows).filter((row) => getCampaignIdentity(row) === campaignKey);
