@@ -27,4 +27,9 @@ The frontend loads the published Google Sheet CSV in `src/hooks/useReelsData.js`
 
 ## Automation
 
-The Google Apps Script sync lives in `automation/google-apps-script/instagram_sync.gs`. It can bootstrap rows from Instagram, backfill media IDs, and sync Instagram metrics into the sheet.
+Google Apps Script sync files live in `automation/google-apps-script/`:
+
+- `instagram_sync.gs` bootstraps rows from Instagram, backfills media IDs, and syncs Instagram metrics.
+- `meta_ads_sync.gs` syncs campaign-level Meta Ads insights into the `Meta Ads API Test` tab.
+
+Setup steps and credential safety notes are documented in `automation/google-apps-script/SETUP.md`.
