@@ -32,7 +32,6 @@ const DEFAULT_FILTERS = {
 export function MetaAdsReportingPage() {
   const { rows, loading, refreshing, error, usingFallback } = useMetaAdsData();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [campaignSearch, setCampaignSearch] = useState("");
   const [campaignSort, setCampaignSort] = useState({
     key: "amountSpent",
     direction: "desc",
@@ -60,13 +59,10 @@ export function MetaAdsReportingPage() {
     [filteredRows, filters.grouping, filters.trendMetric]
   );
   const campaignRows = useMemo(() => {
-    const search = campaignSearch.trim().toLowerCase();
-    const groupedRows = aggregateByCampaign(filteredRows).filter((row) =>
-      search ? row.campaignName.toLowerCase().includes(search) : true
-    );
+    const groupedRows = aggregateByCampaign(filteredRows);
 
     return sortRows(groupedRows, campaignSort.key, campaignSort.direction);
-  }, [campaignSearch, campaignSort, filteredRows]);
+  }, [campaignSort, filteredRows]);
   const deliveryRows = useMemo(() => buildDeliveryRows(filteredRows), [filteredRows]);
   const insights = useMemo(
     () =>
@@ -87,7 +83,6 @@ export function MetaAdsReportingPage() {
 
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
-    setCampaignSearch("");
     setCampaignSort({ key: "amountSpent", direction: "desc" });
   };
 
@@ -146,9 +141,7 @@ export function MetaAdsReportingPage() {
 
           <MetaAdsCampaignTable
             rows={campaignRows}
-            search={campaignSearch}
             sort={campaignSort}
-            onSearch={setCampaignSearch}
             onSort={handleCampaignSort}
           />
 

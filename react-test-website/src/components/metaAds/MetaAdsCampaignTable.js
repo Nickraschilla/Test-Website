@@ -13,9 +13,7 @@ const columns = [
 
 export function MetaAdsCampaignTable({
   rows,
-  search,
   sort,
-  onSearch,
   onSort,
 }) {
   const sortArrow = (key) => {
@@ -32,15 +30,6 @@ export function MetaAdsCampaignTable({
     <section className="analytics-table-card meta-ads-table-card">
       <div className="analytics-card-header">
         <strong>Campaign Performance</strong>
-        <label className="meta-ads-search">
-          Search
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => onSearch(event.target.value)}
-            placeholder="Campaign name"
-          />
-        </label>
       </div>
       <div className="analytics-table-scroll">
         <table className="analytics-table meta-ads-campaign-table">

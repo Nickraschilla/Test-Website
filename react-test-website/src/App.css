@@ -1526,27 +1526,6 @@ select {
   cursor: default;
 }
 
-.meta-ads-search {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #ffffff;
-  font-size: 0.72rem;
-  font-weight: 900;
-}
-
-.meta-ads-search input {
-  min-height: 26px;
-  width: min(220px, 34vw);
-  border: 0;
-  border-radius: 5px;
-  padding: 0 9px;
-  color: #111d31;
-  font-size: 0.76rem;
-  font-weight: 800;
-}
-
 .meta-ads-funnel {
   display: grid;
   gap: 14px;
@@ -4377,15 +4356,6 @@ select {
 
   .analytics-chart-card {
     min-height: 340px;
-  }
-
-  .meta-ads-search {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .meta-ads-search input {
-    width: 100%;
   }
 
   .meta-ads-funnel-rates {
