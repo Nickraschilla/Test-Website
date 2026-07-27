@@ -152,8 +152,13 @@ test('opens the Meta Ads Reporting tab', () => {
   expect(screen.getByText('Meta Test Campaign')).toBeInTheDocument();
   expect(screen.getByText(/15 June 2026 to 01 July 2026/i)).toBeInTheDocument();
   expect(screen.getByText(/daily performance/i)).toBeInTheDocument();
+  expect(screen.getByText(/daily trend/i)).toBeInTheDocument();
+  expect(screen.getByText(/campaign read/i)).toBeInTheDocument();
+  expect(screen.getByText(/campaign vs other campaigns/i)).toBeInTheDocument();
   expect(screen.getByText('$180.00')).toBeInTheDocument();
   expect(screen.getAllByText('18').length).toBeGreaterThan(0);
+  expect(screen.getByText(/18 from \$180\.00/i)).toBeInTheDocument();
+  expect(screen.getByText(/12 on 01 July 2026/i)).toBeInTheDocument();
 });
 
 test('switches the selected Meta Ads campaign with the dropdown', () => {
@@ -168,6 +173,7 @@ test('switches the selected Meta Ads campaign with the dropdown', () => {
   expect(screen.getByText(/02 July 2026 to 02 July 2026/i)).toBeInTheDocument();
   expect(screen.getAllByText('$90.00').length).toBeGreaterThan(0);
   expect(screen.getAllByText('3').length).toBeGreaterThan(0);
+  expect(screen.getByText(/3 from \$90\.00/i)).toBeInTheDocument();
 });
 
 test('uses Instagram loading state for the default page', () => {

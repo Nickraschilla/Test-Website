@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { MetaAdsCampaignAnalysis } from "../components/metaAds/MetaAdsCampaignAnalysis";
+import { MetaAdsCampaignTrend } from "../components/metaAds/MetaAdsCampaignTrend";
 import { MetaAdsDailyCampaignTable } from "../components/metaAds/MetaAdsDailyCampaignTable";
 import { MetaAdsFilters } from "../components/metaAds/MetaAdsFilters";
 import { MetaAdsSelectedCampaignKpis } from "../components/metaAds/MetaAdsSelectedCampaignKpis";
@@ -115,6 +117,15 @@ export function MetaAdsReportingPage() {
           ) : (
             <>
               <MetaAdsSelectedCampaignKpis summary={selectedSummary} />
+              <section className="meta-ads-campaign-layout">
+                <MetaAdsCampaignTrend rows={selectedRows} />
+                <MetaAdsCampaignAnalysis
+                  allRows={rows}
+                  campaign={selectedCampaign}
+                  rows={selectedRows}
+                  summary={selectedSummary}
+                />
+              </section>
               <MetaAdsDailyCampaignTable rows={selectedRows} />
             </>
           )}
