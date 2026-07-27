@@ -11,8 +11,8 @@ export const GROUPING_OPTIONS = ["Daily", "Weekly", "Monthly"];
 
 export const TREND_METRICS = [
   { key: "amountSpent", label: "Spend", format: "currency" },
-  { key: "results", label: "Results", format: "number" },
-  { key: "costPerResult", label: "Cost per Result", format: "currency", lowerIsBetter: true },
+  { key: "results", label: "Leads", format: "number" },
+  { key: "costPerResult", label: "Cost per Lead", format: "currency", lowerIsBetter: true },
   { key: "impressions", label: "Impressions", format: "number" },
   { key: "reach", label: "Reach", format: "number" },
 ];
@@ -310,7 +310,7 @@ export const buildInsights = ({ campaigns, summary }) => {
 
   const topResultCampaign = sortRows(campaignsWithResults, "results", "desc")[0];
   if (topResultCampaign) {
-    insights.push(`${topResultCampaign.campaignName} has the highest result volume with ${formatMetricValue(topResultCampaign.results)} ${topResultCampaign.resultIndicator.toLowerCase()}.`);
+    insights.push(`${topResultCampaign.campaignName} has the highest lead volume with ${formatMetricValue(topResultCampaign.results)} leads.`);
   }
 
   const bestCostCampaign = sortRows(
@@ -319,7 +319,7 @@ export const buildInsights = ({ campaigns, summary }) => {
     "asc"
   )[0];
   if (bestCostCampaign) {
-    insights.push(`${bestCostCampaign.campaignName} has the lowest cost per result at ${formatMetricValue(bestCostCampaign.costPerResult, "currency")}.`);
+    insights.push(`${bestCostCampaign.campaignName} has the lowest cost per lead at ${formatMetricValue(bestCostCampaign.costPerResult, "currency")}.`);
   }
 
   const noDeliveryCampaign = campaigns.find((campaign) => !campaign.campaignDelivery || campaign.campaignDelivery === "—");
@@ -331,11 +331,11 @@ export const buildInsights = ({ campaigns, summary }) => {
     (campaign) => hasNumber(campaign.amountSpent) && campaign.amountSpent > 0 && campaign.results === 0
   );
   if (spendNoResults) {
-    insights.push(`${spendNoResults.campaignName} has spend recorded with zero results for this view.`);
+    insights.push(`${spendNoResults.campaignName} has spend recorded with zero leads for this view.`);
   }
 
   if (hasNumber(summary.costPerResult)) {
-    insights.push(`Overall cost per result is ${formatMetricValue(summary.costPerResult, "currency")} for the selected data.`);
+    insights.push(`Overall cost per lead is ${formatMetricValue(summary.costPerResult, "currency")} for the selected data.`);
   }
 
   return insights;

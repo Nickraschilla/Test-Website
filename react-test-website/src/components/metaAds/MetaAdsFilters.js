@@ -73,7 +73,7 @@ export function MetaAdsFilters({
             value={filters.resultIndicator}
             onChange={(event) => updateFilter("resultIndicator", event.target.value)}
           >
-            <option value="all">All results</option>
+            <option value="all">All lead types</option>
             {options.resultIndicators.map((indicator) => (
               <option key={indicator} value={indicator}>
                 {indicator}

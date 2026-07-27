@@ -12,8 +12,8 @@ export function MetaAdsDeliveryBreakdown({ rows }) {
             <tr>
               <th>Campaign Delivery</th>
               <th>Spend</th>
-              <th>Results</th>
-              <th>Cost / Result</th>
+              <th>Leads</th>
+              <th>Cost / Lead</th>
               <th>Reach</th>
               <th>Impressions</th>
             </tr>

@@ -3,8 +3,8 @@ import { formatDateLabel, formatMetricValue } from "../../utils/metaAdsAnalytics
 const columns = [
   { key: "campaignName", label: "Campaign", numeric: false },
   { key: "amountSpent", label: "Spend", format: "currency", numeric: true },
-  { key: "results", label: "Results", numeric: true },
-  { key: "costPerResult", label: "Cost / Result", format: "currency", numeric: true },
+  { key: "results", label: "Leads", numeric: true },
+  { key: "costPerResult", label: "Cost / Lead", format: "currency", numeric: true },
   { key: "reach", label: "Reach", numeric: true },
   { key: "impressions", label: "Impressions", numeric: true },
   { key: "reportingStarts", label: "Starts", numeric: false, date: true },

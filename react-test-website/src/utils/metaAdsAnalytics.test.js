@@ -6,7 +6,7 @@ import {
 } from "./metaAdsAnalytics";
 import { parseMetaAdsSheetResults } from "./metaAdsSheetParser";
 
-test("aggregates raw totals before calculating cost per result", () => {
+test("aggregates raw totals before calculating cost per lead", () => {
   const summary = buildMetaAdsSummary([
     { amountSpent: 100, results: 4, impressions: 1000, reach: 800 },
     { amountSpent: 50, results: 6, impressions: 500, reach: 350 },
@@ -72,9 +72,9 @@ test("parses representative Meta Ads sheet rows", () => {
         "Reporting Ends",
         "Campaign Name",
         "Campaign Delivery",
-        "Results",
-        "Result Indicator",
-        "Cost Per Results",
+        "Leads",
+        "Result Type",
+        "Cost Per Lead",
         "Amount Spent (AUD)",
         "Impressions",
         "Reach",
@@ -94,7 +94,7 @@ test("parses representative Meta Ads sheet rows", () => {
       [
         "2026-07-08",
         "2026-07-14",
-        "Blank Results",
+        "Blank Leads",
         "Active",
         "",
         "Lead forms",
@@ -131,7 +131,7 @@ test("parses representative Meta Ads sheet rows", () => {
     reach: 8500,
   });
   expect(parsedRows[1]).toMatchObject({
-    campaignName: "Blank Results",
+    campaignName: "Blank Leads",
     results: null,
     costPerResult: null,
     amountSpent: 0,
@@ -143,5 +143,21 @@ test("parses representative Meta Ads sheet rows", () => {
     campaignDelivery: "",
     results: 0,
     costPerResult: null,
+  });
+});
+
+test("still accepts old Results and Cost Per Results headers as fallbacks", () => {
+  const parsedRows = parseMetaAdsSheetResults({
+    data: [
+      ["Campaign Name", "Results", "Result Indicator", "Cost Per Results"],
+      ["Legacy Campaign", "8", "Meta leads", "$20.00"],
+    ],
+  });
+
+  expect(parsedRows[0]).toMatchObject({
+    campaignName: "Legacy Campaign",
+    results: 8,
+    resultIndicator: "Meta leads",
+    costPerResult: 20,
   });
 });
