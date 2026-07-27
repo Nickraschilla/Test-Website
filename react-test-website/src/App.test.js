@@ -129,6 +129,18 @@ beforeEach(() => {
         converted: true,
         status: 'Converted',
       },
+      {
+        id: 'lead-3',
+        campaignId: 'different-sheet-id',
+        campaignName: 'Meta Test Campaign',
+        name: 'Name Match Lead',
+        position: 'Coach',
+        club: 'Name Match FC',
+        league: 'EFNL',
+        contacted: false,
+        converted: false,
+        status: 'New',
+      },
     ],
     loading: false,
     refreshing: false,
@@ -217,6 +229,7 @@ test('shows lead pipeline rows from the lead sheet for the selected campaign', (
   fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
 
   expect(screen.getByText('Test Lead')).toBeInTheDocument();
+  expect(screen.getByText('Name Match Lead')).toBeInTheDocument();
   expect(screen.getByText('President')).toBeInTheDocument();
   expect(screen.getByText('Example FC')).toBeInTheDocument();
   expect(screen.queryByText('Other Lead')).not.toBeInTheDocument();

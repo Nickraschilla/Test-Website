@@ -43,6 +43,19 @@ const describeCampaignRun = (campaignRows) => {
   });
 };
 
+const normaliseCampaignName = (value) => String(value || "").trim().toLowerCase();
+
+const getLeadsForCampaign = (leadRows, campaign) => {
+  const campaignId = getMetaCampaignId(campaign);
+  const campaignName = normaliseCampaignName(campaign?.campaignName);
+
+  return leadRows.filter(
+    (lead) =>
+      lead.campaignId === campaignId ||
+      (campaignName && normaliseCampaignName(lead.campaignName) === campaignName)
+  );
+};
+
 export function MetaAdsReportingPage() {
   const { rows, loading, refreshing, error, usingFallback } = useMetaAdsData();
   const {
@@ -66,13 +79,12 @@ export function MetaAdsReportingPage() {
 
   const leadsByCampaign = useMemo(
     () =>
-      leads.reduce((map, lead) => {
-        const campaignLeads = map[lead.campaignId] || [];
-        campaignLeads.push(lead);
-        map[lead.campaignId] = campaignLeads;
+      campaignOptions.reduce((map, campaign) => {
+        const campaignId = getMetaCampaignId(campaign);
+        map[campaignId] = getLeadsForCampaign(leads, campaign);
         return map;
       }, {}),
-    [leads]
+    [campaignOptions, leads]
   );
 
   const comparison = useMemo(
@@ -95,8 +107,8 @@ export function MetaAdsReportingPage() {
   );
   const activePeriod = useMemo(() => describeCampaignRun(selectedRows), [selectedRows]);
   const selectedManualLeads = useMemo(
-    () => leadsByCampaign[getMetaCampaignId(selectedCampaign)] || [],
-    [leadsByCampaign, selectedCampaign]
+    () => getLeadsForCampaign(leads, selectedCampaign),
+    [leads, selectedCampaign]
   );
   const selectedReview = useMemo(
     () => buildCampaignReviewMetrics({ ...selectedCampaign, rows: selectedRows }, selectedManualLeads),
@@ -185,6 +197,7 @@ export function MetaAdsReportingPage() {
           />
           <MetaAdsLeadPipeline
             campaignId={getMetaCampaignId(selectedCampaign)}
+            campaignName={selectedCampaign.campaignName}
             leads={leads}
             loading={leadsLoading}
             refreshing={leadsRefreshing}

@@ -2,10 +2,18 @@ import { useMemo } from "react";
 import { MANUAL_LEAD_STATUSES, buildManualLeadSummary } from "../../utils/metaAdsCampaignReview";
 import { formatMetricValue } from "../../utils/metaAdsAnalytics";
 
-export function MetaAdsLeadPipeline({ campaignId, leads, loading, refreshing, error, campaignSpend }) {
+const normaliseCampaignName = (value) => String(value || "").trim().toLowerCase();
+
+export function MetaAdsLeadPipeline({ campaignId, campaignName, leads, loading, refreshing, error, campaignSpend }) {
   const campaignLeads = useMemo(
-    () => leads.filter((lead) => lead.campaignId === campaignId),
-    [campaignId, leads]
+    () =>
+      leads.filter(
+        (lead) =>
+          lead.campaignId === campaignId ||
+          (campaignName &&
+            normaliseCampaignName(lead.campaignName) === normaliseCampaignName(campaignName))
+      ),
+    [campaignId, campaignName, leads]
   );
   const summary = useMemo(() => buildManualLeadSummary(campaignLeads), [campaignLeads]);
   const costPerConvertedCustomer = summary.convertedCount
@@ -72,7 +80,7 @@ export function MetaAdsLeadPipeline({ campaignId, leads, loading, refreshing, er
             {!loading && campaignLeads.length === 0 ? (
               <tr>
                 <td className="analytics-empty-row" colSpan="6">
-                  No lead pipeline rows match this campaign ID.
+                  No lead pipeline rows match this campaign.
                 </td>
               </tr>
             ) : null}
