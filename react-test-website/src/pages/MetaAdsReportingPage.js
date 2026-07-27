@@ -4,8 +4,6 @@ import { MetaAdsFilters } from "../components/metaAds/MetaAdsFilters";
 import { MetaAdsLeadPipeline } from "../components/metaAds/MetaAdsLeadPipeline";
 import { MetaAdsPerformanceOverTime } from "../components/metaAds/MetaAdsPerformanceOverTime";
 import { MetaAdsReviewKpis } from "../components/metaAds/MetaAdsReviewKpis";
-import { useMetaAdsData } from "../hooks/useMetaAdsData";
-import { useMetaAdsManualLeads } from "../hooks/useMetaAdsManualLeads";
 import {
   describeDateWindow,
   parseDate,
@@ -53,14 +51,14 @@ const getLeadsForCampaign = (leadRows, campaign) => {
   );
 };
 
-export function MetaAdsReportingPage() {
-  const { rows, loading, refreshing, error, usingFallback } = useMetaAdsData();
+export function MetaAdsReportingPage({ metaAdsData, metaAdsLeadsData }) {
+  const { rows, loading, refreshing, error, usingFallback } = metaAdsData;
   const {
     leads,
     loading: leadsLoading,
     refreshing: leadsRefreshing,
     error: leadsError,
-  } = useMetaAdsManualLeads();
+  } = metaAdsLeadsData;
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [comparisonSort, setComparisonSort] = useState(DEFAULT_SORT);
 

@@ -13,6 +13,8 @@ import {
   normalizeContentTypeLabel,
   shouldShowContentTotalLabel,
 } from "./config/instagramContent";
+import { useMetaAdsData } from "./hooks/useMetaAdsData";
+import { useMetaAdsManualLeads } from "./hooks/useMetaAdsManualLeads";
 import { useInstagramData, useReelsData } from "./hooks/useReelsData";
 import {
   buildMonthOptions,
@@ -1440,6 +1442,8 @@ function App() {
     refreshing: instagramRefreshing,
     error: instagramError,
   } = useInstagramData();
+  const metaAdsData = useMetaAdsData();
+  const metaAdsLeadsData = useMetaAdsManualLeads();
   const [activeTab, setActiveTab] = useState("new-page");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [contentGroups] = useState(() => {
@@ -1776,7 +1780,10 @@ function App() {
         </section>
             </main>
           ) : activeTab === "meta-ads" ? (
-            <MetaAdsReportingPage />
+            <MetaAdsReportingPage
+              metaAdsData={metaAdsData}
+              metaAdsLeadsData={metaAdsLeadsData}
+            />
           ) : (
             <InstagramContentPage
               reels={instagramRows}
