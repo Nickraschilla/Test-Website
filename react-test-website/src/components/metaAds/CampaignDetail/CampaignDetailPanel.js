@@ -12,15 +12,25 @@ import { LeadTrackingSection } from "./LeadTrackingSection";
 
 export function CampaignDetailPanel({
   campaign,
+  campaigns,
+  selectedCampaignId,
   currentRows,
   previousRows,
   activePeriod,
+  onSelectCampaign,
   onBack,
 }) {
   if (!campaign) {
     return (
       <section className="analytics-breakdown-card meta-campaign-detail-panel">
-        <CampaignDetailHeader campaign={null} activePeriod={activePeriod} onBack={onBack} />
+        <CampaignDetailHeader
+          campaign={null}
+          campaigns={campaigns}
+          selectedCampaignId={selectedCampaignId}
+          activePeriod={activePeriod}
+          onSelectCampaign={onSelectCampaign}
+          onBack={onBack}
+        />
         <p className="meta-ads-empty-copy">Campaign not found.</p>
       </section>
     );
@@ -41,8 +51,11 @@ export function CampaignDetailPanel({
     <section className="meta-campaign-detail-panel">
       <CampaignDetailHeader
         campaign={campaign}
+        campaigns={campaigns}
+        selectedCampaignId={selectedCampaignId}
         activePeriod={activePeriod}
         lastSynced={lastSynced}
+        onSelectCampaign={onSelectCampaign}
         onBack={onBack}
       />
 

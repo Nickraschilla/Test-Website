@@ -32,6 +32,7 @@ jest.mock('./hooks/useMetaAdsData', () => ({
 
 beforeEach(() => {
   window.localStorage.clear();
+  window.history.replaceState(null, '', '/');
   mockSocialsData = {
     reels: [],
     loading: false,
@@ -76,6 +77,20 @@ beforeEach(() => {
         impressions: 500,
         reach: 400,
         frequency: 1.2,
+      },
+      {
+        id: 'campaign-2',
+        reportingStarts: '2026-07-02',
+        reportingEnds: '2026-07-02',
+        campaignId: 'cmp_second',
+        campaignName: 'Second Meta Campaign',
+        campaignDelivery: 'Ended',
+        results: 3,
+        resultIndicator: 'Meta leads',
+        amountSpent: 90,
+        impressions: 700,
+        reach: 500,
+        frequency: 1.4,
       },
     ],
     loading: false,
@@ -135,6 +150,7 @@ test('opens the Meta Ads Reporting tab', () => {
   ).toBeInTheDocument();
   expect(screen.getByText(/campaign performance, lead generation and creative analysis/i)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /compare previous period/i })).toBeInTheDocument();
+  expect(screen.getByLabelText(/campaign review/i)).toHaveValue('cmp_meta_test');
 });
 
 test('selects a Meta Ads campaign row by mouse and preserves the date range', () => {
@@ -145,8 +161,40 @@ test('selects a Meta Ads campaign row by mouse and preserves the date range', ()
 
   expect(screen.getByRole('button', { name: /back to campaigns/i })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: /meta test campaign/i })).toBeInTheDocument();
-  expect(screen.getAllByText(/02 June 2026 to 01 July 2026/i).length).toBeGreaterThanOrEqual(2);
+  expect(screen.getAllByText(/03 June 2026 to 02 July 2026/i).length).toBeGreaterThanOrEqual(2);
   expect(screen.getByText(/last synced 27 July 2026/i)).toBeInTheDocument();
+});
+
+test('changes the campaign review with the dropdown and updates URL state', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
+  fireEvent.change(screen.getByLabelText(/campaign review/i), {
+    target: { value: 'cmp_second' },
+  });
+
+  expect(screen.getByRole('heading', { name: /second meta campaign/i })).toBeInTheDocument();
+  expect(window.location.search).toContain('campaign=cmp_second');
+});
+
+test('uses a valid campaign query parameter selection', () => {
+  window.history.replaceState(null, '', '/?campaign=cmp_second');
+
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
+
+  expect(screen.getByLabelText(/campaign review/i)).toHaveValue('cmp_second');
+});
+
+test('falls back from an invalid campaign query parameter', () => {
+  window.history.replaceState(null, '', '/?campaign=missing');
+
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
+
+  expect(screen.getByLabelText(/campaign review/i)).toHaveValue('cmp_meta_test');
 });
 
 test('selects a Meta Ads campaign row by keyboard', () => {

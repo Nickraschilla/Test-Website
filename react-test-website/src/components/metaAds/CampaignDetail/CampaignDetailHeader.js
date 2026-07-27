@@ -1,16 +1,27 @@
 import { formatDateLabel } from "../../../utils/metaAdsAnalytics";
+import { CampaignSelector } from "./CampaignSelector";
 
 export function CampaignDetailHeader({
   campaign,
+  campaigns,
+  selectedCampaignId,
   activePeriod,
   lastSynced,
+  onSelectCampaign,
   onBack,
 }) {
   return (
     <section className="meta-campaign-detail-header">
-      <button type="button" onClick={onBack}>
-        Back to campaigns
-      </button>
+      <div className="meta-campaign-detail-actions">
+        <button type="button" onClick={onBack}>
+          Back to campaigns
+        </button>
+        <CampaignSelector
+          campaigns={campaigns}
+          selectedCampaignId={selectedCampaignId}
+          onChange={onSelectCampaign}
+        />
+      </div>
       <div>
         <h2>{campaign?.campaignName || "Campaign not found"}</h2>
         <div className="meta-campaign-detail-meta">
