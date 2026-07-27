@@ -1,9 +1,15 @@
 const GRAPH_API_VERSION = "v23.0";
 const DEFAULT_SHEET_NAME = "Sheet1";
 const MEDIA_LIMIT = 100;
+const START_DATE = "2025-01-01T00:00:00Z";
 const HEADER_ROW = [
   "name",
   "reelName",
+  "contentTitle",
+  "contentGroup",
+  "contentType",
+  "mediaType",
+  "mediaProductType",
   "clipUrl",
   "igMediaId",
   "igViews",
@@ -11,6 +17,8 @@ const HEADER_ROW = [
   "igComments",
   "igShares",
   "igSaves",
+  "igReach",
+  "igFollowers",
   "lastSyncedAt",
   "publishedAt",
   "fbViews",
@@ -18,6 +26,11 @@ const HEADER_ROW = [
   "fbComments",
   "fbShares",
   "fbSaves",
+  "ttViews",
+  "ttLikes",
+  "ttComments",
+  "ttShares",
+  "ttSaves",
   "totalViews",
   "totalLikes",
   "totalComments",
@@ -31,7 +44,7 @@ function syncInstagramInsightsToSheet() {
   ensureHeaderRow_(sheet);
 
   const headerMap = getHeaderMap_(sheet);
-  const existingRows = readSheetRows_(sheet, headerMap);
+  const existingRows = readSheetRows_(sheet, headerMap).filter(isOnOrAfterStartDate_);
   if (!existingRows.length) {
     throw new Error(
       "No data rows found. Add rows manually first or run bootstrapSheetFromInstagram()."
@@ -39,6 +52,7 @@ function syncInstagramInsightsToSheet() {
   }
 
   const mediaItems = fetchMedia_(config);
+  const followerCount = fetchFollowerCount_(config);
   const mediaById = {};
   const mediaByPermalink = {};
 
@@ -51,7 +65,15 @@ function syncInstagramInsightsToSheet() {
   });
 
   existingRows.forEach((row) => {
-    syncSheetRowInPlace_(config, sheet, headerMap, row, mediaById, mediaByPermalink);
+    syncSheetRowInPlace_(
+      config,
+      sheet,
+      headerMap,
+      row,
+      mediaById,
+      mediaByPermalink,
+      followerCount
+    );
   });
 }
 
@@ -61,7 +83,7 @@ function bootstrapSheetFromInstagram() {
   ensureHeaderRow_(sheet);
 
   const headerMap = getHeaderMap_(sheet);
-  const existingRows = readSheetRows_(sheet, headerMap);
+  const existingRows = readSheetRows_(sheet, headerMap).filter(isOnOrAfterStartDate_);
   const existingKeys = {};
 
   existingRows.forEach((row) => {
@@ -75,13 +97,17 @@ function bootstrapSheetFromInstagram() {
   });
 
   const mediaItems = fetchMedia_(config);
+  const followerCount = fetchFollowerCount_(config);
   const newRows = mediaItems
+    .filter(isMediaOnOrAfterStartDate_)
     .filter((media) => {
       const idKey = "id:" + media.id;
       const urlKey = "url:" + normalizeUrl_(media.permalink || "");
       return !existingKeys[idKey] && !existingKeys[urlKey];
     })
-    .map((media) => buildSheetRowForMedia_(config, headerMap, sheet.getLastColumn(), media));
+    .map((media) =>
+      buildSheetRowForMedia_(config, headerMap, sheet.getLastColumn(), media, followerCount)
+    );
 
   if (newRows.length) {
     sheet
@@ -223,12 +249,17 @@ function setValueByHeader_(row, headerMap, header, value) {
   }
 }
 
-function buildSheetRowForMedia_(config, headerMap, columnCount, media) {
+function buildSheetRowForMedia_(config, headerMap, columnCount, media, followerCount) {
   const row = Array(columnCount).fill("");
 
   setValueByHeader_(row, headerMap, "reelName", buildReelName_(media));
+  setValueByHeader_(row, headerMap, "contentTitle", buildReelName_(media));
+  setValueByHeader_(row, headerMap, "contentType", getContentType_(media));
+  setValueByHeader_(row, headerMap, "mediaType", media.media_type || "");
+  setValueByHeader_(row, headerMap, "mediaProductType", media.media_product_type || "");
   setValueByHeader_(row, headerMap, "clipUrl", media.permalink || "");
   setValueByHeader_(row, headerMap, "igMediaId", media.id);
+  setValueByHeader_(row, headerMap, "igFollowers", followerCount || "");
   setValueByHeader_(row, headerMap, "publishedAt", media.timestamp || "");
 
   return row;
@@ -248,6 +279,11 @@ function readSheetRows_(sheet, headerMap) {
       rowNumber: index + 2,
       name: getRowValue_(row, headerMap, "name") || "",
       reelName: getRowValue_(row, headerMap, "reelName") || "",
+      contentTitle: getRowValue_(row, headerMap, "contentTitle") || "",
+      contentGroup: getRowValue_(row, headerMap, "contentGroup") || "",
+      contentType: getRowValue_(row, headerMap, "contentType") || "",
+      mediaType: getRowValue_(row, headerMap, "mediaType") || "",
+      mediaProductType: getRowValue_(row, headerMap, "mediaProductType") || "",
       clipUrl: getRowValue_(row, headerMap, "clipUrl") || "",
       igMediaId: getRowValue_(row, headerMap, "igMediaId") || "",
       igViews: Number(getRowValue_(row, headerMap, "igViews") || 0),
@@ -255,10 +291,24 @@ function readSheetRows_(sheet, headerMap) {
       igComments: Number(getRowValue_(row, headerMap, "igComments") || 0),
       igShares: Number(getRowValue_(row, headerMap, "igShares") || 0),
       igSaves: Number(getRowValue_(row, headerMap, "igSaves") || 0),
+      igReach: Number(getRowValue_(row, headerMap, "igReach") || 0),
+      igFollowers: Number(getRowValue_(row, headerMap, "igFollowers") || 0),
       lastSyncedAt: getRowValue_(row, headerMap, "lastSyncedAt") || "",
       publishedAt: getRowValue_(row, headerMap, "publishedAt") || "",
     }))
-    .filter((row) => row.name || row.reelName || row.clipUrl || row.igMediaId);
+    .filter((row) => row.name || row.reelName || row.contentTitle || row.clipUrl || row.igMediaId);
+}
+
+function isOnOrAfterStartDate_(row) {
+  if (!START_DATE) return true;
+  const date = new Date(row.publishedAt || "");
+  return !Number.isNaN(date.getTime()) && date >= new Date(START_DATE);
+}
+
+function isMediaOnOrAfterStartDate_(media) {
+  if (!START_DATE) return true;
+  const date = new Date(media.timestamp || "");
+  return !Number.isNaN(date.getTime()) && date >= new Date(START_DATE);
 }
 
 function fetchMedia_(config) {
@@ -292,46 +342,39 @@ function fetchMedia_(config) {
     throw new Error("Meta media fetch failed: " + response.getContentText());
   }
 
-  return (payload.data || []).filter(isReelMedia_);
+  return payload.data || [];
 }
 
-function isReelMedia_(media) {
-  const productType = String(media.media_product_type || "").toUpperCase();
-  const permalink = String(media.permalink || "").toLowerCase();
+function fetchFollowerCount_(config) {
+  const url =
+    "https://graph.facebook.com/" +
+    GRAPH_API_VERSION +
+    "/" +
+    encodeURIComponent(config.instagramUserId) +
+    "?fields=" +
+    encodeURIComponent("followers_count") +
+    "&access_token=" +
+    encodeURIComponent(config.accessToken);
 
-  return productType === "REELS" || permalink.indexOf("/reel/") !== -1;
-}
+  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  const payload = JSON.parse(response.getContentText());
 
-function syncSheetRow_(config, row, mediaById, mediaByPermalink) {
-  const matchedMedia =
-    mediaById[row.igMediaId] || findMediaForRow_(row, mediaByPermalink) || null;
-
-  if (!matchedMedia) {
-    return rowToArray_({
-      ...row,
-      lastSyncedAt: buildTimestamp_(),
-    });
+  if (response.getResponseCode() >= 400) {
+    throw new Error("Meta follower count fetch failed: " + response.getContentText());
   }
 
-  const insights = fetchInsightsWithFallback_(config.accessToken, matchedMedia.id);
-
-  return rowToArray_({
-    name: row.name || "",
-    reelName: row.reelName || buildReelName_(matchedMedia),
-    clipUrl: row.clipUrl || matchedMedia.permalink || "",
-    igMediaId: matchedMedia.id,
-    publishedAt: row.publishedAt || matchedMedia.timestamp || "",
-    views: getMetricValue_(insights, ["views", "plays", "video_views", "impressions"]),
-    likes: matchedMedia.like_count || getMetricValue_(insights, ["likes"]),
-    comments:
-      matchedMedia.comments_count || getMetricValue_(insights, ["comments"]),
-    reshares: getMetricValue_(insights, ["shares"]),
-    saves: getMetricValue_(insights, ["saved"]),
-    lastSyncedAt: buildTimestamp_(),
-  });
+  return Number(payload.followers_count || 0);
 }
 
-function syncSheetRowInPlace_(config, sheet, headerMap, row, mediaById, mediaByPermalink) {
+function syncSheetRowInPlace_(
+  config,
+  sheet,
+  headerMap,
+  row,
+  mediaById,
+  mediaByPermalink,
+  followerCount
+) {
   const matchedMedia =
     mediaById[row.igMediaId] || findMediaForRow_(row, mediaByPermalink) || null;
 
@@ -343,6 +386,10 @@ function syncSheetRowInPlace_(config, sheet, headerMap, row, mediaById, mediaByP
   const insights = fetchInsightsWithFallback_(config.accessToken, matchedMedia.id);
 
   setCellByHeader_(sheet, headerMap, row.rowNumber, "reelName", row.reelName || buildReelName_(matchedMedia));
+  setCellByHeader_(sheet, headerMap, row.rowNumber, "contentTitle", row.contentTitle || row.reelName || buildReelName_(matchedMedia));
+  setCellByHeader_(sheet, headerMap, row.rowNumber, "contentType", row.contentType || getContentType_(matchedMedia));
+  setCellByHeader_(sheet, headerMap, row.rowNumber, "mediaType", matchedMedia.media_type || row.mediaType || "");
+  setCellByHeader_(sheet, headerMap, row.rowNumber, "mediaProductType", matchedMedia.media_product_type || row.mediaProductType || "");
   setCellByHeader_(sheet, headerMap, row.rowNumber, "clipUrl", row.clipUrl || matchedMedia.permalink || "");
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igMediaId", matchedMedia.id);
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igViews", getMetricValue_(insights, ["views", "plays", "video_views", "impressions"]));
@@ -350,6 +397,8 @@ function syncSheetRowInPlace_(config, sheet, headerMap, row, mediaById, mediaByP
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igComments", matchedMedia.comments_count || getMetricValue_(insights, ["comments"]));
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igShares", getMetricValue_(insights, ["shares"]));
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igSaves", getMetricValue_(insights, ["saved"]));
+  setCellByHeader_(sheet, headerMap, row.rowNumber, "igReach", getMetricValue_(insights, ["reach"]));
+  setCellByHeader_(sheet, headerMap, row.rowNumber, "igFollowers", followerCount || row.igFollowers || "");
   setCellByHeader_(sheet, headerMap, row.rowNumber, "lastSyncedAt", buildTimestamp_());
   setCellByHeader_(sheet, headerMap, row.rowNumber, "publishedAt", row.publishedAt || matchedMedia.timestamp || "");
 }
@@ -370,6 +419,26 @@ function buildReelName_(media) {
   }
 
   return media.permalink || media.id;
+}
+
+function getContentType_(media) {
+  const productType = String(media.media_product_type || "").toUpperCase();
+  const mediaType = String(media.media_type || "").toUpperCase();
+  const permalink = String(media.permalink || "").toLowerCase();
+
+  if (productType === "REELS" || permalink.indexOf("/reel/") !== -1) {
+    return "Reel";
+  }
+
+  if (mediaType === "CAROUSEL_ALBUM") {
+    return "Carousel";
+  }
+
+  if (mediaType === "VIDEO") {
+    return "Video";
+  }
+
+  return "Post";
 }
 
 function fetchInsightsWithFallback_(accessToken, mediaId) {
@@ -447,33 +516,6 @@ function normalizeUrl_(url) {
 
 function buildTimestamp_() {
   return new Date().toISOString();
-}
-
-function rowToArray_(row) {
-  return [
-    row.name || "",
-    row.reelName || "",
-    row.clipUrl || "",
-    row.igMediaId || "",
-    Number(row.views || 0),
-    Number(row.likes || 0),
-    Number(row.comments || 0),
-    Number(row.reshares || 0),
-    Number(row.saves || 0),
-    row.lastSyncedAt || "",
-    row.publishedAt || "",
-  ];
-}
-
-function writeRows_(sheet, rows) {
-  sheet.clearContents();
-  sheet.getRange(1, 1, 1, HEADER_ROW.length).setValues([HEADER_ROW]);
-
-  if (!rows.length) {
-    return;
-  }
-
-  sheet.getRange(2, 1, rows.length, HEADER_ROW.length).setValues(rows);
 }
 
 function backfillPublishedAtOnly() {

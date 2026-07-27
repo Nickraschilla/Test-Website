@@ -5,7 +5,7 @@ This setup keeps your React dashboard reading from Google Sheets, while Meta sup
 The sheet structure for this version is:
 
 ```text
-name | reelName | clipUrl | igMediaId | views | likes | comments | reshares | saves | lastSyncedAt | publishedAt
+name | reelName | clipUrl | igMediaId | igViews | igLikes | igComments | igShares | igSaves | lastSyncedAt | publishedAt | fbViews | fbLikes | fbComments | fbShares | fbSaves | ttViews | ttLikes | ttComments | ttShares | ttSaves | totalViews | totalLikes | totalComments | totalShares | totalSaves
 ```
 
 ## What the script does
@@ -13,14 +13,15 @@ name | reelName | clipUrl | igMediaId | views | likes | comments | reshares | sa
 - Keeps your manual columns intact: `name`, `reelName`, `clipUrl`
 - Stores the Meta reel identifier in `igMediaId`
 - Pulls updated metrics from Meta using that `igMediaId`
-- Writes fresh values into `views`, `likes`, `comments`, `reshares`, `saves`
+- Writes fresh Instagram values into `igViews`, `igLikes`, `igComments`, `igShares`, `igSaves`
+- Preserves Facebook, TikTok, and total columns for weekly/manual reporting
 - Timestamps each sync in `lastSyncedAt`
 - Stores the Instagram publish time from Meta in `publishedAt`
 
 ## Files
 
 - Script: [instagram_sync.gs](</Users/nickraschilla/Desktop/Test Website/Test-Website/react-test-website/automation/google-apps-script/instagram_sync.gs>)
-- React parser updated to match this column order: [App.js](</Users/nickraschilla/Desktop/Test Website/Test-Website/react-test-website/src/App.js>)
+- React parser updated to match this column order: [useReelsData.js](</Users/nickraschilla/Desktop/Test Website/Test-Website/react-test-website/src/hooks/useReelsData.js>)
 
 ## What you need before starting
 
@@ -42,7 +43,7 @@ Meta help center references:
 Create these headers in row 1:
 
 ```text
-name | reelName | clipUrl | igMediaId | views | likes | comments | reshares | saves | lastSyncedAt | publishedAt
+name | reelName | clipUrl | igMediaId | igViews | igLikes | igComments | igShares | igSaves | lastSyncedAt | publishedAt | fbViews | fbLikes | fbComments | fbShares | fbSaves | ttViews | ttLikes | ttComments | ttShares | ttSaves | totalViews | totalLikes | totalComments | totalShares | totalSaves
 ```
 
 Fill at least:
@@ -54,11 +55,11 @@ Fill at least:
 Leave these blank for now if you do not have them yet:
 
 - `igMediaId`
-- `views`
-- `likes`
-- `comments`
-- `reshares`
-- `saves`
+- `igViews`
+- `igLikes`
+- `igComments`
+- `igShares`
+- `igSaves`
 - `lastSyncedAt`
 - `publishedAt`
 

@@ -1,4 +1,9 @@
 export const DIRECT_VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm", ".m4v", ".ogg"];
+export const PLATFORM_OPTIONS = [
+  { value: "instagram", label: "Instagram", icon: "/Instagram.svg" },
+  { value: "facebook", label: "Facebook", icon: "/Facebook.svg.png" },
+  { value: "tiktok", label: "TikTok", icon: "/Tiktok.avif" },
+];
 
 export const toNumber = (value) =>
   Number(String(value || "").replace(/,/g, "")) || 0;
@@ -35,6 +40,75 @@ export const getMomentumScore = (reel) => {
 export const getImpactScore = getMomentumScore;
 
 export const formatNumber = (value) => Number(value || 0).toLocaleString();
+
+const sumMetrics = (metricSets) =>
+  metricSets.reduce(
+    (totals, metrics) => ({
+      views: totals.views + Number(metrics.views || 0),
+      likes: totals.likes + Number(metrics.likes || 0),
+      comments: totals.comments + Number(metrics.comments || 0),
+      reshares: totals.reshares + Number(metrics.reshares || 0),
+      saves: totals.saves + Number(metrics.saves || 0),
+    }),
+    {
+      views: 0,
+      likes: 0,
+      comments: 0,
+      reshares: 0,
+      saves: 0,
+    }
+  );
+
+export const getPlatformMetrics = (reel, platform) => {
+  if (Array.isArray(platform)) {
+    return platform.length
+      ? sumMetrics(platform.map((platformValue) => getPlatformMetrics(reel, platformValue)))
+      : getPlatformMetrics(reel, "");
+  }
+
+  if (platform === "instagram") {
+    return {
+      views: reel.igViews,
+      likes: reel.igLikes,
+      comments: reel.igComments,
+      reshares: reel.igShares,
+      saves: reel.igSaves,
+    };
+  }
+
+  if (platform === "facebook") {
+    return {
+      views: reel.fbViews,
+      likes: reel.fbLikes,
+      comments: reel.fbComments,
+      reshares: reel.fbShares,
+      saves: reel.fbSaves,
+    };
+  }
+
+  if (platform === "tiktok") {
+    return {
+      views: reel.ttViews,
+      likes: reel.ttLikes,
+      comments: reel.ttComments,
+      reshares: reel.ttShares,
+      saves: reel.ttSaves,
+    };
+  }
+
+  return {
+    views: reel.views,
+    likes: reel.likes,
+    comments: reel.comments,
+    reshares: reel.reshares,
+    saves: reel.saves,
+  };
+};
+
+export const applyPlatformMetrics = (reel, platform) => ({
+  ...reel,
+  ...getPlatformMetrics(reel, platform),
+});
 
 export const parseReelDate = (reel) => {
   const rawDate =

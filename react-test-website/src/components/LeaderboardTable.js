@@ -5,9 +5,12 @@ export function LeaderboardTable({
   selectedContributor,
   setSelectedContributor,
   setActiveClip,
+  platformLabel,
   formatNumber,
   getMomentumScore,
 }) {
+  const metricPrefix = platformLabel === "Total" ? "" : `${platformLabel} `;
+
   return (
     <div className="table-wrapper">
       <table className="leaderboard-table">
@@ -28,10 +31,10 @@ export function LeaderboardTable({
             <th className="th-text" onClick={() => handleSort("name")}><span className="th-content"><span className="th-label">Coder</span><span className="th-arrow">{sortArrow("name")}</span></span></th>
             <th className="th-text" onClick={() => handleSort("reelName")}><span className="th-content"><span className="th-label">Reel</span><span className="th-arrow">{sortArrow("reelName")}</span></span></th>
             <th className="th-clip"><span className="th-content"><span className="th-label">Clip</span></span></th>
-            <th className="th-metric" onClick={() => handleSort("views")}><span className="th-content"><span className="th-label">Views</span><span className="th-arrow">{sortArrow("views")}</span></span></th>
-            <th className="th-metric" onClick={() => handleSort("likes")}><span className="th-content"><span className="th-label">Likes</span><span className="th-arrow">{sortArrow("likes")}</span></span></th>
-            <th className="th-metric" onClick={() => handleSort("comments")}><span className="th-content"><span className="th-label">Comments</span><span className="th-arrow">{sortArrow("comments")}</span></span></th>
-            <th className="th-metric" onClick={() => handleSort("reshares")}><span className="th-content"><span className="th-label">Shares</span><span className="th-arrow">{sortArrow("reshares")}</span></span></th>
+            <th className="th-metric" onClick={() => handleSort("views")}><span className="th-content"><span className="th-label">{metricPrefix}Views</span><span className="th-arrow">{sortArrow("views")}</span></span></th>
+            <th className="th-metric" onClick={() => handleSort("likes")}><span className="th-content"><span className="th-label">{metricPrefix}Likes</span><span className="th-arrow">{sortArrow("likes")}</span></span></th>
+            <th className="th-metric" onClick={() => handleSort("comments")}><span className="th-content"><span className="th-label">{metricPrefix}Comments</span><span className="th-arrow">{sortArrow("comments")}</span></span></th>
+            <th className="th-metric" onClick={() => handleSort("reshares")}><span className="th-content"><span className="th-label">{metricPrefix}Shares</span><span className="th-arrow">{sortArrow("reshares")}</span></span></th>
             <th
               className="th-score"
               onClick={() => handleSort("score")}
