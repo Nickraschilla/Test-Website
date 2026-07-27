@@ -1636,6 +1636,12 @@ select {
   border-top: 4px solid #ff173a;
 }
 
+.meta-campaign-detail-actions {
+  display: grid;
+  min-width: min(360px, 100%);
+  gap: 8px;
+}
+
 .meta-campaign-detail-header button,
 .meta-lead-form button,
 .meta-lead-actions button {
@@ -1646,6 +1652,34 @@ select {
   color: #ffffff;
   font-weight: 900;
   cursor: pointer;
+}
+
+.meta-campaign-selector {
+  display: grid;
+  gap: 4px;
+}
+
+.meta-campaign-selector span {
+  color: #60718a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.meta-campaign-selector select {
+  min-height: 36px;
+  min-width: 0;
+  width: 100%;
+  border: 1px solid #dfe7f1;
+  border-radius: 7px;
+  color: #111d31;
+  font-weight: 900;
+}
+
+.meta-campaign-selector-empty {
+  color: #60718a;
+  font-weight: 900;
 }
 
 .meta-campaign-detail-header h2 {
@@ -4353,6 +4387,10 @@ select {
   .meta-campaign-detail-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .meta-campaign-detail-actions {
+    width: 100%;
   }
 
   .meta-ads-filter-card {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CampaignDetailPanel } from "../components/metaAds/CampaignDetail/CampaignDetailPanel";
 import { MetaAdsCampaignTable } from "../components/metaAds/MetaAdsCampaignTable";
 import { MetaAdsDeliveryBreakdown } from "../components/metaAds/MetaAdsDeliveryBreakdown";
@@ -22,6 +22,10 @@ import {
   getMetaAdsFilterOptions,
   sortRows,
 } from "../utils/metaAdsAnalytics";
+import {
+  buildCampaignSelectionOptions,
+  getValidCampaignSelection,
+} from "../utils/metaAdsCampaignSelection";
 
 const DEFAULT_FILTERS = {
   dateRange: "30",
@@ -42,7 +46,10 @@ export function MetaAdsReportingPage() {
     key: "amountSpent",
     direction: "desc",
   });
-  const [selectedCampaignKey, setSelectedCampaignKey] = useState("");
+  const [selectedCampaignKey, setSelectedCampaignKey] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("campaign") || "";
+  });
 
   const filterOptions = useMemo(() => getMetaAdsFilterOptions(rows), [rows]);
   const windows = useMemo(
@@ -92,6 +99,10 @@ export function MetaAdsReportingPage() {
 
     return sortRows(groupedRows, campaignSort.key, campaignSort.direction);
   }, [campaignSort, filteredRows, filters.search]);
+  const campaignOptions = useMemo(
+    () => buildCampaignSelectionOptions(rows),
+    [rows]
+  );
   const selectedCampaign = useMemo(
     () =>
       selectedCampaignKey
@@ -123,11 +134,34 @@ export function MetaAdsReportingPage() {
     }));
   };
 
+  const selectCampaign = useCallback((campaignKey) => {
+    setSelectedCampaignKey(campaignKey);
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (campaignKey) {
+        url.searchParams.set("campaign", campaignKey);
+      } else {
+        url.searchParams.delete("campaign");
+      }
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, []);
+
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
     setCampaignSort({ key: "amountSpent", direction: "desc" });
-    setSelectedCampaignKey("");
   };
+
+  useEffect(() => {
+    if (rows.length === 0) return;
+
+    const validSelection = getValidCampaignSelection(rows, selectedCampaignKey);
+
+    if (validSelection && validSelection !== selectedCampaignKey) {
+      selectCampaign(validSelection);
+    }
+  }, [rows, selectedCampaignKey, selectCampaign]);
 
   return (
     <main className="analytics-shell meta-ads-shell">
@@ -172,15 +206,20 @@ export function MetaAdsReportingPage() {
 
       {!loading && rows.length > 0 ? (
         <>
-          {selectedCampaignKey ? (
-            <CampaignDetailPanel
-              campaign={selectedCampaign}
-              currentRows={filteredRows}
-              previousRows={previousRows}
-              activePeriod={activePeriod}
-              onBack={() => setSelectedCampaignKey("")}
-            />
-          ) : null}
+          <CampaignDetailPanel
+            campaign={selectedCampaign}
+            campaigns={campaignOptions}
+            selectedCampaignId={selectedCampaignKey}
+            currentRows={filteredRows}
+            previousRows={previousRows}
+            activePeriod={activePeriod}
+            onSelectCampaign={selectCampaign}
+            onBack={() => {
+              document
+                .querySelector(".meta-ads-table-card")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          />
 
           <MetaAdsKpiGrid
             summary={summary}
@@ -200,7 +239,7 @@ export function MetaAdsReportingPage() {
             onSort={handleCampaignSort}
             selectedCampaignId={selectedCampaignKey}
             onSelectCampaign={(campaign) =>
-              setSelectedCampaignKey(getCampaignIdentity(campaign))
+              selectCampaign(getCampaignIdentity(campaign))
             }
           />
 
