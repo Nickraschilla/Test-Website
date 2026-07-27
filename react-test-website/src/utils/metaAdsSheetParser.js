@@ -27,6 +27,7 @@ const HEADER_ALIASES = {
     "results initial indicator",
     "results (initial) indicator",
   ],
+  lastSynced: ["last synced", "synced at"],
 };
 
 const normaliseHeader = (value) =>
@@ -109,6 +110,7 @@ export const parseMetaAdsSheetResults = (results) => {
         attributionSetting: parseCell(row, headerIndex, "attributionSetting"),
         resultsInitial: parseMetaAdsNumber(parseCell(row, headerIndex, "resultsInitial")),
         resultsInitialIndicator: parseCell(row, headerIndex, "resultsInitialIndicator"),
+        lastSynced: parseCell(row, headerIndex, "lastSynced"),
       };
     });
 };

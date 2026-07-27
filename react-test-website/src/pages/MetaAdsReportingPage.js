@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { CampaignDetailPanel } from "../components/metaAds/CampaignDetail/CampaignDetailPanel";
 import { MetaAdsCampaignTable } from "../components/metaAds/MetaAdsCampaignTable";
 import { MetaAdsDeliveryBreakdown } from "../components/metaAds/MetaAdsDeliveryBreakdown";
 import { MetaAdsFilters } from "../components/metaAds/MetaAdsFilters";
@@ -17,6 +18,7 @@ import {
   describeDateWindow,
   filterMetaAdsRows,
   getDefaultGrouping,
+  getCampaignIdentity,
   getMetaAdsFilterOptions,
   sortRows,
 } from "../utils/metaAdsAnalytics";
@@ -40,6 +42,7 @@ export function MetaAdsReportingPage() {
     key: "amountSpent",
     direction: "desc",
   });
+  const [selectedCampaignKey, setSelectedCampaignKey] = useState("");
 
   const filterOptions = useMemo(() => getMetaAdsFilterOptions(rows), [rows]);
   const windows = useMemo(
@@ -89,6 +92,18 @@ export function MetaAdsReportingPage() {
 
     return sortRows(groupedRows, campaignSort.key, campaignSort.direction);
   }, [campaignSort, filteredRows, filters.search]);
+  const selectedCampaign = useMemo(
+    () =>
+      selectedCampaignKey
+        ? aggregateByCampaign(filteredRows).find(
+            (campaign) => getCampaignIdentity(campaign) === selectedCampaignKey
+          ) ||
+          aggregateByCampaign(rows).find(
+            (campaign) => getCampaignIdentity(campaign) === selectedCampaignKey
+          )
+        : null,
+    [filteredRows, rows, selectedCampaignKey]
+  );
   const deliveryRows = useMemo(() => buildDeliveryRows(filteredRows), [filteredRows]);
   const insights = useMemo(
     () =>
@@ -111,6 +126,7 @@ export function MetaAdsReportingPage() {
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
     setCampaignSort({ key: "amountSpent", direction: "desc" });
+    setSelectedCampaignKey("");
   };
 
   return (
@@ -156,6 +172,16 @@ export function MetaAdsReportingPage() {
 
       {!loading && rows.length > 0 ? (
         <>
+          {selectedCampaignKey ? (
+            <CampaignDetailPanel
+              campaign={selectedCampaign}
+              currentRows={filteredRows}
+              previousRows={previousRows}
+              activePeriod={activePeriod}
+              onBack={() => setSelectedCampaignKey("")}
+            />
+          ) : null}
+
           <MetaAdsKpiGrid
             summary={summary}
             previousSummary={previousSummary}
@@ -172,6 +198,10 @@ export function MetaAdsReportingPage() {
             rows={campaignRows}
             sort={campaignSort}
             onSort={handleCampaignSort}
+            selectedCampaignId={selectedCampaignKey}
+            onSelectCampaign={(campaign) =>
+              setSelectedCampaignKey(getCampaignIdentity(campaign))
+            }
           />
 
           <MetaAdsTrendChart rowsByMetric={trendRows} grouping={chartGrouping} />

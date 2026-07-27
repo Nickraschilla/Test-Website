@@ -2,6 +2,8 @@ import {
   aggregateByCampaign,
   buildDateWindows,
   buildInsights,
+  buildCampaignSummary,
+  buildComparisonRows,
   buildMetaAdsSummary,
   buildTrendRows,
   dedupeMetaAdsRows,
@@ -155,6 +157,24 @@ test("treats lower cost metrics as improved", () => {
   expect(
     getComparisonClass({ key: "costPerResult", lowerIsBetter: true }, -12)
   ).toBe("meta-ads-comparison-positive");
+});
+
+test("campaign comparison omits percentage change when previous value is zero", () => {
+  const [spendRow] = buildComparisonRows(
+    { amountSpent: 100, results: 4, costPerResult: 25, impressions: 1000, reach: 800 },
+    { amountSpent: 0, results: 0, costPerResult: null, impressions: 0, reach: 0 }
+  );
+
+  expect(spendRow.change).toBeNull();
+});
+
+test("builds factual campaign summary wording", () => {
+  expect(
+    buildCampaignSummary(
+      { results: 14, costPerResult: 32.4 },
+      { results: 10, costPerResult: 30 }
+    )[0]
+  ).toBe("This campaign generated 14 leads at an average cost of $32.40 per lead.");
 });
 
 test("generates deterministic campaign insights and avoids forced output", () => {
