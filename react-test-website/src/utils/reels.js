@@ -6,7 +6,7 @@ export const PLATFORM_OPTIONS = [
 ];
 
 export const toNumber = (value) =>
-  Number(String(value || "").replace(/,/g, "")) || 0;
+  Number(String(value ?? "").replace(/,/g, "")) || 0;
 
 export const SCORE_MIN_LIVE_DAYS = 5;
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -36,8 +36,6 @@ export const getMomentumScore = (reel) => {
     reel.saves * 6
   ) / liveDays;
 };
-
-export const getImpactScore = getMomentumScore;
 
 export const formatNumber = (value) => Number(value || 0).toLocaleString();
 
@@ -162,7 +160,7 @@ export const isInstagramReel = (reel) => {
   return clipUrl.includes("instagram.com/reel/");
 };
 
-export const buildSortValueMap = () => ({
+const buildSortValueMap = () => ({
   score: (reel) => getMomentumScore(reel),
 });
 

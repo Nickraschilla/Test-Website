@@ -261,6 +261,25 @@ const addPostToSummary = (summary, item) => ({
   saves: summary.saves + Number(item.saves || 0),
 });
 
+const mergeSummaries = (summary, nextSummary) => ({
+  postCount: summary.postCount + nextSummary.postCount,
+  views: summary.views + nextSummary.views,
+  reach: summary.reach + nextSummary.reach,
+  likes: summary.likes + nextSummary.likes,
+  comments: summary.comments + nextSummary.comments,
+  reshares: summary.reshares + nextSummary.reshares,
+  saves: summary.saves + nextSummary.saves,
+});
+
+const sumMonthlyBreakdown = (breakdown) =>
+  breakdown.reduce(
+    (totalSummary, monthItem) => mergeSummaries(totalSummary, monthItem.summary),
+    createMonthSummary()
+  );
+
+const getSummaryEngagements = (summary) =>
+  summary.likes + summary.comments + summary.reshares + summary.saves;
+
 const getSummaryDivisor = (summary, mode) =>
   mode === "averages" ? summary.postCount || 1 : 1;
 
@@ -271,9 +290,7 @@ const getAnalyticsMetricValue = (summary, metricKey, mode = "totals") => {
   const divisor = getSummaryDivisor(summary, mode);
 
   if (metricKey === "interactions") {
-    return Math.round(
-      (summary.likes + summary.comments + summary.reshares + summary.saves) / divisor
-    );
+    return Math.round(getSummaryEngagements(summary) / divisor);
   }
 
   if (metricKey === "profileVisits") {
@@ -317,6 +334,49 @@ const buildMonthlySummaryBreakdown = (posts, yearToSummarise) => {
     };
   });
 };
+
+const buildContentTypeRows = ({
+  tabs,
+  posts,
+  scope,
+  year,
+  selectedMonth,
+}) =>
+  tabs
+    .filter((tab) => {
+      if (tab === "Everything") return false;
+
+      const isCollaboration = COLLABORATION_CONTENT_TYPES.has(
+        normalizeContentTypeLabel(tab)
+      );
+
+      return scope === "collaborations" ? isCollaboration : !isCollaboration;
+    })
+    .map((tab) => {
+      const postsForTab = posts.filter((item) => postHasContentLabel(item, tab));
+      const breakdown = buildMonthlySummaryBreakdown(postsForTab, year);
+      const summary =
+        selectedMonth === "all"
+          ? sumMonthlyBreakdown(breakdown)
+          : breakdown.find((monthItem) => monthItem.month === Number(selectedMonth))
+              ?.summary || createMonthSummary();
+      const engagements = getSummaryEngagements(summary);
+
+      return {
+        label: tab,
+        avatarSrc: getContentTypeAvatar(tab),
+        initials: tab
+          .split(/\s+/)
+          .map((word) => word[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase(),
+        summary,
+        engagements,
+        engagementRate: summary.views ? (engagements / summary.views) * 100 : 0,
+      };
+    })
+    .filter((row) => row.summary.postCount > 0);
 
 function KpiIcon({ type }) {
   const icons = {
@@ -508,18 +568,7 @@ function InstagramContentPage({
 
   const selectedPeriodSummary = useMemo(() => {
     if (selectedAnalysisMonth === "all") {
-      return monthlyBreakdown.reduce(
-        (totalSummary, monthItem) => ({
-          postCount: totalSummary.postCount + monthItem.summary.postCount,
-          views: totalSummary.views + monthItem.summary.views,
-          reach: totalSummary.reach + monthItem.summary.reach,
-          likes: totalSummary.likes + monthItem.summary.likes,
-          comments: totalSummary.comments + monthItem.summary.comments,
-          reshares: totalSummary.reshares + monthItem.summary.reshares,
-          saves: totalSummary.saves + monthItem.summary.saves,
-        }),
-        createMonthSummary()
-      );
+      return sumMonthlyBreakdown(monthlyBreakdown);
     }
 
     return (
@@ -550,21 +599,21 @@ function InstagramContentPage({
           visibleChartMonths.some((visibleMonth) => Number(visibleMonth.value) === month)
         )
         .map(({ label, month, summary }) => {
-        const comparisonSummary =
-          comparisonMonthlyBreakdown.find((monthItem) => monthItem.month === month)?.summary ||
-          createMonthSummary();
+          const comparisonSummary =
+            comparisonMonthlyBreakdown.find((monthItem) => monthItem.month === month)?.summary ||
+            createMonthSummary();
 
-        return {
-        id: label,
-        label,
-        primary: getAnalyticsMetricValue(summary, selectedMetric, performanceTrendMode),
-        secondary: showYearComparison
-          ? getAnalyticsMetricValue(comparisonSummary, selectedMetric, performanceTrendMode)
-          : null,
-        primaryLabel: String(selectedYearNumber),
-        secondaryLabel: String(comparisonYearNumber),
-        };
-      });
+          return {
+            id: label,
+            label,
+            primary: getAnalyticsMetricValue(summary, selectedMetric, performanceTrendMode),
+            secondary: showYearComparison
+              ? getAnalyticsMetricValue(comparisonSummary, selectedMetric, performanceTrendMode)
+              : null,
+            primaryLabel: String(selectedYearNumber),
+            secondaryLabel: String(comparisonYearNumber),
+          };
+        });
     }
 
     return visibleChartMonths.map(({ value, label }) => {
@@ -610,57 +659,13 @@ function InstagramContentPage({
 
   const contentTotals = useMemo(
     () =>
-      instagramAnalysisTabs
-        .filter((tab) => {
-          if (tab === "Everything") return false;
-
-          const isCollaboration = COLLABORATION_CONTENT_TYPES.has(
-            normalizeContentTypeLabel(tab)
-          );
-
-          return contentTotalsScope === "collaborations"
-            ? isCollaboration
-            : !isCollaboration;
-        })
-        .map((tab) => {
-          const postsForTab = instagramPosts.filter(
-            (item) => postHasContentLabel(item, tab)
-          );
-          const breakdown = buildMonthlySummaryBreakdown(postsForTab, contentTotalsYearNumber);
-          const summary =
-            selectedAnalysisMonth === "all"
-              ? breakdown.reduce(
-                  (totalSummary, monthItem) => ({
-                    postCount: totalSummary.postCount + monthItem.summary.postCount,
-                    views: totalSummary.views + monthItem.summary.views,
-                    reach: totalSummary.reach + monthItem.summary.reach,
-                    likes: totalSummary.likes + monthItem.summary.likes,
-                    comments: totalSummary.comments + monthItem.summary.comments,
-                    reshares: totalSummary.reshares + monthItem.summary.reshares,
-                    saves: totalSummary.saves + monthItem.summary.saves,
-                  }),
-                  createMonthSummary()
-                )
-              : breakdown.find((monthItem) => monthItem.month === Number(selectedAnalysisMonth))
-                  ?.summary || createMonthSummary();
-          const engagements =
-            summary.likes + summary.comments + summary.reshares + summary.saves;
-
-          return {
-            label: tab,
-            avatarSrc: getContentTypeAvatar(tab),
-            initials: tab
-              .split(/\s+/)
-              .map((word) => word[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase(),
-            summary,
-            engagements,
-            engagementRate: summary.views ? (engagements / summary.views) * 100 : 0,
-          };
-        })
-        .filter((row) => row.summary.postCount > 0)
+      buildContentTypeRows({
+        tabs: instagramAnalysisTabs,
+        posts: instagramPosts,
+        scope: contentTotalsScope,
+        year: contentTotalsYearNumber,
+        selectedMonth: selectedAnalysisMonth,
+      })
         .sort((a, b) => {
           const getSortValue = (row) => {
             if (contentTotalsSort.key === "engagementRate") return row.engagementRate;
@@ -687,56 +692,13 @@ function InstagramContentPage({
 
   const interactionBreakdownRows = useMemo(
     () =>
-      instagramAnalysisTabs
-        .filter((tab) => {
-          if (tab === "Everything") return false;
-
-          const isCollaboration = COLLABORATION_CONTENT_TYPES.has(
-            normalizeContentTypeLabel(tab)
-          );
-
-          return interactionBreakdownScope === "collaborations"
-            ? isCollaboration
-            : !isCollaboration;
-        })
-        .map((tab) => {
-          const postsForTab = instagramPosts.filter((item) =>
-            postHasContentLabel(item, tab)
-          );
-          const breakdown = buildMonthlySummaryBreakdown(postsForTab, interactionBreakdownYearNumber);
-          const summary =
-            selectedAnalysisMonth === "all"
-              ? breakdown.reduce(
-                  (totalSummary, monthItem) => ({
-                    postCount: totalSummary.postCount + monthItem.summary.postCount,
-                    views: totalSummary.views + monthItem.summary.views,
-                    reach: totalSummary.reach + monthItem.summary.reach,
-                    likes: totalSummary.likes + monthItem.summary.likes,
-                    comments: totalSummary.comments + monthItem.summary.comments,
-                    reshares: totalSummary.reshares + monthItem.summary.reshares,
-                    saves: totalSummary.saves + monthItem.summary.saves,
-                  }),
-                  createMonthSummary()
-                )
-              : breakdown.find((monthItem) => monthItem.month === Number(selectedAnalysisMonth))
-                  ?.summary || createMonthSummary();
-          const engagements =
-            summary.likes + summary.comments + summary.reshares + summary.saves;
-
-          return {
-            label: tab,
-            avatarSrc: getContentTypeAvatar(tab),
-            initials: tab
-              .split(/\s+/)
-              .map((word) => word[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase(),
-            summary,
-            engagements,
-          };
-        })
-        .filter((row) => row.summary.postCount > 0)
+      buildContentTypeRows({
+        tabs: instagramAnalysisTabs,
+        posts: instagramPosts,
+        scope: interactionBreakdownScope,
+        year: interactionBreakdownYearNumber,
+        selectedMonth: selectedAnalysisMonth,
+      })
         .sort((a, b) => {
           const getInteractionValue = (row) => {
             const divisor = getSummaryDivisor(row.summary, interactionBreakdownMode);
@@ -762,11 +724,7 @@ function InstagramContentPage({
     ]
   );
 
-  const selectedEngagements =
-    selectedPeriodSummary.likes +
-    selectedPeriodSummary.comments +
-    selectedPeriodSummary.reshares +
-    selectedPeriodSummary.saves;
+  const selectedEngagements = getSummaryEngagements(selectedPeriodSummary);
   const followerCount = useMemo(
     () => {
       const postsWithFollowerCounts = instagramPosts
@@ -819,9 +777,7 @@ function InstagramContentPage({
   const sortedMonthlyRows = useMemo(() => {
     const getSortValue = ({ month, summary }) => {
       if (monthlyBreakdownSort.key === "month") return month;
-      if (monthlyBreakdownSort.key === "interactions") {
-        return summary.likes + summary.comments + summary.reshares + summary.saves;
-      }
+      if (monthlyBreakdownSort.key === "interactions") return getSummaryEngagements(summary);
       if (monthlyBreakdownSort.key === "shares") return summary.reshares;
       if (monthlyBreakdownSort.key === "posts") return summary.postCount;
       return Number(summary[monthlyBreakdownSort.key] || 0);
@@ -1432,8 +1388,7 @@ function InstagramContentPage({
           <tbody>
             {sortedMonthlyRows.map(({ label, summary }) => {
               const divisor = getSummaryDivisor(summary, "totals");
-              const interactions =
-                summary.likes + summary.comments + summary.reshares + summary.saves;
+              const interactions = getSummaryEngagements(summary);
 
               return (
                 <tr key={label}>
@@ -1473,6 +1428,7 @@ function App() {
   const { reels, loading, refreshing, error } = useReelsData();
   const {
     reels: instagramRows,
+    loading: instagramLoading,
     refreshing: instagramRefreshing,
     error: instagramError,
   } = useInstagramData();
@@ -1581,7 +1537,9 @@ function App() {
     activeTab === "socials"
       ? "Social performance leaderboard"
       : "Instagram content performance";
+  const activeLoading = activeTab === "socials" ? loading : instagramLoading;
   const activeRefreshing = activeTab === "socials" ? refreshing : instagramRefreshing;
+  const activeError = activeTab === "socials" ? error : instagramError;
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -1605,7 +1563,7 @@ function App() {
     return ascending ? "↑" : "↓";
   };
 
-  if (loading) {
+  if (activeLoading) {
     return <LoadingScreen />;
   }
 
@@ -1635,10 +1593,10 @@ function App() {
             <PageHeader title={activePageTitle} subtitle={activePageSubtitle} />
           ) : null}
 
-          {error || instagramError ? (
+          {activeError ? (
             <div className="dashboard-shell dashboard-alert-shell">
               <div className="dashboard-warning" role="alert">
-                {error || instagramError} Check that the published Google Sheets CSV is still available.
+                {activeError} Check that the published Google Sheets CSV is still available.
               </div>
             </div>
           ) : null}
