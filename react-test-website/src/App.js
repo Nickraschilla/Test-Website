@@ -513,54 +513,6 @@ function DashboardOverview({
     socialsTotals.likes + socialsTotals.comments + socialsTotals.reshares + socialsTotals.saves;
   const selectedMetaCampaignRows = (latestCampaign?.rows || []).slice(0, 5);
 
-  const summaryCards = [
-    {
-      label: "Instagram Reporting",
-      value: formatNumber(instagramSummary.views),
-      metric: "Views",
-      accent: "instagram",
-      icon: "views",
-      detail: `${formatNumber(instagramSummary.reach)} reach · ${formatNumber(
-        instagramSummary.posts
-      )} posts`,
-      tab: "new-page",
-    },
-    {
-      label: "Socials Reporting",
-      value: formatNumber(socialsTotals.views),
-      metric: "Views",
-      accent: "socials",
-      icon: "interactions",
-      detail: `${formatNumber(socialsReelCount)} reels · ${formatNumber(
-        socialsTotals.reshares
-      )} shares`,
-      tab: "socials",
-    },
-    {
-      label: "Meta Ads Reporting",
-      value: formatMetricValue(metaSummary.results, "number"),
-      metric: "Leads",
-      accent: "meta",
-      icon: "reach",
-      detail: `${formatMetricValue(metaSummary.amountSpent, "currency")} spend · ${formatMetricValue(
-        metaSummary.costPerResult,
-        "currency"
-      )} CPL`,
-      tab: "meta-ads",
-    },
-    {
-      label: "Lead Pipeline",
-      value: formatNumber(manualLeads.length),
-      metric: "Manual leads",
-      accent: "pipeline",
-      icon: "profile",
-      detail: `${formatNumber(contactedLeads)} contacted · ${formatNumber(
-        convertedLeads
-      )} converted`,
-      tab: "meta-ads",
-    },
-  ];
-
   return (
     <main className="analytics-shell dashboard-overview-shell">
       <section className="analytics-hero-panel dashboard-overview-hero">
@@ -586,58 +538,53 @@ function DashboardOverview({
         </div>
       </section>
 
-      <section className="dashboard-overview-cards" aria-label="Dashboard summary">
-        {summaryCards.map((card) => (
-          <button
-            key={card.label}
-            type="button"
-            className={`dashboard-overview-card dashboard-overview-card-${card.accent}`}
-            onClick={() => onOpenTab(card.tab)}
-          >
-            <div className="dashboard-overview-card-top">
-              <span>{card.label}</span>
-              <KpiIcon type={card.icon} />
-            </div>
-            <div className="dashboard-overview-card-value">
-              <strong>{card.value}</strong>
-              <span>{card.metric}</span>
-            </div>
-            <p>{card.detail}</p>
-          </button>
-        ))}
-      </section>
-
       <section className="dashboard-overview-snapshot-grid" aria-label="Dashboard snapshots">
-        <article className="dashboard-overview-snapshot dashboard-overview-snapshot-instagram">
-          <span>Instagram Content</span>
+        <button
+          type="button"
+          className="dashboard-overview-snapshot dashboard-overview-snapshot-instagram"
+          onClick={() => onOpenTab("new-page")}
+        >
+          <span>Instagram Reporting</span>
           <strong>{formatNumber(instagramSummary.views)}</strong>
           <em>Views</em>
           <p>{formatNumber(instagramSummary.interactions)} interactions · {formatNumber(instagramSummary.followers)} followers</p>
-        </article>
-        <article className="dashboard-overview-snapshot dashboard-overview-snapshot-socials">
-          <span>Socials Leaderboard</span>
+        </button>
+        <button
+          type="button"
+          className="dashboard-overview-snapshot dashboard-overview-snapshot-socials"
+          onClick={() => onOpenTab("socials")}
+        >
+          <span>Socials Reporting</span>
           <strong>{formatNumber(socialsTotals.views)}</strong>
           <em>Combined platform views</em>
           <p>{formatNumber(socialsInteractions)} interactions · {formatNumber(socialsReelCount)} reels</p>
-        </article>
-        <article className="dashboard-overview-snapshot dashboard-overview-snapshot-meta">
-          <span>Meta Ads</span>
+        </button>
+        <button
+          type="button"
+          className="dashboard-overview-snapshot dashboard-overview-snapshot-meta"
+          onClick={() => onOpenTab("meta-ads")}
+        >
+          <span>Meta Ads Reporting</span>
           <strong>{formatMetricValue(metaSummary.results, "number")}</strong>
           <em>Leads</em>
           <p>{formatMetricValue(metaSummary.amountSpent, "currency")} spend · {formatMetricValue(metaSummary.costPerResult, "currency")} CPL</p>
-        </article>
-        <article className="dashboard-overview-snapshot dashboard-overview-snapshot-pipeline">
+        </button>
+        <button
+          type="button"
+          className="dashboard-overview-snapshot dashboard-overview-snapshot-pipeline"
+          onClick={() => onOpenTab("meta-ads")}
+        >
           <span>Lead Pipeline</span>
           <strong>{formatNumber(manualLeads.length)}</strong>
           <em>Manual leads</em>
           <p>{formatNumber(contactedLeads)} contacted · {formatNumber(convertedLeads)} converted</p>
-        </article>
+        </button>
       </section>
 
       <div className="dashboard-overview-grid">
         <section className="analytics-breakdown-card dashboard-overview-table-card">
-          <div className="analytics-table-title">
-            <span>Page Summary</span>
+          <div className="analytics-card-header">
+            <strong>Page Summary</strong>
             <span className="analytics-mode-chip">{DISPLAY_YEAR} overview</span>
           </div>
           <table className="analytics-table">
@@ -679,8 +626,8 @@ function DashboardOverview({
         </section>
 
         <section className="analytics-breakdown-card dashboard-overview-side-card">
-          <div className="analytics-table-title">
-            <span>Instagram Top Line</span>
+          <div className="analytics-card-header">
+            <strong>Instagram Top Line</strong>
             <span className="analytics-mode-chip">Content</span>
           </div>
           <div className="dashboard-overview-list">
@@ -700,8 +647,8 @@ function DashboardOverview({
         </section>
 
         <section className="analytics-breakdown-card dashboard-overview-side-card">
-          <div className="analytics-table-title">
-            <span>Latest Campaign</span>
+          <div className="analytics-card-header">
+            <strong>Latest Campaign</strong>
             <span className="analytics-mode-chip">Meta Ads</span>
           </div>
           <div className="dashboard-overview-meta-highlight">
@@ -714,8 +661,8 @@ function DashboardOverview({
       </div>
 
       <section className="analytics-breakdown-card dashboard-overview-wide-card">
-        <div className="analytics-table-title">
-          <span>Latest Campaign Daily Snapshot</span>
+        <div className="analytics-card-header">
+          <strong>Latest Campaign Daily Snapshot</strong>
           <span className="analytics-mode-chip">{latestCampaign?.campaignName || "Meta Ads"}</span>
         </div>
         <table className="analytics-table">
