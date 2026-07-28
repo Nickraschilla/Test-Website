@@ -916,11 +916,49 @@ function createQuarterHourlyTrigger() {
     .create();
 }
 
+function createHourlyBootstrapTrigger() {
+  deleteBootstrapTriggers();
+  ScriptApp.newTrigger("bootstrapSheetFromInstagram")
+    .timeBased()
+    .everyHours(1)
+    .create();
+}
+
+function createSixHourlyBootstrapTrigger() {
+  deleteBootstrapTriggers();
+  ScriptApp.newTrigger("bootstrapSheetFromInstagram")
+    .timeBased()
+    .everyHours(6)
+    .create();
+}
+
+function createSheet1ReelsHourlyBootstrapTrigger() {
+  deleteBootstrapTriggers();
+  ScriptApp.newTrigger("bootstrapSheet1ReelsFromInstagram")
+    .timeBased()
+    .everyHours(1)
+    .create();
+}
+
 function deleteSyncTriggers() {
   const triggers = ScriptApp.getProjectTriggers();
 
   triggers.forEach((trigger) => {
     if (trigger.getHandlerFunction() === "syncInstagramInsightsToSheet") {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+}
+
+function deleteBootstrapTriggers() {
+  const triggers = ScriptApp.getProjectTriggers();
+  const bootstrapFunctions = [
+    "bootstrapSheetFromInstagram",
+    "bootstrapSheet1ReelsFromInstagram",
+  ];
+
+  triggers.forEach((trigger) => {
+    if (bootstrapFunctions.indexOf(trigger.getHandlerFunction()) !== -1) {
       ScriptApp.deleteTrigger(trigger);
     }
   });
