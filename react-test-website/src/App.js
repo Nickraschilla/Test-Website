@@ -553,6 +553,16 @@ function DashboardOverview({
     () => buildTrendInsights(trendRows, previousTrendTotal),
     [previousTrendTotal, trendRows]
   );
+  const trendMaxValue = Math.max(1, ...trendRows.map((row) => row.value || 0));
+  const trendAxisTicks = useMemo(
+    () => [
+      trendMaxValue,
+      Math.round(trendMaxValue * 0.66),
+      Math.round(trendMaxValue * 0.33),
+      0,
+    ],
+    [trendMaxValue]
+  );
   const recentActivity = useMemo(
     () =>
       buildRecentActivity({
@@ -574,7 +584,6 @@ function DashboardOverview({
       }),
     [instagramRows, latestSyncTime, metaAdsData.rows, metaAdsLeadsData.leads, socialsRows]
   );
-  const trendMaxValue = Math.max(1, ...trendRows.map((row) => row.value || 0));
   const trendOptions = [
     { value: "instagram", label: "Instagram Views", axisLabel: "Instagram views" },
     { value: "social", label: "Social Views", axisLabel: "Social views" },
@@ -715,6 +724,11 @@ function DashboardOverview({
             <div className="dashboard-trend-frame">
               <div className="dashboard-trend-axis-title dashboard-trend-axis-y">
                 {activeTrendOption.axisLabel}
+              </div>
+              <div className="dashboard-trend-axis-values" aria-hidden="true">
+                {trendAxisTicks.map((tickValue, tickIndex) => (
+                  <span key={`${tickValue}-${tickIndex}`}>{formatDashboardNumber(tickValue)}</span>
+                ))}
               </div>
               <div className="dashboard-trend-chart" aria-label={`${activeTrendOption.axisLabel} by month`}>
                 {trendRows.map((row) => (
