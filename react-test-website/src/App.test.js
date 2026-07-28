@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import App from './App';
 
 let mockSocialsData;
@@ -195,6 +195,109 @@ test('renders the reporting dashboard tabs', () => {
     'aria-pressed',
     'true'
   );
+});
+
+test('renders a clean executive overview on the dashboard front page', () => {
+  mockInstagramData.reels = [
+    {
+      contentTitle: 'Instagram Feature',
+      publishedAt: '2026-07-10',
+      igViews: 2200,
+      igReach: 1200,
+      igFollowers: 40852,
+    },
+  ];
+  mockSocialsData.reels = [
+    {
+      reelName: 'Leaderboard Reel',
+      publishedAt: '2026-07-09',
+      views: 9000,
+      reshares: 55,
+      igViews: 9000,
+      fbViews: 0,
+      ttViews: 0,
+    },
+  ];
+
+  render(<App />);
+
+  const executiveSummary = screen.getByRole('region', { name: /executive summary/i });
+  expect(within(executiveSummary).getAllByRole('button')).toHaveLength(4);
+  expect(screen.getByRole('heading', { name: /cross-platform performance trend/i })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /what is currently performing best/i })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /latest data-driven changes/i })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /actionable items/i })).toBeInTheDocument();
+
+  expect(screen.queryByText(/page summary/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/instagram top line/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/latest campaign daily snapshot/i)).not.toBeInTheDocument();
+});
+
+test('keeps available dashboard sections visible when one source fails', () => {
+  mockInstagramData.reels = [
+    {
+      contentTitle: 'Available Instagram Post',
+      publishedAt: '2026-07-10',
+      igViews: 1800,
+      igReach: 1000,
+    },
+  ];
+  mockSocialsData.error = 'Could not load Socials Reporting data.';
+
+  render(<App />);
+
+  const executiveSummary = screen.getByRole('region', { name: /executive summary/i });
+  expect(screen.getByText('Partial data')).toBeInTheDocument();
+  expect(screen.getByRole('status')).toHaveTextContent(/some dashboard data is unavailable/i);
+  expect(within(executiveSummary).getByRole('button', { name: /instagram reporting/i })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /cross-platform performance trend/i })).toBeInTheDocument();
+});
+
+test('switches the dashboard trend metric', () => {
+  mockInstagramData.reels = [
+    { contentTitle: 'Instagram Feature', publishedAt: '2026-07-10', igViews: 2200 },
+  ];
+  mockSocialsData.reels = [
+    { reelName: 'Leaderboard Reel', publishedAt: '2026-07-09', views: 9000 },
+  ];
+
+  render(<App />);
+
+  expect(screen.getByRole('tab', { name: /instagram views/i })).toHaveAttribute('aria-selected', 'true');
+  fireEvent.click(screen.getByRole('tab', { name: /social views/i }));
+  expect(screen.getByRole('tab', { name: /social views/i })).toHaveAttribute('aria-selected', 'true');
+});
+
+test('opens the best Meta campaign from the dashboard top performers card', () => {
+  mockMetaAdsData.rows = [
+    {
+      id: 'active-expensive',
+      reportingStarts: '2026-07-01',
+      campaignId: 'cmp_active',
+      campaignName: 'Active Expensive Campaign',
+      campaignDelivery: 'Active',
+      results: 3,
+      amountSpent: 300,
+    },
+    {
+      id: 'ended-best',
+      reportingStarts: '2026-07-02',
+      campaignId: 'cmp_best',
+      campaignName: 'Best Value Campaign',
+      campaignDelivery: 'Ended',
+      results: 5,
+      amountSpent: 50,
+    },
+  ];
+
+  render(<App />);
+
+  const topPerformers = screen.getByRole('heading', { name: /what is currently performing best/i })
+    .closest('section');
+  fireEvent.click(within(topPerformers).getByRole('button', { name: /open meta ads reporting/i }));
+
+  expect(screen.getByRole('heading', { name: /meta ads reporting/i })).toBeInTheDocument();
+  expect(screen.getByRole('combobox', { name: /^campaign$/i })).toHaveValue('cmp_best');
 });
 
 test('opens the Meta Ads Reporting tab', () => {

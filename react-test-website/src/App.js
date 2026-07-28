@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { ClipModal } from "./components/ClipModal";
 import { ContributorSummary } from "./components/ContributorSummary";
@@ -17,10 +17,25 @@ import { useMetaAdsData } from "./hooks/useMetaAdsData";
 import { useMetaAdsManualLeads } from "./hooks/useMetaAdsManualLeads";
 import { useInstagramData, useReelsData } from "./hooks/useReelsData";
 import {
-  buildMetaAdsSummary,
-  formatMetricValue,
-} from "./utils/metaAdsAnalytics";
-import { buildCampaignOptions } from "./utils/metaAdsCampaignReview";
+  buildAttentionItems,
+  buildDashboardTrend,
+  buildInstagramSummary,
+  buildLeadPipelineSummary,
+  buildMetaSummary,
+  buildRecentActivity,
+  buildSocialsSummary,
+  buildTrendInsights,
+  formatDashboardDate,
+  formatDashboardNumber,
+  formatPercentageChange,
+  getBestMetaCampaign,
+  getCampaignLinkId,
+  getLatestSyncTime,
+  getPreviousEquivalentTotal,
+  getTopInstagramContent,
+  getTopSocialContent,
+} from "./utils/dashboardOverview";
+import { formatMetricValue } from "./utils/metaAdsAnalytics";
 import {
   buildMonthOptions,
   buildContributorLeaders,
@@ -447,71 +462,142 @@ function KpiIcon({ type }) {
   );
 }
 
-const getInstagramDashboardSummary = (rows) => {
-  const currentYearRows = rows
-    .filter((item) => isPublishedInYear(item, DISPLAY_YEAR))
-    .map((item) => applyPlatformMetrics(item, "instagram"));
-  const totals = currentYearRows.reduce(
-    (summary, item) => ({
-      views: summary.views + Number(item.igViews || item.views || 0),
-      reach: summary.reach + Number(item.igReach || 0),
-      likes: summary.likes + Number(item.igLikes || item.likes || 0),
-      comments: summary.comments + Number(item.igComments || item.comments || 0),
-      shares: summary.shares + Number(item.igShares || item.reshares || 0),
-      saves: summary.saves + Number(item.igSaves || item.saves || 0),
-      posts: summary.posts + 1,
-    }),
-    {
-      views: 0,
-      reach: 0,
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      saves: 0,
-      posts: 0,
-    }
-  );
-  const latestFollowerRow = rows.find((item) => Number(item.igFollowers || 0) > 0);
-
-  return {
-    ...totals,
-    interactions: totals.likes + totals.comments + totals.shares + totals.saves,
-    profileVisits: totals.comments + totals.shares,
-    followers: Number(latestFollowerRow?.igFollowers || 0) || 40800,
-  };
-};
-
 function DashboardOverview({
   socialsRows,
+  socialsError,
   instagramRows,
+  instagramError,
   metaAdsData,
   metaAdsLeadsData,
-  formatNumber,
   onOpenTab,
 }) {
-  const socialsTotals = useMemo(() => calculateTotals(socialsRows), [socialsRows]);
-  const socialsReelCount = socialsRows.filter(isInstagramReel).length;
+  const [trendMetric, setTrendMetric] = useState("instagram");
   const instagramSummary = useMemo(
-    () => getInstagramDashboardSummary(instagramRows),
+    () => buildInstagramSummary(instagramRows, DISPLAY_YEAR),
     [instagramRows]
   );
   const metaSummary = useMemo(
-    () => buildMetaAdsSummary(metaAdsData.rows || []),
+    () => buildMetaSummary(metaAdsData.rows || []),
     [metaAdsData.rows]
   );
-  const campaignOptions = useMemo(
-    () => buildCampaignOptions(metaAdsData.rows || []),
+  const socialsSummary = useMemo(
+    () => buildSocialsSummary(socialsRows, DISPLAY_YEAR),
+    [socialsRows]
+  );
+  const leadSummary = useMemo(
+    () => buildLeadPipelineSummary(metaAdsLeadsData.leads || []),
+    [metaAdsLeadsData.leads]
+  );
+  const bestCampaign = useMemo(
+    () => getBestMetaCampaign(metaAdsData.rows || []),
     [metaAdsData.rows]
   );
-  const latestCampaign = campaignOptions[0];
-  const manualLeads = metaAdsLeadsData.leads || [];
-  const contactedLeads = manualLeads.filter((lead) =>
-    ["Contacted", "Converted", "Failed"].includes(lead.status)
-  ).length;
-  const convertedLeads = manualLeads.filter((lead) => lead.status === "Converted").length;
-  const socialsInteractions =
-    socialsTotals.likes + socialsTotals.comments + socialsTotals.reshares + socialsTotals.saves;
-  const selectedMetaCampaignRows = (latestCampaign?.rows || []).slice(0, 5);
+  const topInstagramContent = useMemo(
+    () => getTopInstagramContent(instagramRows, DISPLAY_YEAR),
+    [instagramRows]
+  );
+  const topSocialContent = useMemo(
+    () => getTopSocialContent(socialsRows, DISPLAY_YEAR),
+    [socialsRows]
+  );
+  const latestSyncTime = useMemo(
+    () => getLatestSyncTime(instagramRows, socialsRows, metaAdsData.rows || []),
+    [instagramRows, metaAdsData.rows, socialsRows]
+  );
+  const trendRows = useMemo(
+    () =>
+      buildDashboardTrend({
+        metric: trendMetric,
+        instagramRows,
+        socialsRows,
+        metaRows: metaAdsData.rows || [],
+        reportingYear: DISPLAY_YEAR,
+      }),
+    [instagramRows, metaAdsData.rows, socialsRows, trendMetric]
+  );
+  const previousTrendTotal = useMemo(() => {
+    if (trendMetric === "social") {
+      return getPreviousEquivalentTotal(socialsRows, DISPLAY_YEAR, (row) => row.views);
+    }
+    if (trendMetric === "meta") {
+      return getPreviousEquivalentTotal(metaAdsData.rows || [], DISPLAY_YEAR, (row) => row.results);
+    }
+    return getPreviousEquivalentTotal(
+      instagramRows.map((row) => applyPlatformMetrics(row, "instagram")),
+      DISPLAY_YEAR,
+      (row) => row.igViews || row.views
+    );
+  }, [instagramRows, metaAdsData.rows, socialsRows, trendMetric]);
+  const trendInsights = useMemo(
+    () => buildTrendInsights(trendRows, previousTrendTotal),
+    [previousTrendTotal, trendRows]
+  );
+  const recentActivity = useMemo(
+    () =>
+      buildRecentActivity({
+        instagramRows,
+        socialsRows,
+        metaRows: metaAdsData.rows || [],
+        manualLeads: metaAdsLeadsData.leads || [],
+      }),
+    [instagramRows, metaAdsData.rows, metaAdsLeadsData.leads, socialsRows]
+  );
+  const attentionItems = useMemo(
+    () =>
+      buildAttentionItems({
+        instagramRows,
+        socialsRows,
+        metaRows: metaAdsData.rows || [],
+        manualLeads: metaAdsLeadsData.leads || [],
+        latestSyncTime,
+      }),
+    [instagramRows, latestSyncTime, metaAdsData.rows, metaAdsLeadsData.leads, socialsRows]
+  );
+  const trendMaxValue = Math.max(1, ...trendRows.map((row) => row.value || 0));
+  const trendOptions = [
+    { value: "instagram", label: "Instagram Views" },
+    { value: "social", label: "Social Views" },
+    { value: "meta", label: "Meta Ads Leads" },
+  ];
+  const hasSourceError = Boolean(
+    socialsError || instagramError || metaAdsData.error || metaAdsLeadsData.error
+  );
+  const executiveCards = [
+    {
+      id: "instagram",
+      title: "Instagram Reporting",
+      metric: formatDashboardNumber(instagramSummary.views),
+      metricLabel: "Instagram views",
+      detail: `${formatDashboardNumber(instagramSummary.reach)} reach · ${formatDashboardNumber(instagramSummary.posts)} posts`,
+      change: instagramSummary.change,
+      tab: "new-page",
+    },
+    {
+      id: "socials",
+      title: "Socials Reporting",
+      metric: formatDashboardNumber(socialsSummary.views),
+      metricLabel: "Combined social views",
+      detail: `${formatDashboardNumber(socialsSummary.reels)} reels · ${formatDashboardNumber(socialsSummary.shares)} shares`,
+      change: socialsSummary.change,
+      tab: "socials",
+    },
+    {
+      id: "meta",
+      title: "Meta Ads Reporting",
+      metric: formatDashboardNumber(metaSummary.leads),
+      metricLabel: "Leads generated",
+      detail: `${formatMetricValue(metaSummary.spend, "currency")} spend · ${formatMetricValue(metaSummary.costPerLead, "currency")} CPL · ${formatDashboardNumber(metaSummary.campaignCount)} campaigns`,
+      tab: "meta-ads",
+    },
+    {
+      id: "pipeline",
+      title: "Lead Pipeline",
+      metric: leadSummary.conversionRate === null ? "—" : `${leadSummary.conversionRate.toFixed(1)}%`,
+      metricLabel: "Conversion rate",
+      detail: `${formatDashboardNumber(leadSummary.total)} tracked · ${formatDashboardNumber(leadSummary.converted)} converted · ${formatDashboardNumber(leadSummary.requiringAction)} requiring action`,
+      tab: "meta-ads",
+    },
+  ];
 
   return (
     <main className="analytics-shell dashboard-overview-shell">
@@ -522,7 +608,7 @@ function DashboardOverview({
             <h2>Dashboard</h2>
           </div>
           <p>
-            Performance snapshot across Instagram content, Socials leaderboard and Meta Ads.
+            Performance overview across Instagram, Socials and Meta Ads.
           </p>
         </div>
 
@@ -532,168 +618,193 @@ function DashboardOverview({
             <strong>{DISPLAY_YEAR}</strong>
           </div>
           <div>
-            <span>Status</span>
-            <strong>Live sheets</strong>
+            <span>Data status</span>
+            <strong>{hasSourceError ? "Partial data" : "Live sheets"}</strong>
+          </div>
+          <div>
+            <span>Latest sync</span>
+            <strong>{latestSyncTime ? formatDashboardDate(latestSyncTime) : "—"}</strong>
           </div>
         </div>
       </section>
 
-      <section className="dashboard-overview-snapshot-grid" aria-label="Dashboard snapshots">
-        <button
-          type="button"
-          className="dashboard-overview-snapshot dashboard-overview-snapshot-instagram"
-          onClick={() => onOpenTab("new-page")}
-        >
-          <span>Instagram Reporting</span>
-          <strong>{formatNumber(instagramSummary.views)}</strong>
-          <em>Views</em>
-          <p>{formatNumber(instagramSummary.interactions)} interactions · {formatNumber(instagramSummary.followers)} followers</p>
-        </button>
-        <button
-          type="button"
-          className="dashboard-overview-snapshot dashboard-overview-snapshot-socials"
-          onClick={() => onOpenTab("socials")}
-        >
-          <span>Socials Reporting</span>
-          <strong>{formatNumber(socialsTotals.views)}</strong>
-          <em>Combined platform views</em>
-          <p>{formatNumber(socialsInteractions)} interactions · {formatNumber(socialsReelCount)} reels</p>
-        </button>
-        <button
-          type="button"
-          className="dashboard-overview-snapshot dashboard-overview-snapshot-meta"
-          onClick={() => onOpenTab("meta-ads")}
-        >
-          <span>Meta Ads Reporting</span>
-          <strong>{formatMetricValue(metaSummary.results, "number")}</strong>
-          <em>Leads</em>
-          <p>{formatMetricValue(metaSummary.amountSpent, "currency")} spend · {formatMetricValue(metaSummary.costPerResult, "currency")} CPL</p>
-        </button>
-        <button
-          type="button"
-          className="dashboard-overview-snapshot dashboard-overview-snapshot-pipeline"
-          onClick={() => onOpenTab("meta-ads")}
-        >
-          <span>Lead Pipeline</span>
-          <strong>{formatNumber(manualLeads.length)}</strong>
-          <em>Manual leads</em>
-          <p>{formatNumber(contactedLeads)} contacted · {formatNumber(convertedLeads)} converted</p>
-        </button>
+      <section className="dashboard-executive-cards" aria-label="Executive summary">
+        {executiveCards.map((card) => (
+          <button
+            key={card.id}
+            type="button"
+            className={`dashboard-executive-card dashboard-executive-card-${card.id}`}
+            onClick={() => onOpenTab(card.tab)}
+          >
+            <span className="dashboard-card-title">{card.title}</span>
+            <strong>{card.metric}</strong>
+            <em>{card.metricLabel}</em>
+            <p>{card.detail}</p>
+            {card.change !== undefined ? (
+              <span className={`dashboard-change ${card.change >= 0 ? "dashboard-change-up" : "dashboard-change-down"}`}>
+                {formatPercentageChange(card.change)}
+              </span>
+            ) : null}
+          </button>
+        ))}
       </section>
 
-      <div className="dashboard-overview-grid">
-        <section className="analytics-breakdown-card dashboard-overview-table-card">
-          <div className="analytics-card-header">
-            <strong>Page Summary</strong>
-            <span className="analytics-mode-chip">{DISPLAY_YEAR} overview</span>
+      <section className="dashboard-panel dashboard-trend-panel">
+        <div className="dashboard-section-header">
+          <div>
+            <span className="analytics-kicker">Performance trend</span>
+            <h3>Cross-platform performance trend</h3>
           </div>
-          <table className="analytics-table">
-            <thead>
-              <tr>
-                <th>Area</th>
-                <th>Primary</th>
-                <th>Secondary</th>
-                <th>Activity</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Instagram Reporting</td>
-                <td>{formatNumber(instagramSummary.views)} views</td>
-                <td>{formatNumber(instagramSummary.reach)} reach</td>
-                <td>{formatNumber(instagramSummary.posts)} posts</td>
-              </tr>
-              <tr>
-                <td>Socials Reporting</td>
-                <td>{formatNumber(socialsTotals.views)} views</td>
-                <td>{formatNumber(socialsTotals.reshares)} shares</td>
-                <td>{formatNumber(socialsReelCount)} reels</td>
-              </tr>
-              <tr>
-                <td>Meta Ads Reporting</td>
-                <td>{formatMetricValue(metaSummary.results, "number")} leads</td>
-                <td>{formatMetricValue(metaSummary.amountSpent, "currency")} spend</td>
-                <td>{formatNumber(metaSummary.campaignCount)} campaigns</td>
-              </tr>
-              <tr>
-                <td>Lead Pipeline</td>
-                <td>{formatNumber(manualLeads.length)} leads</td>
-                <td>{formatNumber(contactedLeads)} contacted</td>
-                <td>{formatNumber(convertedLeads)} converted</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        <section className="analytics-breakdown-card dashboard-overview-side-card">
-          <div className="analytics-card-header">
-            <strong>Instagram Top Line</strong>
-            <span className="analytics-mode-chip">Content</span>
+          <div className="dashboard-trend-tabs" role="tablist" aria-label="Trend metric">
+            {trendOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={trendMetric === option.value}
+                className={trendMetric === option.value ? "dashboard-trend-tab-active" : ""}
+                onClick={() => setTrendMetric(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
-          <div className="dashboard-overview-list">
-            <div className="dashboard-overview-list-row">
-              <span><img src="/Instagram.svg" alt="" /> Followers</span>
-              <strong>{formatNumber(instagramSummary.followers)}</strong>
-            </div>
-            <div className="dashboard-overview-list-row">
-              <span>Reach</span>
-              <strong>{formatNumber(instagramSummary.reach)}</strong>
-            </div>
-            <div className="dashboard-overview-list-row">
-              <span>Posts</span>
-              <strong>{formatNumber(instagramSummary.posts)}</strong>
-            </div>
-          </div>
-        </section>
-
-        <section className="analytics-breakdown-card dashboard-overview-side-card">
-          <div className="analytics-card-header">
-            <strong>Latest Campaign</strong>
-            <span className="analytics-mode-chip">Meta Ads</span>
-          </div>
-          <div className="dashboard-overview-meta-highlight">
-            <span>{latestCampaign?.campaignName || "No campaign data"}</span>
-            <strong>{formatMetricValue(latestCampaign?.results, "number")}</strong>
-            <em>Leads tracked</em>
-            <p>{formatMetricValue(latestCampaign?.amountSpent, "currency")} spend · {formatMetricValue(latestCampaign?.costPerResult, "currency")} CPL</p>
-          </div>
-        </section>
-      </div>
-
-      <section className="analytics-breakdown-card dashboard-overview-wide-card">
-        <div className="analytics-card-header">
-          <strong>Latest Campaign Daily Snapshot</strong>
-          <span className="analytics-mode-chip">{latestCampaign?.campaignName || "Meta Ads"}</span>
         </div>
-        <table className="analytics-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Leads</th>
-              <th>Spend</th>
-              <th>Impressions</th>
-              <th>Reach</th>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedMetaCampaignRows.length ? (
-              selectedMetaCampaignRows.map((row, index) => (
-                <tr key={`${row.campaignName}-${row.reportingStarts || row.date}-${index}`}>
-                  <td>{row.reportingStarts || row.date || "—"}</td>
-                  <td>{formatMetricValue(row.results, "number")}</td>
-                  <td>{formatMetricValue(row.amountSpent, "currency")}</td>
-                  <td>{formatMetricValue(row.impressions, "number")}</td>
-                  <td>{formatMetricValue(row.reach, "number")}</td>
-                </tr>
+        {trendRows.length ? (
+          <>
+            <div className="dashboard-trend-chart" aria-label="Selected metric over time">
+              {trendRows.map((row) => (
+                <div key={row.key} className="dashboard-trend-bar-item">
+                  <span
+                    className="dashboard-trend-bar"
+                    style={{ height: `${Math.max(8, (row.value / trendMaxValue) * 100)}%` }}
+                    title={`${row.label}: ${formatDashboardNumber(row.value)}`}
+                  />
+                  <em>{row.label}</em>
+                </div>
+              ))}
+            </div>
+            <div className="dashboard-trend-insights">
+              <span>Total: <strong>{formatDashboardNumber(trendInsights.total)}</strong></span>
+              <span>Change vs previous: <strong>{formatPercentageChange(trendInsights.change)}</strong></span>
+              <span>Best period: <strong>{trendInsights.best ? `${trendInsights.best.label} (${formatDashboardNumber(trendInsights.best.value)})` : "—"}</strong></span>
+            </div>
+          </>
+        ) : (
+          <div className="dashboard-empty-state">No trend data available for this metric yet.</div>
+        )}
+      </section>
+
+      <section className="dashboard-section">
+        <div className="dashboard-section-header">
+          <div>
+            <span className="analytics-kicker">Top performers</span>
+            <h3>What is currently performing best</h3>
+          </div>
+        </div>
+        <div className="dashboard-performer-grid">
+          <article className="dashboard-performer-card">
+            <span>Top Instagram Content</span>
+            {topInstagramContent ? (
+              <>
+                <strong>{topInstagramContent.title}</strong>
+                <p>{formatDashboardNumber(topInstagramContent.views)} views · {formatDashboardNumber(topInstagramContent.secondary)} reach/interactions</p>
+                <em>{formatDashboardDate(topInstagramContent.date)}</em>
+                <button type="button" onClick={() => onOpenTab("new-page")}>Open Instagram Reporting</button>
+              </>
+            ) : (
+              <p>No Instagram content available.</p>
+            )}
+          </article>
+          <article className="dashboard-performer-card">
+            <span>Top Social Content</span>
+            {topSocialContent ? (
+              <>
+                <strong>{topSocialContent.title}</strong>
+                <p>{formatDashboardNumber(topSocialContent.views)} views · {formatDashboardNumber(topSocialContent.shares)} shares</p>
+                <em>{topSocialContent.platform}</em>
+                <button type="button" onClick={() => onOpenTab("socials")}>Open Socials Reporting</button>
+              </>
+            ) : (
+              <p>No social content available.</p>
+            )}
+          </article>
+          <article className="dashboard-performer-card">
+            <span>Best Meta Campaign</span>
+            {bestCampaign ? (
+              <>
+                <strong>{bestCampaign.campaignName || "Untitled campaign"}</strong>
+                <p>{formatDashboardNumber(bestCampaign.results)} leads · {formatMetricValue(bestCampaign.costPerResult, "currency")} CPL</p>
+                <em>{formatMetricValue(bestCampaign.amountSpent, "currency")} spend · {bestCampaign.campaignDelivery || "No status"}</em>
+                <button
+                  type="button"
+                  onClick={() => onOpenTab("meta-ads", { campaignId: getCampaignLinkId(bestCampaign) })}
+                >
+                  Open Meta Ads Reporting
+                </button>
+              </>
+            ) : (
+              <p>No campaign has enough lead data to identify a best performer.</p>
+            )}
+          </article>
+        </div>
+      </section>
+
+      <section className="dashboard-activity-grid">
+        <article className="dashboard-panel">
+          <div className="dashboard-section-header">
+            <div>
+              <span className="analytics-kicker">Recent activity</span>
+              <h3>Latest data-driven changes</h3>
+            </div>
+          </div>
+          <div className="dashboard-item-list">
+            {recentActivity.length ? (
+              recentActivity.map((item) => (
+                <button key={`${item.title}-${item.detail}-${item.date.toISOString()}`} type="button" onClick={() => onOpenTab(item.tab)}>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                  <em>{formatDashboardDate(item.date)}</em>
+                </button>
               ))
             ) : (
-              <tr>
-                <td colSpan="5">No Meta Ads rows available.</td>
-              </tr>
+              <p>No recent activity can be derived from the available data.</p>
             )}
-          </tbody>
-        </table>
+          </div>
+        </article>
+        <article className="dashboard-panel">
+          <div className="dashboard-section-header">
+            <div>
+              <span className="analytics-kicker">Needs attention</span>
+              <h3>Actionable items</h3>
+            </div>
+          </div>
+          <div className="dashboard-item-list dashboard-attention-list">
+            {attentionItems.length ? (
+              attentionItems.map((item) => (
+                <button key={`${item.title}-${item.detail}`} type="button" onClick={() => onOpenTab(item.tab)}>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </button>
+              ))
+            ) : (
+              <p>No supported attention items detected.</p>
+            )}
+          </div>
+        </article>
       </section>
+
+      <section className="dashboard-actions" aria-label="Dashboard navigation actions">
+        <button type="button" onClick={() => onOpenTab("new-page")}>View Instagram Reporting</button>
+        <button type="button" onClick={() => onOpenTab("socials")}>View Socials Reporting</button>
+        <button type="button" onClick={() => onOpenTab("meta-ads")}>View Meta Ads Reporting</button>
+      </section>
+
+      {hasSourceError ? (
+        <div className="dashboard-warning dashboard-overview-warning" role="status">
+          Some dashboard data is unavailable. Available sections are still shown.
+        </div>
+      ) : null}
     </main>
   );
 }
@@ -1715,6 +1826,13 @@ function App() {
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   const [activeClip, setActiveClip] = useState(null);
+  const [preferredMetaCampaignId, setPreferredMetaCampaignId] = useState("");
+  const openDashboardTab = useCallback((tabId, options = {}) => {
+    if (tabId === "meta-ads" && options.campaignId) {
+      setPreferredMetaCampaignId(options.campaignId);
+    }
+    setActiveTab(tabId);
+  }, []);
 
   const yearFilteredReels = useMemo(
     () => reels.filter((reel) => isPublishedInYear(reel, DISPLAY_YEAR)),
@@ -1874,11 +1992,12 @@ function App() {
           {activeTab === "dashboard" ? (
             <DashboardOverview
               socialsRows={yearFilteredReels}
+              socialsError={error}
               instagramRows={instagramRows}
+              instagramError={instagramError}
               metaAdsData={metaAdsData}
               metaAdsLeadsData={metaAdsLeadsData}
-              formatNumber={formatNumber}
-              onOpenTab={setActiveTab}
+              onOpenTab={openDashboardTab}
             />
           ) : activeTab === "socials" ? (
             <main className="dashboard-shell socials-reporting-shell">
@@ -2066,6 +2185,8 @@ function App() {
             <MetaAdsReportingPage
               metaAdsData={metaAdsData}
               metaAdsLeadsData={metaAdsLeadsData}
+              preferredCampaignId={preferredMetaCampaignId}
+              onPreferredCampaignApplied={() => setPreferredMetaCampaignId("")}
             />
           ) : (
             <InstagramContentPage

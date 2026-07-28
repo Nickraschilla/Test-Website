@@ -51,7 +51,12 @@ const getLeadsForCampaign = (leadRows, campaign) => {
   );
 };
 
-export function MetaAdsReportingPage({ metaAdsData, metaAdsLeadsData }) {
+export function MetaAdsReportingPage({
+  metaAdsData,
+  metaAdsLeadsData,
+  preferredCampaignId = "",
+  onPreferredCampaignApplied = () => {},
+}) {
   const { rows, loading, refreshing, error, usingFallback } = metaAdsData;
   const {
     leads,
@@ -71,6 +76,14 @@ export function MetaAdsReportingPage({ metaAdsData, metaAdsLeadsData }) {
       setSelectedCampaignId(getDefaultCampaignId(rows));
     }
   }, [campaignOptions, rows, selectedCampaignId]);
+
+  useEffect(() => {
+    if (!preferredCampaignId) return;
+    const preferredExists = campaignOptions.some((campaign) => campaign.id === preferredCampaignId);
+    if (!preferredExists) return;
+    setSelectedCampaignId(preferredCampaignId);
+    onPreferredCampaignApplied();
+  }, [campaignOptions, onPreferredCampaignApplied, preferredCampaignId]);
 
   const leadsByCampaign = useMemo(
     () =>
