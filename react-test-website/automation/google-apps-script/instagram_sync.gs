@@ -329,6 +329,23 @@ function getHeaderMap_(sheet) {
   }, {});
 }
 
+function getHeaderIndex_(headerMap, aliases) {
+  for (let i = 0; i < aliases.length; i += 1) {
+    const alias = aliases[i];
+    const normalizedAlias = String(alias || "").trim().toLowerCase();
+
+    if (headerMap[alias] !== undefined) {
+      return headerMap[alias];
+    }
+
+    if (headerMap[normalizedAlias] !== undefined) {
+      return headerMap[normalizedAlias];
+    }
+  }
+
+  return undefined;
+}
+
 function sortSheetByPublishedAtNewestFirst_(sheet, headerMap) {
   const publishedAtIndex =
     headerMap.publishedAt !== undefined ? headerMap.publishedAt : headerMap.publishedat;
@@ -772,9 +789,16 @@ function backfillMissingInstagramPermalinks() {
   const config = getConfig_();
   const sheet = getSheet_(config.sheetId, config.sheetName);
   const headerMap = getHeaderMap_(sheet);
+  const clipUrlIndex = getHeaderIndex_(headerMap, ["clipUrl", "Clip URL", "clip URL", "permalink", "url"]);
+  const igMediaIdIndex = getHeaderIndex_(headerMap, ["igMediaId", "IG Media ID", "media id", "mediaId"]);
+  const publishedAtIndex = getHeaderIndex_(headerMap, ["publishedAt", "Published At", "published at"]);
 
-  if (headerMap.clipUrl === undefined && headerMap.clipurl === undefined) {
-    throw new Error("Add a clipUrl header first. This function will not change headers.");
+  if (clipUrlIndex === undefined) {
+    throw new Error("Add a clipUrl header first. This function will not change headers. Current target tab: " + config.sheetName);
+  }
+
+  if (igMediaIdIndex === undefined) {
+    throw new Error("Add an igMediaId header first. This function will not change headers. Current target tab: " + config.sheetName);
   }
 
   const lastRow = sheet.getLastRow();
@@ -792,8 +816,8 @@ function backfillMissingInstagramPermalinks() {
     }
 
     const rowNumber = index + 2;
-    const currentClipUrl = getRowValue_(row, headerMap, "clipUrl");
-    const igMediaId = getRowValue_(row, headerMap, "igMediaId");
+    const currentClipUrl = row[clipUrlIndex];
+    const igMediaId = row[igMediaIdIndex];
 
     if (currentClipUrl || !igMediaId) {
       return;
@@ -805,10 +829,14 @@ function backfillMissingInstagramPermalinks() {
       return;
     }
 
-    setCellByHeader_(sheet, headerMap, rowNumber, "clipUrl", mediaDetails.permalink);
+    sheet.getRange(rowNumber, clipUrlIndex + 1).setValue(mediaDetails.permalink);
 
-    if (!getRowValue_(row, headerMap, "publishedAt") && mediaDetails.timestamp) {
-      setCellByHeader_(sheet, headerMap, rowNumber, "publishedAt", mediaDetails.timestamp);
+    if (
+      publishedAtIndex !== undefined &&
+      !row[publishedAtIndex] &&
+      mediaDetails.timestamp
+    ) {
+      sheet.getRange(rowNumber, publishedAtIndex + 1).setValue(mediaDetails.timestamp);
     }
 
     updatedCount += 1;
@@ -822,6 +850,7 @@ function debugInstagramColumnMap() {
   const sheet = getSheet_(config.sheetId, config.sheetName);
   const headerMap = getHeaderMap_(sheet);
   const fields = [
+    "clipUrl",
     "igMediaId",
     "igViews",
     "igLikes",
