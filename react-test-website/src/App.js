@@ -1588,7 +1588,7 @@ function App() {
           onToggle={() => setSidebarOpen((currentValue) => !currentValue)}
         />
 
-        <div className={`dashboard-content ${activeTab !== "socials" ? "dashboard-content-analytics" : ""}`}>
+        <div className="dashboard-content dashboard-content-analytics">
           {activeRefreshing ? (
             <div className="dashboard-refreshing-pill" role="status" aria-live="polite">
               <span aria-hidden="true" />
@@ -1609,7 +1609,7 @@ function App() {
           ) : null}
 
           {activeTab === "socials" ? (
-            <main className="dashboard-shell">
+            <main className="dashboard-shell socials-reporting-shell">
         <DashboardHero
           totals={overallTotals}
           platformLabel={selectedPlatformLabel}

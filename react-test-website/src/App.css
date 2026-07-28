@@ -3971,6 +3971,147 @@ select {
   text-align: right;
 }
 
+.socials-reporting-shell {
+  width: min(100% - 28px, 1880px);
+  padding-top: 14px;
+  gap: 12px;
+}
+
+.socials-reporting-shell .hero {
+  gap: 12px;
+}
+
+.socials-reporting-shell .hero-feature-card,
+.socials-reporting-shell .leaderboard-stage,
+.socials-reporting-shell .contributor-summary,
+.socials-reporting-shell .leaderboard-table-frame {
+  border-radius: 8px;
+  border-color: #d9e2ec;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 34, 61, 0.08);
+  backdrop-filter: none;
+}
+
+.socials-reporting-shell .hero-feature-card {
+  padding: 14px;
+  overflow: hidden;
+}
+
+.socials-reporting-shell .hero-feature-header,
+.socials-reporting-shell .leaderboard-stage-top {
+  margin: -14px -14px 14px;
+  padding: 12px 14px;
+  border-bottom: 2px solid #ff304d;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 46%),
+    #061424;
+  color: #ffffff;
+}
+
+.socials-reporting-shell .hero-card-label,
+.socials-reporting-shell .section-kicker {
+  color: #ff304d;
+}
+
+.socials-reporting-shell .hero-feature-rank,
+.socials-reporting-shell .leaderboard-heading,
+.socials-reporting-shell .leaderboard-subheading {
+  color: #ffffff;
+}
+
+.socials-reporting-shell .hero-feature-rank,
+.socials-reporting-shell .leaderboard-subheading {
+  opacity: 0.78;
+}
+
+.socials-reporting-shell .hero-rank-chip,
+.socials-reporting-shell .leaderboard-status-pill {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.socials-reporting-shell .hero-stats-grid-totals {
+  gap: 10px;
+}
+
+.socials-reporting-shell .mini-stat {
+  min-height: 96px;
+  border-radius: 8px;
+  border-color: #d9e2ec;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%),
+    #ffffff;
+  box-shadow: none;
+}
+
+.socials-reporting-shell .mini-stat::before,
+.socials-reporting-shell .mini-stat::after {
+  display: none;
+}
+
+.socials-reporting-shell .platform-tabs {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(15, 34, 61, 0.06);
+}
+
+.socials-reporting-shell .platform-tab {
+  min-height: 52px;
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: clamp(1.05rem, 1.8vw, 1.55rem);
+}
+
+.socials-reporting-shell .platform-tab-active {
+  background:
+    linear-gradient(180deg, rgba(255, 48, 77, 0.94), rgba(192, 25, 45, 0.96)),
+    #ff304d;
+  box-shadow: 0 10px 22px rgba(237, 27, 52, 0.18);
+}
+
+.socials-reporting-shell .leaderboard-stage {
+  padding: 14px;
+}
+
+.socials-reporting-shell .leaderboard-heading {
+  font-size: clamp(2rem, 2.8vw, 3rem);
+}
+
+.socials-reporting-shell .leaderboard-stage-actions {
+  align-items: end;
+}
+
+.socials-reporting-shell .filter-select,
+.socials-reporting-shell .home-button {
+  min-height: 36px;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.socials-reporting-shell .month-leader-card {
+  margin-bottom: 12px;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(15, 34, 61, 0.12);
+}
+
+.socials-reporting-shell .leaderboard-table-frame {
+  border-radius: 8px;
+}
+
+.socials-reporting-shell .leaderboard-table thead th {
+  background: #061424;
+  border-bottom-color: #ff304d;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.socials-reporting-shell .leaderboard-table tbody tr.leaderboard-row-top-1 {
+  background: linear-gradient(90deg, rgba(255, 48, 77, 0.1), #ffffff 48%);
+}
+
 .rank-badge {
   display: inline-flex;
   align-items: center;
