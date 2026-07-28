@@ -94,33 +94,6 @@ function LoadingScreen() {
   );
 }
 
-function PageHeader({ title, subtitle }) {
-  return (
-    <header className="page-header">
-      <div className="page-header-inner">
-        <div className="page-header-brand">
-          <div className="page-header-logo-wrap">
-            <img
-              className="page-header-logo"
-              src="/premier-data-logo-cropped.png"
-              alt="Premier Data"
-            />
-          </div>
-          <div className="page-header-copy">
-            <h1>{title}</h1>
-            <p>{subtitle}</p>
-          </div>
-        </div>
-
-        <div className="page-header-meta" aria-label="2026 season">
-          <span>Season</span>
-          <strong>2026</strong>
-        </div>
-      </div>
-    </header>
-  );
-}
-
 function SideTabBar({ activeTab, isOpen, onSelectTab, onToggle }) {
   const tabs = [
     {
@@ -1539,9 +1512,6 @@ function App() {
     : null;
   const selectedMonthLabel =
     selectedMonth === "all" ? "All months" : formatMonthKey(selectedMonth);
-  const activePageTitle = activeTab === "socials" ? "Socials Reporting" : "Instagram Reporting";
-  const activePageSubtitle =
-    activeTab === "socials" ? "Social performance leaderboard" : "Instagram content performance";
   const activeLoading =
     activeTab === "socials" ? loading : activeTab === "new-page" ? instagramLoading : false;
   const activeRefreshing =
@@ -1600,10 +1570,6 @@ function App() {
             </div>
           ) : null}
 
-          {activeTab === "socials" ? (
-            <PageHeader title={activePageTitle} subtitle={activePageSubtitle} />
-          ) : null}
-
           {activeError ? (
             <div className="dashboard-shell dashboard-alert-shell">
               <div className="dashboard-warning" role="alert">
@@ -1614,6 +1580,69 @@ function App() {
 
           {activeTab === "socials" ? (
             <main className="dashboard-shell socials-reporting-shell">
+        <section className="analytics-hero-panel socials-hero-panel">
+          <div className="analytics-hero-copy">
+            <span className="analytics-kicker">Social media analytics</span>
+            <div className="analytics-title-row">
+              <h2>Socials Reporting</h2>
+            </div>
+            <p>
+              Performance leaderboard across Premier Data social channels.
+            </p>
+          </div>
+
+          <div className="analytics-filter-card socials-platform-card">
+            <div className="analytics-filter-title">Platform view</div>
+            <div className="platform-tabs socials-platform-tabs" aria-label="Platform view">
+              {PLATFORM_OPTIONS.map((platform) => {
+                const isSelected = selectedPlatforms.includes(platform.value);
+
+                return (
+                  <button
+                    key={platform.value}
+                    type="button"
+                    aria-pressed={isSelected}
+                    className={`platform-tab ${
+                      isSelected ? "platform-tab-active" : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedPlatforms((currentPlatforms) =>
+                        currentPlatforms.includes(platform.value)
+                          ? currentPlatforms.filter(
+                              (platformValue) => platformValue !== platform.value
+                            )
+                          : [...currentPlatforms, platform.value]
+                      );
+                      setAscending(false);
+                    }}
+                  >
+                    <span className="platform-tab-icon-wrap" aria-hidden="true">
+                      <img
+                        className="platform-tab-icon"
+                        src={platform.icon}
+                        alt=""
+                      />
+                    </span>
+                    <span className="platform-tab-label">{platform.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="analytics-filter-meta socials-filter-meta">
+              <span>{selectedPlatformLabel}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPlatforms([]);
+                  setAscending(false);
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </section>
+
         <DashboardHero
           totals={overallTotals}
           platformLabel={selectedPlatformLabel}
@@ -1621,42 +1650,6 @@ function App() {
         />
 
         <section className="leaderboard-stage">
-          <div className="platform-tabs" aria-label="Platform view">
-            {PLATFORM_OPTIONS.map((platform) => {
-              const isSelected = selectedPlatforms.includes(platform.value);
-
-              return (
-                <button
-                  key={platform.value}
-                  type="button"
-                  aria-pressed={isSelected}
-                  className={`platform-tab ${
-                    isSelected ? "platform-tab-active" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedPlatforms((currentPlatforms) =>
-                      currentPlatforms.includes(platform.value)
-                        ? currentPlatforms.filter(
-                            (platformValue) => platformValue !== platform.value
-                          )
-                        : [...currentPlatforms, platform.value]
-                    );
-                    setAscending(false);
-                  }}
-                >
-                  <span className="platform-tab-icon-wrap" aria-hidden="true">
-                    <img
-                      className="platform-tab-icon"
-                      src={platform.icon}
-                      alt=""
-                    />
-                  </span>
-                  <span className="platform-tab-label">{platform.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
           <div className="leaderboard-stage-top">
             <div className="leaderboard-stage-copy">
               <div className="section-kicker">Performance ranking</div>
