@@ -107,6 +107,28 @@ function syncInstagramInsightsToSheet() {
 
 function bootstrapSheetFromInstagram() {
   const config = getConfig_();
+  bootstrapSheetWithConfig_(config);
+}
+
+function bootstrapSheet1ReelsFromInstagram() {
+  const config = getConfig_();
+  config.sheetName = DEFAULT_SHEET_NAME;
+  config.mediaMode = "reels";
+  config.sheetLayout = "legacy";
+
+  bootstrapSheetWithConfig_(config);
+}
+
+function syncSheet1ReelInsightsToSheet() {
+  const props = PropertiesService.getScriptProperties();
+  props.setProperty("TARGET_SHEET_NAME", DEFAULT_SHEET_NAME);
+  props.setProperty("INSTAGRAM_MEDIA_MODE", "reels");
+  props.setProperty("INSTAGRAM_SHEET_LAYOUT", "legacy");
+
+  syncInstagramInsightsToSheet();
+}
+
+function bootstrapSheetWithConfig_(config) {
   const sheet = getSheet_(config.sheetId, config.sheetName);
   ensureHeaderRow_(sheet, config);
 
@@ -179,7 +201,8 @@ function backfillMediaIdsFromSheet() {
 
 function getConfig_() {
   const props = PropertiesService.getScriptProperties();
-  const sheetName = props.getProperty("TARGET_SHEET_NAME") || DEFAULT_SHEET_NAME;
+  const sheetName = String(props.getProperty("TARGET_SHEET_NAME") || DEFAULT_SHEET_NAME).trim();
+  const isDefaultSheet = sheetName.toLowerCase() === DEFAULT_SHEET_NAME.toLowerCase();
 
   const config = {
     accessToken: props.getProperty("META_IG_ACCESS_TOKEN"),
@@ -188,11 +211,11 @@ function getConfig_() {
     sheetId: props.getProperty("TARGET_SHEET_ID"),
     sheetName,
     mediaMode:
-      props.getProperty("INSTAGRAM_MEDIA_MODE") ||
-      (sheetName === DEFAULT_SHEET_NAME ? "reels" : "all"),
+      String(props.getProperty("INSTAGRAM_MEDIA_MODE") || "").trim().toLowerCase() ||
+      (isDefaultSheet ? "reels" : "all"),
     sheetLayout:
-      props.getProperty("INSTAGRAM_SHEET_LAYOUT") ||
-      (sheetName === DEFAULT_SHEET_NAME ? "legacy" : "all-content"),
+      String(props.getProperty("INSTAGRAM_SHEET_LAYOUT") || "").trim().toLowerCase() ||
+      (isDefaultSheet ? "legacy" : "all-content"),
   };
 
   const missing = Object.entries({
