@@ -4195,31 +4195,39 @@ select {
 
 .socials-reporting-shell .platform-tab {
   width: 100%;
-  height: 58px;
-  min-height: 58px;
-  padding: 0 16px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  font-size: 0;
+  height: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(6, 20, 36, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 22px rgba(5, 12, 24, 0.12);
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.78rem;
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease;
 }
 
 .socials-reporting-shell .socials-platform-tabs {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
   align-items: center;
   justify-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .socials-reporting-shell .platform-tab-icon-wrap {
-  width: 46px;
-  height: 46px;
-  border-radius: 13px;
-  box-shadow: 0 10px 22px rgba(15, 34, 61, 0.16);
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  box-shadow: 0 7px 14px rgba(5, 12, 24, 0.18);
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
@@ -4237,48 +4245,52 @@ select {
 }
 
 .socials-reporting-shell .platform-tab-icon {
-  width: 32px;
-  height: 32px;
+  width: 21px;
+  height: 21px;
 }
 
 .socials-reporting-shell .platform-tab-active {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.socials-reporting-shell .platform-tab-instagram.platform-tab-active {
-  border-color: #dd2a7b;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    0 0 0 3px rgba(221, 42, 123, 0.2);
-}
-
-.socials-reporting-shell .platform-tab-facebook.platform-tab-active {
-  border-color: #1877f2;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    0 0 0 3px rgba(24, 119, 242, 0.2);
-}
-
-.socials-reporting-shell .platform-tab-tiktok.platform-tab-active {
-  border-color: #111111;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    0 0 0 3px rgba(37, 244, 238, 0.2),
-    0 0 0 6px rgba(254, 44, 85, 0.12);
-}
-
-.socials-reporting-shell .platform-tab-active .platform-tab-icon-wrap {
-  box-shadow: 0 12px 26px rgba(15, 34, 61, 0.22);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
+.socials-reporting-shell .platform-tab-instagram.platform-tab-active {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: linear-gradient(135deg, rgba(245, 133, 41, 0.92) 0%, rgba(221, 42, 123, 0.92) 52%, rgba(129, 52, 175, 0.92) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 12px 24px rgba(221, 42, 123, 0.26);
+}
+
+.socials-reporting-shell .platform-tab-facebook.platform-tab-active {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: linear-gradient(135deg, #1877f2 0%, #0b5fc7 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 12px 24px rgba(24, 119, 242, 0.25);
+}
+
+.socials-reporting-shell .platform-tab-tiktok.platform-tab-active {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: linear-gradient(135deg, #25f4ee 0%, #111111 48%, #fe2c55 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 12px 24px rgba(254, 44, 85, 0.22);
+}
+
+.socials-reporting-shell .platform-tab-active .platform-tab-icon-wrap {
+  box-shadow: 0 8px 16px rgba(5, 12, 24, 0.2);
+}
+
 .socials-reporting-shell .platform-tab-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
   white-space: nowrap;
+  font-weight: 900;
+  letter-spacing: 0.02em;
 }
 
 .socials-reporting-shell .leaderboard-stage {
