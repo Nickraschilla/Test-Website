@@ -737,16 +737,11 @@ function InstagramContentPage({
   const selectedEngagements = getSummaryEngagements(selectedPeriodSummary);
   const followerCount = useMemo(
     () => {
-      const postsWithFollowerCounts = instagramPosts
-        .filter((item) => Number(item.igFollowers || 0) > 0)
-        .sort((a, b) => {
-          const getTime = (item) =>
-            new Date(item.lastSyncedAt || item.publishedAt || "").getTime() || 0;
+      const mostRecentRowWithFollowerCount = instagramPosts.find(
+        (item) => Number(item.igFollowers || 0) > 0
+      );
 
-          return getTime(b) - getTime(a);
-        });
-
-      return Number(postsWithFollowerCounts[0]?.igFollowers || 0) || 40800;
+      return Number(mostRecentRowWithFollowerCount?.igFollowers || 0) || 40800;
     },
     [instagramPosts]
   );
