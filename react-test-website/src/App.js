@@ -100,21 +100,24 @@ function SideTabBar({ activeTab, isOpen, onSelectTab, onToggle }) {
       id: "new-page",
       icon: "/Instagram.svg",
       iconType: "image",
-      label: "Instagram Reporting",
+      label: "Instagram",
+      ariaLabel: "Instagram Reporting Content groups",
       description: "Content groups",
     },
     {
       id: "socials",
       icon: "/Logo App.png",
       iconType: "image",
-      label: "Socials Reporting",
+      label: "Social Media",
+      ariaLabel: "Socials Reporting Leaderboard",
       description: "Leaderboard",
     },
     {
       id: "meta-ads",
       icon: "AD",
       iconType: "text",
-      label: "Meta Ads Reporting",
+      label: "Meta Ads",
+      ariaLabel: "Meta Ads Reporting Paid campaigns",
       description: "Paid campaigns",
     },
   ];
@@ -124,18 +127,25 @@ function SideTabBar({ activeTab, isOpen, onSelectTab, onToggle }) {
       className={`side-tabs ${isOpen ? "side-tabs-open" : "side-tabs-collapsed"}`}
       aria-label="Report navigation"
     >
-      <button
-        type="button"
-        className="side-tabs-toggle"
-        aria-expanded={isOpen}
-        aria-label={isOpen ? "Collapse navigation" : "Open navigation"}
-        onClick={onToggle}
-      >
-        <span className="side-tabs-toggle-icon" aria-hidden="true">
-          {isOpen ? "<<" : ">>"}
-        </span>
-        <span className="side-tabs-toggle-label">Tabs</span>
-      </button>
+      <div className="side-tabs-brand" aria-hidden="true">
+        <img
+          className="side-tabs-logo side-tabs-logo-open"
+          src="/Premier Data White.png"
+          alt=""
+        />
+        <img
+          className="side-tabs-logo side-tabs-logo-collapsed"
+          src="/Logo App.png"
+          alt=""
+        />
+      </div>
+
+      <div className="side-tabs-divider" />
+
+      <div className="side-tabs-search" aria-hidden="true">
+        <span className="side-tabs-search-icon">⌕</span>
+        <span className="side-tabs-search-label">Search dashboard</span>
+      </div>
 
       <nav className="side-tabs-list" aria-label="Report tabs">
         {tabs.map((tab) => {
@@ -147,7 +157,7 @@ function SideTabBar({ activeTab, isOpen, onSelectTab, onToggle }) {
               type="button"
               className={`side-tab ${isActive ? "side-tab-active" : ""}`}
               aria-current={isActive ? "page" : undefined}
-              aria-label={`${tab.label} ${tab.description}`}
+              aria-label={tab.ariaLabel}
               title={tab.label}
               onClick={() => onSelectTab(tab.id)}
             >
@@ -162,6 +172,19 @@ function SideTabBar({ activeTab, isOpen, onSelectTab, onToggle }) {
           );
         })}
       </nav>
+
+      <button
+        type="button"
+        className="side-tabs-toggle"
+        aria-expanded={isOpen}
+        aria-label={isOpen ? "Collapse navigation" : "Open navigation"}
+        onClick={onToggle}
+      >
+        <span className="side-tabs-toggle-icon" aria-hidden="true">
+          {isOpen ? "‹" : "›"}
+        </span>
+        <span className="side-tabs-toggle-label">Collapse</span>
+      </button>
     </aside>
   );
 }
