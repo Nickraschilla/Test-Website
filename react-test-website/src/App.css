@@ -4103,9 +4103,9 @@ select {
 }
 
 .socials-reporting-shell .platform-tab {
-  width: 100%;
-  height: 46px;
-  min-height: 46px;
+  width: 66px;
+  height: 66px;
+  min-height: 66px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 50%;
@@ -4117,15 +4117,16 @@ select {
 .socials-reporting-shell .socials-platform-tabs {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, 66px);
   align-items: center;
   justify-items: center;
-  gap: 18px;
+  justify-content: center;
+  gap: clamp(14px, 2.8vw, 28px);
 }
 
 .socials-reporting-shell .platform-tab-icon-wrap {
-  width: 40px;
-  height: 40px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   box-shadow: 0 8px 18px rgba(15, 34, 61, 0.12);
 }
@@ -4144,8 +4145,8 @@ select {
 }
 
 .socials-reporting-shell .platform-tab-icon {
-  width: 27px;
-  height: 27px;
+  width: 36px;
+  height: 36px;
 }
 
 .socials-reporting-shell .platform-tab-active {
