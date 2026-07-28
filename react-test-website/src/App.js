@@ -1591,8 +1591,7 @@ function App() {
             </p>
           </div>
 
-          <div className="analytics-filter-card socials-platform-card">
-            <div className="analytics-filter-title">Platform view</div>
+          <div className="socials-platform-card">
             <div className="platform-tabs socials-platform-tabs" aria-label="Platform view">
               {PLATFORM_OPTIONS.map((platform) => {
                 const isSelected = selectedPlatforms.includes(platform.value);

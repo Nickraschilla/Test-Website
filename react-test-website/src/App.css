@@ -3992,8 +3992,10 @@ select {
 }
 
 .socials-platform-card {
-  align-content: center;
-  gap: 12px;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .socials-reporting-shell .hero {
@@ -4115,8 +4117,8 @@ select {
 .socials-reporting-shell .socials-platform-tabs {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 14px;
 }
 
 .socials-reporting-shell .platform-tab-icon-wrap {
