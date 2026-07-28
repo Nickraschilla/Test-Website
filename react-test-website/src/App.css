@@ -4103,32 +4103,33 @@ select {
 }
 
 .socials-reporting-shell .platform-tab {
-  width: 66px;
-  height: 66px;
-  min-height: 66px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: none;
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
   font-size: 0;
 }
 
 .socials-reporting-shell .socials-platform-tabs {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, 66px);
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
   align-items: center;
   justify-items: center;
   justify-content: center;
-  gap: clamp(14px, 2.8vw, 28px);
+  gap: 12px;
 }
 
 .socials-reporting-shell .platform-tab-icon-wrap {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  box-shadow: 0 8px 18px rgba(15, 34, 61, 0.12);
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  box-shadow: 0 10px 22px rgba(15, 34, 61, 0.16);
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
 .socials-reporting-shell .platform-tab-instagram .platform-tab-icon-wrap {
@@ -4145,33 +4146,39 @@ select {
 }
 
 .socials-reporting-shell .platform-tab-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
 }
 
 .socials-reporting-shell .platform-tab-active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .socials-reporting-shell .platform-tab-instagram.platform-tab-active {
   border-color: #dd2a7b;
-  box-shadow: 0 0 0 3px rgba(221, 42, 123, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 0 0 3px rgba(221, 42, 123, 0.2);
 }
 
 .socials-reporting-shell .platform-tab-facebook.platform-tab-active {
   border-color: #1877f2;
-  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 0 0 3px rgba(24, 119, 242, 0.2);
 }
 
 .socials-reporting-shell .platform-tab-tiktok.platform-tab-active {
   border-color: #111111;
   box-shadow:
-    0 0 0 3px rgba(37, 244, 238, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 0 0 3px rgba(37, 244, 238, 0.2),
     0 0 0 6px rgba(254, 44, 85, 0.12);
 }
 
 .socials-reporting-shell .platform-tab-active .platform-tab-icon-wrap {
-  box-shadow: 0 10px 22px rgba(15, 34, 61, 0.16);
+  box-shadow: 0 12px 26px rgba(15, 34, 61, 0.22);
+  transform: translateY(-1px);
 }
 
 .socials-reporting-shell .platform-tab-label {
