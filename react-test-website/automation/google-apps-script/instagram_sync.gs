@@ -1,6 +1,7 @@
 const GRAPH_API_VERSION = "v23.0";
 const DEFAULT_SHEET_NAME = "Sheet1";
-const DEFAULT_INSTAGRAM_BATCH_SIZE = 25;
+const DEFAULT_INSTAGRAM_BATCH_SIZE = 10;
+const BOOTSTRAP_CURSOR_PROPERTY = "INSTAGRAM_BOOTSTRAP_AFTER_CURSOR";
 const START_DATE = "2025-01-01T00:00:00Z";
 const LEGACY_REELS_HEADER_ROW = [
   "name",
@@ -146,7 +147,8 @@ function bootstrapSheetWithConfig_(config) {
     }
   });
 
-  const mediaItems = fetchMedia_(config);
+  const page = fetchMediaPage_(config, getBootstrapCursor_());
+  const mediaItems = page.mediaItems;
   const followerCount = fetchFollowerCount_(config);
   const newRows = mediaItems
     .filter(isMediaOnOrAfterStartDate_)
@@ -164,6 +166,22 @@ function bootstrapSheetWithConfig_(config) {
       .getRange(sheet.getLastRow() + 1, 1, newRows.length, sheet.getLastColumn())
       .setValues(newRows);
   }
+
+  setBootstrapCursor_(page.nextCursor);
+
+  Logger.log(
+    "Bootstrap batch complete. Fetched " +
+      mediaItems.length +
+      " media item(s), wrote " +
+      newRows.length +
+      " new row(s). " +
+      (page.nextCursor ? "Run again for the next batch." : "No next page available.")
+  );
+}
+
+function resetInstagramBootstrapCursor() {
+  PropertiesService.getScriptProperties().deleteProperty(BOOTSTRAP_CURSOR_PROPERTY);
+  Logger.log("Instagram bootstrap cursor reset. The next bootstrap run starts from the newest media.");
 }
 
 function backfillMediaIdsFromSheet() {
@@ -397,6 +415,10 @@ function selectRowsForSync_(rows, batchSize) {
 }
 
 function fetchMedia_(config) {
+  return fetchMediaPage_(config, "").mediaItems;
+}
+
+function fetchMediaPage_(config, afterCursor) {
   const fields = [
     "id",
     "caption",
@@ -408,7 +430,7 @@ function fetchMedia_(config) {
     "comments_count",
   ];
 
-  const url =
+  let url =
     "https://graph.facebook.com/" +
     GRAPH_API_VERSION +
     "/" +
@@ -420,6 +442,10 @@ function fetchMedia_(config) {
     "&access_token=" +
     encodeURIComponent(config.accessToken);
 
+  if (afterCursor) {
+    url += "&after=" + encodeURIComponent(afterCursor);
+  }
+
   const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
   const payload = JSON.parse(response.getContentText());
 
@@ -428,12 +454,34 @@ function fetchMedia_(config) {
   }
 
   const mediaItems = payload.data || [];
+  const filteredMediaItems =
+    String(config.mediaMode || "").toLowerCase() === "reels"
+      ? mediaItems.filter(isReelMedia_)
+      : mediaItems;
+  const nextCursor =
+    payload.paging && payload.paging.cursors
+      ? payload.paging.cursors.after || ""
+      : "";
 
-  if (String(config.mediaMode || "").toLowerCase() === "reels") {
-    return mediaItems.filter(isReelMedia_);
+  return {
+    mediaItems: filteredMediaItems,
+    nextCursor,
+  };
+}
+
+function getBootstrapCursor_() {
+  return PropertiesService.getScriptProperties().getProperty(BOOTSTRAP_CURSOR_PROPERTY) || "";
+}
+
+function setBootstrapCursor_(cursor) {
+  const props = PropertiesService.getScriptProperties();
+
+  if (cursor) {
+    props.setProperty(BOOTSTRAP_CURSOR_PROPERTY, cursor);
+    return;
   }
 
-  return mediaItems;
+  props.deleteProperty(BOOTSTRAP_CURSOR_PROPERTY);
 }
 
 function isReelMedia_(media) {
