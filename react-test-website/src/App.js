@@ -175,6 +175,7 @@ function SideTabBar({ activeTab, isOpen, onSelectTab, onToggle }) {
               className={`side-tab ${isActive ? "side-tab-active" : ""}`}
               aria-current={isActive ? "page" : undefined}
               aria-label={`${tab.label} ${tab.description}`}
+              title={tab.label}
               onClick={() => onSelectTab(tab.id)}
             >
               <span className="side-tab-icon" aria-hidden="true">
@@ -1584,7 +1585,10 @@ function App() {
         <SideTabBar
           activeTab={activeTab}
           isOpen={sidebarOpen}
-          onSelectTab={setActiveTab}
+          onSelectTab={(tabId) => {
+            setActiveTab(tabId);
+            setSidebarOpen(false);
+          }}
           onToggle={() => setSidebarOpen((currentValue) => !currentValue)}
         />
 
