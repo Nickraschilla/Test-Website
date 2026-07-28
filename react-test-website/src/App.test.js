@@ -151,7 +151,16 @@ beforeEach(() => {
 test('renders the reporting dashboard tabs', () => {
   render(<App />);
   expect(
-    screen.getByRole('heading', { name: /instagram reporting/i })
+    screen.getByRole('heading', { name: /^dashboard$/i })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: /instagram reporting content groups/i })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: /socials reporting leaderboard/i })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: /meta ads reporting paid campaigns/i })
   ).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /socials reporting leaderboard/i }));
@@ -235,11 +244,12 @@ test('shows lead pipeline rows from the lead sheet for the selected campaign', (
   expect(screen.queryByText('Other Lead')).not.toBeInTheDocument();
 });
 
-test('uses Instagram loading state for the default page', () => {
+test('uses Instagram loading state when the Instagram page is active', () => {
   mockSocialsData.loading = false;
   mockInstagramData.loading = true;
 
   render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /instagram reporting content groups/i }));
 
   expect(screen.getByRole('status')).toHaveTextContent(/syncing live data/i);
 });
