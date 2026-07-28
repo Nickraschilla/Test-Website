@@ -4127,8 +4127,20 @@ select {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #ffffff;
   box-shadow: 0 8px 18px rgba(15, 34, 61, 0.12);
+}
+
+.socials-reporting-shell .platform-tab-instagram .platform-tab-icon-wrap {
+  background: linear-gradient(135deg, #f58529 0%, #dd2a7b 52%, #8134af 100%);
+}
+
+.socials-reporting-shell .platform-tab-facebook .platform-tab-icon-wrap {
+  background: #1877f2;
+}
+
+.socials-reporting-shell .platform-tab-tiktok .platform-tab-icon-wrap {
+  background:
+    linear-gradient(135deg, rgba(37, 244, 238, 0.88) 0%, #111111 43%, #fe2c55 100%);
 }
 
 .socials-reporting-shell .platform-tab-icon {
