@@ -34,7 +34,7 @@ export function MetaAdsFilters({
 
         <div className="analytics-filter-meta meta-ads-filter-meta">
           <button type="button" onClick={onReset}>
-            Reset
+            Reset View
           </button>
         </div>
       </div>

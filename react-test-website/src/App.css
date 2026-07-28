@@ -2006,10 +2006,52 @@ select {
 
 .meta-ads-filter-card {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 12px;
+  border-color: rgba(255, 255, 255, 0.2);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07)),
+    rgba(7, 19, 40, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 18px 42px rgba(5, 12, 24, 0.16);
 }
 
 .meta-ads-review-selector {
-  grid-template-columns: minmax(260px, 1.4fr) minmax(150px, 0.7fr) auto;
+  grid-template-columns: minmax(320px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.meta-ads-review-selector label {
+  min-width: 0;
+  gap: 7px;
+}
+
+.meta-ads-review-selector label > span {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.74rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+}
+
+.meta-ads-review-selector select {
+  min-height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 11px;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #eef4fb 100%);
+  color: #071328;
+  font-size: clamp(1rem, 1.35vw, 1.34rem);
+  font-weight: 950;
+  box-shadow:
+    0 13px 24px rgba(5, 12, 24, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+.meta-ads-review-selector select:focus {
+  outline: 3px solid rgba(255, 48, 77, 0.45);
+  outline-offset: 2px;
 }
 
 .meta-ads-active-period {
@@ -2031,9 +2073,28 @@ select {
 }
 
 .meta-ads-filter-meta button {
-  min-height: 30px;
+  min-height: 46px;
+  padding: 0 22px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
+  color: #ffffff;
   justify-content: center;
+  font-size: 0.92rem;
+  font-weight: 950;
   white-space: nowrap;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 12px 22px rgba(5, 12, 24, 0.12);
+}
+
+.meta-ads-filter-meta button:hover,
+.meta-ads-filter-meta button:focus-visible {
+  border-color: rgba(255, 255, 255, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.12));
+  transform: translateY(-1px);
 }
 
 .meta-ads-filter-active {
