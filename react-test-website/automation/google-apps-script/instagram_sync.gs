@@ -165,6 +165,7 @@ function bootstrapSheetWithConfig_(config) {
     sheet
       .getRange(sheet.getLastRow() + 1, 1, newRows.length, sheet.getLastColumn())
       .setValues(newRows);
+    sortSheetByPublishedAtNewestFirst_(sheet, headerMap);
   }
 
   setBootstrapCursor_(page.nextCursor);
@@ -182,6 +183,14 @@ function bootstrapSheetWithConfig_(config) {
 function resetInstagramBootstrapCursor() {
   PropertiesService.getScriptProperties().deleteProperty(BOOTSTRAP_CURSOR_PROPERTY);
   Logger.log("Instagram bootstrap cursor reset. The next bootstrap run starts from the newest media.");
+}
+
+function sortInstagramSheetNewestFirst() {
+  const config = getConfig_();
+  const sheet = getSheet_(config.sheetId, config.sheetName);
+  const headerMap = getHeaderMap_(sheet);
+
+  sortSheetByPublishedAtNewestFirst_(sheet, headerMap);
 }
 
 function backfillMediaIdsFromSheet() {
@@ -318,6 +327,21 @@ function getHeaderMap_(sheet) {
     }
     return map;
   }, {});
+}
+
+function sortSheetByPublishedAtNewestFirst_(sheet, headerMap) {
+  const publishedAtIndex =
+    headerMap.publishedAt !== undefined ? headerMap.publishedAt : headerMap.publishedat;
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+
+  if (publishedAtIndex === undefined || lastRow < 3) {
+    return;
+  }
+
+  sheet
+    .getRange(2, 1, lastRow - 1, lastColumn)
+    .sort({ column: publishedAtIndex + 1, ascending: false });
 }
 
 function getRowValue_(row, headerMap, header) {
