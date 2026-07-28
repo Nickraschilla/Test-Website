@@ -509,13 +509,9 @@ function DashboardOverview({
     ["Contacted", "Converted", "Failed"].includes(lead.status)
   ).length;
   const convertedLeads = manualLeads.filter((lead) => lead.status === "Converted").length;
-  const reportingViews = socialsTotals.views + instagramSummary.views;
-  const reportingInteractions =
-    socialsTotals.likes +
-    socialsTotals.comments +
-    socialsTotals.reshares +
-    socialsTotals.saves +
-    instagramSummary.interactions;
+  const socialsInteractions =
+    socialsTotals.likes + socialsTotals.comments + socialsTotals.reshares + socialsTotals.saves;
+  const selectedMetaCampaignRows = (latestCampaign?.rows || []).slice(0, 5);
 
   const summaryCards = [
     {
@@ -611,16 +607,37 @@ function DashboardOverview({
         ))}
       </section>
 
-      <section className="dashboard-overview-network-strip">
-        <span>Reporting views</span>
-        <strong>{formatNumber(reportingViews)}</strong>
-        <em>Instagram + Socials views · {formatNumber(reportingInteractions)} interactions</em>
+      <section className="dashboard-overview-snapshot-grid" aria-label="Dashboard snapshots">
+        <article className="dashboard-overview-snapshot dashboard-overview-snapshot-instagram">
+          <span>Instagram Content</span>
+          <strong>{formatNumber(instagramSummary.views)}</strong>
+          <em>Views</em>
+          <p>{formatNumber(instagramSummary.interactions)} interactions · {formatNumber(instagramSummary.followers)} followers</p>
+        </article>
+        <article className="dashboard-overview-snapshot dashboard-overview-snapshot-socials">
+          <span>Socials Leaderboard</span>
+          <strong>{formatNumber(socialsTotals.views)}</strong>
+          <em>Combined platform views</em>
+          <p>{formatNumber(socialsInteractions)} interactions · {formatNumber(socialsReelCount)} reels</p>
+        </article>
+        <article className="dashboard-overview-snapshot dashboard-overview-snapshot-meta">
+          <span>Meta Ads</span>
+          <strong>{formatMetricValue(metaSummary.results, "number")}</strong>
+          <em>Leads</em>
+          <p>{formatMetricValue(metaSummary.amountSpent, "currency")} spend · {formatMetricValue(metaSummary.costPerResult, "currency")} CPL</p>
+        </article>
+        <article className="dashboard-overview-snapshot dashboard-overview-snapshot-pipeline">
+          <span>Lead Pipeline</span>
+          <strong>{formatNumber(manualLeads.length)}</strong>
+          <em>Manual leads</em>
+          <p>{formatNumber(contactedLeads)} contacted · {formatNumber(convertedLeads)} converted</p>
+        </article>
       </section>
 
       <div className="dashboard-overview-grid">
         <section className="analytics-breakdown-card dashboard-overview-table-card">
           <div className="analytics-table-title">
-            <span>Performance Summary</span>
+            <span>Page Summary</span>
             <span className="analytics-mode-chip">{DISPLAY_YEAR} overview</span>
           </div>
           <table className="analytics-table">
@@ -663,29 +680,73 @@ function DashboardOverview({
 
         <section className="analytics-breakdown-card dashboard-overview-side-card">
           <div className="analytics-table-title">
-            <span>Audience</span>
-            <span className="analytics-mode-chip">Live</span>
+            <span>Instagram Top Line</span>
+            <span className="analytics-mode-chip">Content</span>
           </div>
           <div className="dashboard-overview-list">
             <div className="dashboard-overview-list-row">
-              <span><img src="/Instagram.svg" alt="" /> Instagram</span>
+              <span><img src="/Instagram.svg" alt="" /> Followers</span>
               <strong>{formatNumber(instagramSummary.followers)}</strong>
+            </div>
+            <div className="dashboard-overview-list-row">
+              <span>Reach</span>
+              <strong>{formatNumber(instagramSummary.reach)}</strong>
+            </div>
+            <div className="dashboard-overview-list-row">
+              <span>Posts</span>
+              <strong>{formatNumber(instagramSummary.posts)}</strong>
             </div>
           </div>
         </section>
 
         <section className="analytics-breakdown-card dashboard-overview-side-card">
           <div className="analytics-table-title">
-            <span>Meta Ads</span>
-            <span className="analytics-mode-chip">Latest</span>
+            <span>Latest Campaign</span>
+            <span className="analytics-mode-chip">Meta Ads</span>
           </div>
           <div className="dashboard-overview-meta-highlight">
             <span>{latestCampaign?.campaignName || "No campaign data"}</span>
-            <strong>{formatMetricValue(metaSummary.impressions, "number")}</strong>
-            <em>Impressions tracked</em>
+            <strong>{formatMetricValue(latestCampaign?.results, "number")}</strong>
+            <em>Leads tracked</em>
+            <p>{formatMetricValue(latestCampaign?.amountSpent, "currency")} spend · {formatMetricValue(latestCampaign?.costPerResult, "currency")} CPL</p>
           </div>
         </section>
       </div>
+
+      <section className="analytics-breakdown-card dashboard-overview-wide-card">
+        <div className="analytics-table-title">
+          <span>Latest Campaign Daily Snapshot</span>
+          <span className="analytics-mode-chip">{latestCampaign?.campaignName || "Meta Ads"}</span>
+        </div>
+        <table className="analytics-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Leads</th>
+              <th>Spend</th>
+              <th>Impressions</th>
+              <th>Reach</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedMetaCampaignRows.length ? (
+              selectedMetaCampaignRows.map((row, index) => (
+                <tr key={`${row.campaignName}-${row.reportingStarts || row.date}-${index}`}>
+                  <td>{row.reportingStarts || row.date || "—"}</td>
+                  <td>{formatMetricValue(row.results, "number")}</td>
+                  <td>{formatMetricValue(row.amountSpent, "currency")}</td>
+                  <td>{formatMetricValue(row.impressions, "number")}</td>
+                  <td>{formatMetricValue(row.reach, "number")}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5">No Meta Ads rows available.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </section>
     </main>
   );
 }
