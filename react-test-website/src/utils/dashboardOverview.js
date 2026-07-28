@@ -47,6 +47,8 @@ export const formatPercentageChange = (value) => {
 export const formatComparisonLabel = (value, comparisonYear) =>
   `${formatPercentageChange(value)} vs ${comparisonYear}`;
 
+export const getCurrentMonthIndex = (referenceDate = new Date()) => referenceDate.getMonth();
+
 const getYear = (date) => (date ? date.getFullYear() : null);
 
 const getMonthLabel = (monthIndex) =>
@@ -65,13 +67,16 @@ export const getLatestSyncTime = (...rowSets) => {
   return dates[0] || null;
 };
 
-export const buildInstagramSummary = (rows, reportingYear) => {
+export const buildInstagramSummary = (rows, reportingYear, referenceDate = new Date()) => {
+  const currentMonthIndex = getCurrentMonthIndex(referenceDate);
   const currentRows = rows
     .filter((item) => isPublishedInYear(item, reportingYear))
     .map((item) => applyPlatformMetrics(item, "instagram"));
   const previousRows = rows
     .filter((item) => isPublishedInYear(item, reportingYear - 1))
     .map((item) => applyPlatformMetrics(item, "instagram"));
+  const currentMonthRows = currentRows.filter((item) => parseReelDate(item)?.getMonth() === currentMonthIndex);
+  const previousMonthRows = previousRows.filter((item) => parseReelDate(item)?.getMonth() === currentMonthIndex);
   const current = {
     views: sumMetric(currentRows, (row) => row.igViews || row.views),
     reach: sumMetric(currentRows, (row) => row.igReach),
@@ -86,12 +91,25 @@ export const buildInstagramSummary = (rows, reportingYear) => {
     ),
   };
   const previousViews = sumMetric(previousRows, (row) => row.igViews || row.views);
+  const currentMonth = {
+    label: new Intl.DateTimeFormat("en-AU", { month: "long" }).format(
+      new Date(reportingYear, currentMonthIndex, 1)
+    ),
+    views: sumMetric(currentMonthRows, (row) => row.igViews || row.views),
+    reach: sumMetric(currentMonthRows, (row) => row.igReach),
+    posts: currentMonthRows.length,
+    previousViews: sumMetric(previousMonthRows, (row) => row.igViews || row.views),
+  };
   const latestFollowerRow = rows.find((item) => Number(item.igFollowers || 0) > 0);
 
   return {
     ...current,
     followers: Number(latestFollowerRow?.igFollowers || 0) || null,
     change: getPercentageChange(current.views, previousViews),
+    currentMonth: {
+      ...currentMonth,
+      change: getPercentageChange(currentMonth.views, currentMonth.previousViews),
+    },
   };
 };
 

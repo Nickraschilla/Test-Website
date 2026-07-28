@@ -128,6 +128,13 @@ test("builds executive summaries without combining Instagram and Socials values"
     reach: 2500,
     posts: 2,
     followers: 40852,
+    currentMonth: {
+      views: 3400,
+      reach: 2500,
+      posts: 2,
+      previousViews: 1700,
+      change: 100,
+    },
   });
   expect(buildSocialsSummary(socialRows, 2026)).toMatchObject({
     views: 6200,

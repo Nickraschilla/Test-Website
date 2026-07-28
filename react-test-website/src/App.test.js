@@ -206,6 +206,12 @@ test('renders a clean executive overview on the dashboard front page', () => {
       igReach: 1200,
       igFollowers: 40852,
     },
+    {
+      contentTitle: 'Previous July Feature',
+      publishedAt: '2025-07-10',
+      igViews: 1100,
+      igReach: 700,
+    },
   ];
   mockSocialsData.reels = [
     {
@@ -227,7 +233,8 @@ test('renders a clean executive overview on the dashboard front page', () => {
   expect(within(executiveSummary).queryByRole('button', { name: /lead pipeline/i })).not.toBeInTheDocument();
   expect(within(executiveSummary).getByRole('button', { name: /tom donnelly/i })).toBeInTheDocument();
   expect(within(executiveSummary).getByRole('button', { name: /\$15\.71/i })).toBeInTheDocument();
-  expect(within(executiveSummary).getByText(/vs 2025/i)).toBeInTheDocument();
+  expect(within(executiveSummary).getByText(/july 2026 instagram views/i)).toBeInTheDocument();
+  expect(within(executiveSummary).getByText(/\+100\.0% vs july 2025/i)).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: /cross-platform performance trend/i })).toBeInTheDocument();
   expect(screen.getByLabelText(/instagram views by month/i)).toBeInTheDocument();
   expect(screen.getByText(/month \(2026\)/i)).toBeInTheDocument();
