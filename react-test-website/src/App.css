@@ -2114,6 +2114,29 @@ select {
   color: rgba(255, 255, 255, 0.76);
 }
 
+.meta-ads-combined-legend button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.meta-ads-combined-legend button:hover,
+.meta-ads-combined-legend button:focus-visible,
+.meta-ads-combined-legend .meta-ads-legend-active {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
 .meta-ads-combined-legend em {
   color: #ffffff;
 }

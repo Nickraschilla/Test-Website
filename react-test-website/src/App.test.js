@@ -353,6 +353,26 @@ test('opens the Meta Ads Reporting tab', () => {
   expect(screen.getAllByText('18').length).toBeGreaterThan(0);
 });
 
+test('focuses and clears the Meta Ads performance chart metric', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
+
+  expect(screen.getByLabelText(/1 july leads/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/1 july cost per lead/i)).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /focus cost per lead/i }));
+
+  expect(screen.getByRole('button', { name: /show all metrics cost per lead/i })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.queryByLabelText(/1 july leads/i)).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/1 july cost per lead/i)).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /show all metrics cost per lead/i }));
+
+  expect(screen.getByRole('button', { name: /focus cost per lead/i })).toHaveAttribute('aria-pressed', 'false');
+  expect(screen.getByLabelText(/1 july leads/i)).toBeInTheDocument();
+});
+
 test('switches Meta Ads campaign from the dropdown and comparison table', () => {
   render(<App />);
 

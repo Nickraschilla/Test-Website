@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   buildCampaignTrendSummary,
 } from "../../utils/metaAdsCampaignReview";
@@ -15,6 +15,10 @@ const metrics = [
 ];
 
 export function MetaAdsPerformanceOverTime({ rows }) {
+  const [focusedMetricKey, setFocusedMetricKey] = useState("");
+  const visibleMetrics = focusedMetricKey
+    ? metrics.filter((metric) => metric.key === focusedMetricKey)
+    : metrics;
   const trendData = useMemo(() => {
     const rowsByDate = new Map();
     const maxByMetric = {};
@@ -42,8 +46,11 @@ export function MetaAdsPerformanceOverTime({ rows }) {
   }, [rows]);
   const trendSummary = useMemo(() => buildCampaignTrendSummary(rows), [rows]);
   const hasTrendRows = trendData.rows.some((row) =>
-    metrics.some((metric) => hasNumber(row.values[metric.key]))
+    visibleMetrics.some((metric) => hasNumber(row.values[metric.key]))
   );
+  const toggleFocusedMetric = (metricKey) => {
+    setFocusedMetricKey((currentKey) => (currentKey === metricKey ? "" : metricKey));
+  };
 
   return (
     <section className="analytics-chart-card meta-ads-chart-card meta-ads-review-chart">
@@ -51,10 +58,17 @@ export function MetaAdsPerformanceOverTime({ rows }) {
         <strong>Performance over time</strong>
         <div className="analytics-chart-legend meta-ads-combined-legend">
           {metrics.map((item) => (
-            <span key={item.key}>
+            <button
+              key={item.key}
+              type="button"
+              className={focusedMetricKey === item.key ? "meta-ads-legend-active" : ""}
+              aria-pressed={focusedMetricKey === item.key}
+              aria-label={`${focusedMetricKey === item.key ? "Show all metrics" : "Focus"} ${item.label}`}
+              onClick={() => toggleFocusedMetric(item.key)}
+            >
               <i className={item.className} />
               <em>{item.label}</em>
-            </span>
+            </button>
           ))}
         </div>
       </div>
@@ -72,7 +86,7 @@ export function MetaAdsPerformanceOverTime({ rows }) {
             {trendData.rows.map((row) => (
               <div className="analytics-bar-group" key={row.key}>
                 <div className="analytics-bar-track">
-                  {metrics.map((metric) => {
+                  {visibleMetrics.map((metric) => {
                     const value = row.values[metric.key];
                     const height = hasNumber(value)
                       ? Math.max(4, (Number(value) / trendData.maxByMetric[metric.key]) * 100)
