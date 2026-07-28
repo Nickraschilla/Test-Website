@@ -366,17 +366,18 @@ function setValueByHeader_(row, headerMap, header, value) {
 }
 
 function buildSheetRowForMedia_(config, headerMap, columnCount, media, followerCount) {
+  const mediaDetails = media.permalink ? media : fetchMediaDetails_(config.accessToken, media.id, media);
   const row = Array(columnCount).fill("");
 
-  setValueByHeader_(row, headerMap, "reelName", buildReelName_(media));
-  setValueByHeader_(row, headerMap, "contentTitle", buildReelName_(media));
-  setValueByHeader_(row, headerMap, "contentType", getContentType_(media));
-  setValueByHeader_(row, headerMap, "mediaType", media.media_type || "");
-  setValueByHeader_(row, headerMap, "mediaProductType", media.media_product_type || "");
-  setValueByHeader_(row, headerMap, "clipUrl", media.permalink || "");
-  setValueByHeader_(row, headerMap, "igMediaId", media.id);
+  setValueByHeader_(row, headerMap, "reelName", buildReelName_(mediaDetails));
+  setValueByHeader_(row, headerMap, "contentTitle", buildReelName_(mediaDetails));
+  setValueByHeader_(row, headerMap, "contentType", getContentType_(mediaDetails));
+  setValueByHeader_(row, headerMap, "mediaType", mediaDetails.media_type || "");
+  setValueByHeader_(row, headerMap, "mediaProductType", mediaDetails.media_product_type || "");
+  setValueByHeader_(row, headerMap, "clipUrl", mediaDetails.permalink || "");
+  setValueByHeader_(row, headerMap, "igMediaId", mediaDetails.id);
   setValueByHeader_(row, headerMap, "igFollowers", followerCount || "");
-  setValueByHeader_(row, headerMap, "publishedAt", media.timestamp || "");
+  setValueByHeader_(row, headerMap, "publishedAt", mediaDetails.timestamp || "");
 
   return row;
 }
@@ -534,6 +535,36 @@ function fetchFollowerCount_(config) {
   }
 
   return Number(payload.followers_count || 0);
+}
+
+function fetchMediaDetails_(accessToken, mediaId, fallback) {
+  const fields = [
+    "id",
+    "caption",
+    "timestamp",
+    "permalink",
+    "media_product_type",
+    "media_type",
+    "like_count",
+    "comments_count",
+  ];
+  const url =
+    "https://graph.facebook.com/" +
+    GRAPH_API_VERSION +
+    "/" +
+    encodeURIComponent(mediaId) +
+    "?fields=" +
+    encodeURIComponent(fields.join(",")) +
+    "&access_token=" +
+    encodeURIComponent(accessToken);
+  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  const payload = JSON.parse(response.getContentText());
+
+  if (response.getResponseCode() >= 400) {
+    return fallback || {};
+  }
+
+  return Object.assign({}, fallback || {}, payload || {});
 }
 
 function syncSheetRowInPlace_(
@@ -735,6 +766,55 @@ function backfillPublishedAtOnly() {
 
     setCellByHeader_(sheet, headerMap, rowNumber, "publishedAt", matchedMedia.timestamp);
   });
+}
+
+function backfillMissingInstagramPermalinks() {
+  const config = getConfig_();
+  const sheet = getSheet_(config.sheetId, config.sheetName);
+  const headerMap = getHeaderMap_(sheet);
+
+  if (headerMap.clipUrl === undefined && headerMap.clipurl === undefined) {
+    throw new Error("Add a clipUrl header first. This function will not change headers.");
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+  if (lastRow < 2) {
+    return;
+  }
+
+  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+  let updatedCount = 0;
+
+  values.forEach((row, index) => {
+    if (updatedCount >= config.batchSize) {
+      return;
+    }
+
+    const rowNumber = index + 2;
+    const currentClipUrl = getRowValue_(row, headerMap, "clipUrl");
+    const igMediaId = getRowValue_(row, headerMap, "igMediaId");
+
+    if (currentClipUrl || !igMediaId) {
+      return;
+    }
+
+    const mediaDetails = fetchMediaDetails_(config.accessToken, igMediaId, {});
+
+    if (!mediaDetails.permalink) {
+      return;
+    }
+
+    setCellByHeader_(sheet, headerMap, rowNumber, "clipUrl", mediaDetails.permalink);
+
+    if (!getRowValue_(row, headerMap, "publishedAt") && mediaDetails.timestamp) {
+      setCellByHeader_(sheet, headerMap, rowNumber, "publishedAt", mediaDetails.timestamp);
+    }
+
+    updatedCount += 1;
+  });
+
+  Logger.log("Backfilled " + updatedCount + " missing Instagram permalink(s).");
 }
 
 function debugInstagramColumnMap() {
