@@ -2,7 +2,35 @@ const GRAPH_API_VERSION = "v23.0";
 const DEFAULT_SHEET_NAME = "Sheet1";
 const MEDIA_LIMIT = 100;
 const START_DATE = "2025-01-01T00:00:00Z";
-const HEADER_ROW = [
+const LEGACY_REELS_HEADER_ROW = [
+  "name",
+  "reelName",
+  "clipUrl",
+  "igMediaId",
+  "igViews",
+  "igLikes",
+  "igComments",
+  "igShares",
+  "igSaves",
+  "lastSyncedAt",
+  "publishedAt",
+  "fbViews",
+  "fbLikes",
+  "fbComments",
+  "fbShares",
+  "fbSaves",
+  "ttViews",
+  "ttLikes",
+  "ttComments",
+  "ttShares",
+  "ttSaves",
+  "totalViews",
+  "totalLikes",
+  "totalComments",
+  "totalShares",
+  "totalSaves",
+];
+const ALL_CONTENT_HEADER_ROW = [
   "name",
   "reelName",
   "contentTitle",
@@ -41,7 +69,7 @@ const HEADER_ROW = [
 function syncInstagramInsightsToSheet() {
   const config = getConfig_();
   const sheet = getSheet_(config.sheetId, config.sheetName);
-  ensureHeaderRow_(sheet);
+  ensureHeaderRow_(sheet, config);
 
   const headerMap = getHeaderMap_(sheet);
   const existingRows = readSheetRows_(sheet, headerMap).filter(isOnOrAfterStartDate_);
@@ -80,7 +108,7 @@ function syncInstagramInsightsToSheet() {
 function bootstrapSheetFromInstagram() {
   const config = getConfig_();
   const sheet = getSheet_(config.sheetId, config.sheetName);
-  ensureHeaderRow_(sheet);
+  ensureHeaderRow_(sheet, config);
 
   const headerMap = getHeaderMap_(sheet);
   const existingRows = readSheetRows_(sheet, headerMap).filter(isOnOrAfterStartDate_);
@@ -119,7 +147,7 @@ function bootstrapSheetFromInstagram() {
 function backfillMediaIdsFromSheet() {
   const config = getConfig_();
   const sheet = getSheet_(config.sheetId, config.sheetName);
-  ensureHeaderRow_(sheet);
+  ensureHeaderRow_(sheet, config);
 
   const headerMap = getHeaderMap_(sheet);
   const existingRows = readSheetRows_(sheet, headerMap);
@@ -162,6 +190,9 @@ function getConfig_() {
     mediaMode:
       props.getProperty("INSTAGRAM_MEDIA_MODE") ||
       (sheetName === DEFAULT_SHEET_NAME ? "reels" : "all"),
+    sheetLayout:
+      props.getProperty("INSTAGRAM_SHEET_LAYOUT") ||
+      (sheetName === DEFAULT_SHEET_NAME ? "legacy" : "all-content"),
   };
 
   const missing = Object.entries({
@@ -184,7 +215,14 @@ function getSheet_(sheetId, sheetName) {
   return spreadsheet.getSheetByName(sheetName) || spreadsheet.insertSheet(sheetName);
 }
 
-function ensureHeaderRow_(sheet) {
+function getHeaderRow_(config) {
+  return String(config.sheetLayout || "").toLowerCase() === "legacy"
+    ? LEGACY_REELS_HEADER_ROW
+    : ALL_CONTENT_HEADER_ROW;
+}
+
+function ensureHeaderRow_(sheet, config) {
+  const headerRow = getHeaderRow_(config);
   const lastColumn = Math.max(sheet.getLastColumn(), 1);
   const currentHeaderValues = sheet
     .getRange(1, 1, 1, lastColumn)
@@ -196,11 +234,11 @@ function ensureHeaderRow_(sheet) {
   );
 
   if (!currentHeaders.length) {
-    sheet.getRange(1, 1, 1, HEADER_ROW.length).setValues([HEADER_ROW]);
+    sheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]);
     return;
   }
 
-  const missingHeaders = HEADER_ROW.filter(
+  const missingHeaders = headerRow.filter(
     (header) => normalizedCurrentHeaders.indexOf(header.toLowerCase()) === -1
   );
 
@@ -212,7 +250,7 @@ function ensureHeaderRow_(sheet) {
 }
 
 function getHeaderMap_(sheet) {
-  const lastColumn = Math.max(sheet.getLastColumn(), HEADER_ROW.length);
+  const lastColumn = Math.max(sheet.getLastColumn(), ALL_CONTENT_HEADER_ROW.length);
   const headers = sheet
     .getRange(1, 1, 1, lastColumn)
     .getValues()[0]
@@ -275,7 +313,7 @@ function readSheetRows_(sheet, headerMap) {
     return [];
   }
 
-  const lastColumn = Math.max(sheet.getLastColumn(), HEADER_ROW.length);
+  const lastColumn = Math.max(sheet.getLastColumn(), ALL_CONTENT_HEADER_ROW.length);
   const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
 
   return values
