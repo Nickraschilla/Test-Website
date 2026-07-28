@@ -613,6 +613,38 @@ function DashboardOverview({
       [key]: (currentIndexes[key] + direction + itemCount) % itemCount,
     }));
   };
+
+  useEffect(() => {
+    const carouselLengths = {
+      instagram: topInstagramContentList.length,
+      social: topSocialContentList.length,
+      meta: bestCampaigns.length,
+    };
+    const hasMultipleItems = Object.values(carouselLengths).some((itemCount) => itemCount > 1);
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+    if (!hasMultipleItems || prefersReducedMotion) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      setPerformerIndexes((currentIndexes) => ({
+        instagram:
+          carouselLengths.instagram > 1
+            ? (currentIndexes.instagram + 1) % carouselLengths.instagram
+            : currentIndexes.instagram,
+        social:
+          carouselLengths.social > 1
+            ? (currentIndexes.social + 1) % carouselLengths.social
+            : currentIndexes.social,
+        meta:
+          carouselLengths.meta > 1
+            ? (currentIndexes.meta + 1) % carouselLengths.meta
+            : currentIndexes.meta,
+      }));
+    }, 6000);
+
+    return () => window.clearInterval(intervalId);
+  }, [bestCampaigns.length, topInstagramContentList.length, topSocialContentList.length]);
+
   const executiveCards = [
     {
       id: "instagram",
