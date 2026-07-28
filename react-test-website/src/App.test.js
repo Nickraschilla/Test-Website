@@ -210,6 +210,7 @@ test('renders a clean executive overview on the dashboard front page', () => {
   mockSocialsData.reels = [
     {
       reelName: 'Leaderboard Reel',
+      name: 'Tom Donnelly',
       publishedAt: '2026-07-09',
       views: 9000,
       reshares: 55,
@@ -222,8 +223,14 @@ test('renders a clean executive overview on the dashboard front page', () => {
   render(<App />);
 
   const executiveSummary = screen.getByRole('region', { name: /executive summary/i });
-  expect(within(executiveSummary).getAllByRole('button')).toHaveLength(4);
+  expect(within(executiveSummary).getAllByRole('button')).toHaveLength(3);
+  expect(within(executiveSummary).queryByRole('button', { name: /lead pipeline/i })).not.toBeInTheDocument();
+  expect(within(executiveSummary).getByRole('button', { name: /tom donnelly/i })).toBeInTheDocument();
+  expect(within(executiveSummary).getByRole('button', { name: /\$15\.71/i })).toBeInTheDocument();
+  expect(within(executiveSummary).getByText(/vs 2025/i)).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: /cross-platform performance trend/i })).toBeInTheDocument();
+  expect(screen.getByLabelText(/instagram views by month/i)).toBeInTheDocument();
+  expect(screen.getByText(/month \(2026\)/i)).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: /what is currently performing best/i })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: /latest data-driven changes/i })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: /actionable items/i })).toBeInTheDocument();
@@ -258,7 +265,7 @@ test('switches the dashboard trend metric', () => {
     { contentTitle: 'Instagram Feature', publishedAt: '2026-07-10', igViews: 2200 },
   ];
   mockSocialsData.reels = [
-    { reelName: 'Leaderboard Reel', publishedAt: '2026-07-09', views: 9000 },
+    { reelName: 'Leaderboard Reel', name: 'Tom Donnelly', publishedAt: '2026-07-09', views: 9000 },
   ];
 
   render(<App />);
@@ -266,6 +273,26 @@ test('switches the dashboard trend metric', () => {
   expect(screen.getByRole('tab', { name: /instagram views/i })).toHaveAttribute('aria-selected', 'true');
   fireEvent.click(screen.getByRole('tab', { name: /social views/i }));
   expect(screen.getByRole('tab', { name: /social views/i })).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByLabelText(/social views by month/i)).toBeInTheDocument();
+});
+
+test('cycles dashboard top performer carousels', () => {
+  mockInstagramData.reels = [
+    { contentTitle: 'First Instagram Post', publishedAt: '2026-07-10', igViews: 2200 },
+    { contentTitle: 'Second Instagram Post', publishedAt: '2026-07-11', igViews: 1800 },
+  ];
+  mockSocialsData.reels = [
+    { reelName: 'First Social Reel', name: 'Tom Donnelly', publishedAt: '2026-07-09', views: 9000 },
+    { reelName: 'Second Social Reel', name: 'Alex Smith', publishedAt: '2026-07-08', views: 8000 },
+  ];
+
+  render(<App />);
+
+  const topPerformers = screen.getByRole('heading', { name: /what is currently performing best/i })
+    .closest('section');
+  expect(within(topPerformers).getByText('First Instagram Post')).toBeInTheDocument();
+  fireEvent.click(within(topPerformers).getAllByRole('button', { name: '›' })[0]);
+  expect(within(topPerformers).getByText('Second Instagram Post')).toBeInTheDocument();
 });
 
 test('opens the best Meta campaign from the dashboard top performers card', () => {

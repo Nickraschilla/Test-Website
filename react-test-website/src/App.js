@@ -20,20 +20,24 @@ import {
   buildAttentionItems,
   buildDashboardTrend,
   buildInstagramSummary,
-  buildLeadPipelineSummary,
   buildMetaSummary,
   buildRecentActivity,
   buildSocialsSummary,
   buildTrendInsights,
   formatDashboardDate,
   formatDashboardNumber,
+  formatComparisonLabel,
   formatPercentageChange,
   getBestMetaCampaign,
+  getBestMetaCampaignList,
   getCampaignLinkId,
   getLatestSyncTime,
   getPreviousEquivalentTotal,
   getTopInstagramContent,
+  getTopInstagramContentList,
+  getTopSocialContributor,
   getTopSocialContent,
+  getTopSocialContentList,
 } from "./utils/dashboardOverview";
 import { formatMetricValue } from "./utils/metaAdsAnalytics";
 import {
@@ -472,6 +476,11 @@ function DashboardOverview({
   onOpenTab,
 }) {
   const [trendMetric, setTrendMetric] = useState("instagram");
+  const [performerIndexes, setPerformerIndexes] = useState({
+    instagram: 0,
+    social: 0,
+    meta: 0,
+  });
   const instagramSummary = useMemo(
     () => buildInstagramSummary(instagramRows, DISPLAY_YEAR),
     [instagramRows]
@@ -484,20 +493,32 @@ function DashboardOverview({
     () => buildSocialsSummary(socialsRows, DISPLAY_YEAR),
     [socialsRows]
   );
-  const leadSummary = useMemo(
-    () => buildLeadPipelineSummary(metaAdsLeadsData.leads || []),
-    [metaAdsLeadsData.leads]
-  );
   const bestCampaign = useMemo(
     () => getBestMetaCampaign(metaAdsData.rows || []),
+    [metaAdsData.rows]
+  );
+  const bestCampaigns = useMemo(
+    () => getBestMetaCampaignList(metaAdsData.rows || []),
     [metaAdsData.rows]
   );
   const topInstagramContent = useMemo(
     () => getTopInstagramContent(instagramRows, DISPLAY_YEAR),
     [instagramRows]
   );
+  const topInstagramContentList = useMemo(
+    () => getTopInstagramContentList(instagramRows, DISPLAY_YEAR),
+    [instagramRows]
+  );
   const topSocialContent = useMemo(
     () => getTopSocialContent(socialsRows, DISPLAY_YEAR),
+    [socialsRows]
+  );
+  const topSocialContentList = useMemo(
+    () => getTopSocialContentList(socialsRows, DISPLAY_YEAR),
+    [socialsRows]
+  );
+  const topSocialContributor = useMemo(
+    () => getTopSocialContributor(socialsRows, DISPLAY_YEAR),
     [socialsRows]
   );
   const latestSyncTime = useMemo(
@@ -555,13 +576,35 @@ function DashboardOverview({
   );
   const trendMaxValue = Math.max(1, ...trendRows.map((row) => row.value || 0));
   const trendOptions = [
-    { value: "instagram", label: "Instagram Views" },
-    { value: "social", label: "Social Views" },
-    { value: "meta", label: "Meta Ads Leads" },
+    { value: "instagram", label: "Instagram Views", axisLabel: "Instagram views" },
+    { value: "social", label: "Social Views", axisLabel: "Social views" },
+    { value: "meta", label: "Meta Ads Leads", axisLabel: "Meta Ads leads" },
   ];
+  const activeTrendOption =
+    trendOptions.find((option) => option.value === trendMetric) || trendOptions[0];
   const hasSourceError = Boolean(
     socialsError || instagramError || metaAdsData.error || metaAdsLeadsData.error
   );
+  const getCarouselItem = (items, key) => {
+    if (!items.length) return null;
+    const index = performerIndexes[key] % items.length;
+    return items[index];
+  };
+  const getCarouselPosition = (items, key) =>
+    items.length ? `${(performerIndexes[key] % items.length) + 1}/${items.length}` : "0/0";
+  const selectedInstagramContent =
+    getCarouselItem(topInstagramContentList, "instagram") || topInstagramContent;
+  const selectedSocialContent =
+    getCarouselItem(topSocialContentList, "social") || topSocialContent;
+  const selectedMetaCampaign =
+    getCarouselItem(bestCampaigns, "meta") || bestCampaign;
+  const updatePerformerIndex = (key, direction, itemCount) => {
+    if (itemCount <= 1) return;
+    setPerformerIndexes((currentIndexes) => ({
+      ...currentIndexes,
+      [key]: (currentIndexes[key] + direction + itemCount) % itemCount,
+    }));
+  };
   const executiveCards = [
     {
       id: "instagram",
@@ -570,31 +613,26 @@ function DashboardOverview({
       metricLabel: "Instagram views",
       detail: `${formatDashboardNumber(instagramSummary.reach)} reach · ${formatDashboardNumber(instagramSummary.posts)} posts`,
       change: instagramSummary.change,
+      changeLabel: formatComparisonLabel(instagramSummary.change, DISPLAY_YEAR - 1),
       tab: "new-page",
     },
     {
       id: "socials",
       title: "Socials Reporting",
-      metric: formatDashboardNumber(socialsSummary.views),
-      metricLabel: "Combined social views",
-      detail: `${formatDashboardNumber(socialsSummary.reels)} reels · ${formatDashboardNumber(socialsSummary.shares)} shares`,
-      change: socialsSummary.change,
+      metric: topSocialContributor?.name || "—",
+      metricLabel: "Top coder",
+      detail: topSocialContributor
+        ? `${formatDashboardNumber(topSocialContributor.totals.views)} total views · ${formatDashboardNumber(topSocialContributor.topReel?.views)} top reel views`
+        : `${formatDashboardNumber(socialsSummary.reels)} reels · ${formatDashboardNumber(socialsSummary.shares)} shares`,
+      metricType: "text",
       tab: "socials",
     },
     {
       id: "meta",
       title: "Meta Ads Reporting",
-      metric: formatDashboardNumber(metaSummary.leads),
-      metricLabel: "Leads generated",
-      detail: `${formatMetricValue(metaSummary.spend, "currency")} spend · ${formatMetricValue(metaSummary.costPerLead, "currency")} CPL · ${formatDashboardNumber(metaSummary.campaignCount)} campaigns`,
-      tab: "meta-ads",
-    },
-    {
-      id: "pipeline",
-      title: "Lead Pipeline",
-      metric: leadSummary.conversionRate === null ? "—" : `${leadSummary.conversionRate.toFixed(1)}%`,
-      metricLabel: "Conversion rate",
-      detail: `${formatDashboardNumber(leadSummary.total)} tracked · ${formatDashboardNumber(leadSummary.converted)} converted · ${formatDashboardNumber(leadSummary.requiringAction)} requiring action`,
+      metric: formatMetricValue(metaSummary.costPerLead, "currency"),
+      metricLabel: `Cost per lead in ${DISPLAY_YEAR}`,
+      detail: `${formatDashboardNumber(metaSummary.leads)} leads · ${formatMetricValue(metaSummary.spend, "currency")} spend · ${formatDashboardNumber(metaSummary.campaignCount)} campaigns`,
       tab: "meta-ads",
     },
   ];
@@ -637,12 +675,14 @@ function DashboardOverview({
             onClick={() => onOpenTab(card.tab)}
           >
             <span className="dashboard-card-title">{card.title}</span>
-            <strong>{card.metric}</strong>
+            <strong className={card.metricType === "text" ? "dashboard-card-text-metric" : ""}>
+              {card.metric}
+            </strong>
             <em>{card.metricLabel}</em>
             <p>{card.detail}</p>
             {card.change !== undefined ? (
               <span className={`dashboard-change ${card.change >= 0 ? "dashboard-change-up" : "dashboard-change-down"}`}>
-                {formatPercentageChange(card.change)}
+                {card.changeLabel || formatPercentageChange(card.change)}
               </span>
             ) : null}
           </button>
@@ -672,17 +712,25 @@ function DashboardOverview({
         </div>
         {trendRows.length ? (
           <>
-            <div className="dashboard-trend-chart" aria-label="Selected metric over time">
-              {trendRows.map((row) => (
-                <div key={row.key} className="dashboard-trend-bar-item">
-                  <span
-                    className="dashboard-trend-bar"
-                    style={{ height: `${Math.max(8, (row.value / trendMaxValue) * 100)}%` }}
-                    title={`${row.label}: ${formatDashboardNumber(row.value)}`}
-                  />
-                  <em>{row.label}</em>
-                </div>
-              ))}
+            <div className="dashboard-trend-frame">
+              <div className="dashboard-trend-axis-title dashboard-trend-axis-y">
+                {activeTrendOption.axisLabel}
+              </div>
+              <div className="dashboard-trend-chart" aria-label={`${activeTrendOption.axisLabel} by month`}>
+                {trendRows.map((row) => (
+                  <div key={row.key} className="dashboard-trend-bar-item">
+                    <span
+                      className="dashboard-trend-bar"
+                      style={{ height: `${Math.max(8, (row.value / trendMaxValue) * 100)}%` }}
+                      title={`${row.label}: ${formatDashboardNumber(row.value)}`}
+                    />
+                    <em>{row.label}</em>
+                  </div>
+                ))}
+              </div>
+              <div className="dashboard-trend-axis-title dashboard-trend-axis-x">
+                Month ({DISPLAY_YEAR})
+              </div>
             </div>
             <div className="dashboard-trend-insights">
               <span>Total: <strong>{formatDashboardNumber(trendInsights.total)}</strong></span>
@@ -704,12 +752,19 @@ function DashboardOverview({
         </div>
         <div className="dashboard-performer-grid">
           <article className="dashboard-performer-card">
-            <span>Top Instagram Content</span>
-            {topInstagramContent ? (
+            <div className="dashboard-performer-card-header">
+              <span>Top Instagram Content</span>
+              <div className="dashboard-carousel-controls" aria-label="Instagram top content carousel">
+                <button type="button" onClick={() => updatePerformerIndex("instagram", -1, topInstagramContentList.length)} disabled={topInstagramContentList.length <= 1}>‹</button>
+                <em>{getCarouselPosition(topInstagramContentList, "instagram")}</em>
+                <button type="button" onClick={() => updatePerformerIndex("instagram", 1, topInstagramContentList.length)} disabled={topInstagramContentList.length <= 1}>›</button>
+              </div>
+            </div>
+            {selectedInstagramContent ? (
               <>
-                <strong>{topInstagramContent.title}</strong>
-                <p>{formatDashboardNumber(topInstagramContent.views)} views · {formatDashboardNumber(topInstagramContent.secondary)} reach/interactions</p>
-                <em>{formatDashboardDate(topInstagramContent.date)}</em>
+                <strong>{selectedInstagramContent.title}</strong>
+                <p>{formatDashboardNumber(selectedInstagramContent.views)} views · {formatDashboardNumber(selectedInstagramContent.secondary)} reach/interactions</p>
+                <em>{formatDashboardDate(selectedInstagramContent.date)}</em>
                 <button type="button" onClick={() => onOpenTab("new-page")}>Open Instagram Reporting</button>
               </>
             ) : (
@@ -717,12 +772,19 @@ function DashboardOverview({
             )}
           </article>
           <article className="dashboard-performer-card">
-            <span>Top Social Content</span>
-            {topSocialContent ? (
+            <div className="dashboard-performer-card-header">
+              <span>Top Social Content</span>
+              <div className="dashboard-carousel-controls" aria-label="Social top content carousel">
+                <button type="button" onClick={() => updatePerformerIndex("social", -1, topSocialContentList.length)} disabled={topSocialContentList.length <= 1}>‹</button>
+                <em>{getCarouselPosition(topSocialContentList, "social")}</em>
+                <button type="button" onClick={() => updatePerformerIndex("social", 1, topSocialContentList.length)} disabled={topSocialContentList.length <= 1}>›</button>
+              </div>
+            </div>
+            {selectedSocialContent ? (
               <>
-                <strong>{topSocialContent.title}</strong>
-                <p>{formatDashboardNumber(topSocialContent.views)} views · {formatDashboardNumber(topSocialContent.shares)} shares</p>
-                <em>{topSocialContent.platform}</em>
+                <strong>{selectedSocialContent.title}</strong>
+                <p>{formatDashboardNumber(selectedSocialContent.views)} views · {formatDashboardNumber(selectedSocialContent.shares)} shares</p>
+                <em>{selectedSocialContent.platform}</em>
                 <button type="button" onClick={() => onOpenTab("socials")}>Open Socials Reporting</button>
               </>
             ) : (
@@ -730,15 +792,22 @@ function DashboardOverview({
             )}
           </article>
           <article className="dashboard-performer-card">
-            <span>Best Meta Campaign</span>
-            {bestCampaign ? (
+            <div className="dashboard-performer-card-header">
+              <span>Best Meta Campaign</span>
+              <div className="dashboard-carousel-controls" aria-label="Meta campaign carousel">
+                <button type="button" onClick={() => updatePerformerIndex("meta", -1, bestCampaigns.length)} disabled={bestCampaigns.length <= 1}>‹</button>
+                <em>{getCarouselPosition(bestCampaigns, "meta")}</em>
+                <button type="button" onClick={() => updatePerformerIndex("meta", 1, bestCampaigns.length)} disabled={bestCampaigns.length <= 1}>›</button>
+              </div>
+            </div>
+            {selectedMetaCampaign ? (
               <>
-                <strong>{bestCampaign.campaignName || "Untitled campaign"}</strong>
-                <p>{formatDashboardNumber(bestCampaign.results)} leads · {formatMetricValue(bestCampaign.costPerResult, "currency")} CPL</p>
-                <em>{formatMetricValue(bestCampaign.amountSpent, "currency")} spend · {bestCampaign.campaignDelivery || "No status"}</em>
+                <strong>{selectedMetaCampaign.campaignName || "Untitled campaign"}</strong>
+                <p>{formatDashboardNumber(selectedMetaCampaign.results)} leads · {formatMetricValue(selectedMetaCampaign.costPerResult, "currency")} CPL</p>
+                <em>{formatMetricValue(selectedMetaCampaign.amountSpent, "currency")} spend · {selectedMetaCampaign.campaignDelivery || "No status"}</em>
                 <button
                   type="button"
-                  onClick={() => onOpenTab("meta-ads", { campaignId: getCampaignLinkId(bestCampaign) })}
+                  onClick={() => onOpenTab("meta-ads", { campaignId: getCampaignLinkId(selectedMetaCampaign) })}
                 >
                   Open Meta Ads Reporting
                 </button>

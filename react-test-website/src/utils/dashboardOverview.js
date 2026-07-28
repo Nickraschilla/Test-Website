@@ -8,7 +8,7 @@ import {
   safeDivide,
 } from "./metaAdsAnalytics";
 import { buildCampaignReviewMetrics, isActiveMetaCampaign } from "./metaAdsCampaignReview";
-import { applyPlatformMetrics, calculateTotals, isInstagramReel, isPublishedInYear, parseReelDate } from "./reels";
+import { applyPlatformMetrics, buildContributorLeaders, calculateTotals, isInstagramReel, isPublishedInYear, parseReelDate } from "./reels";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BEST_CAMPAIGN_MIN_LEADS = 3;
@@ -43,6 +43,9 @@ export const formatPercentageChange = (value) => {
   const sign = Number(value) > 0 ? "+" : "";
   return `${sign}${Number(value).toFixed(1)}%`;
 };
+
+export const formatComparisonLabel = (value, comparisonYear) =>
+  `${formatPercentageChange(value)} vs ${comparisonYear}`;
 
 const getYear = (date) => (date ? date.getFullYear() : null);
 
@@ -177,6 +180,9 @@ const getTitle = (item) =>
   item.contentTitle || item.reelName || item.name || item.campaignName || item.igMediaId || "Untitled";
 
 export const getTopInstagramContent = (rows, reportingYear) =>
+  getTopInstagramContentList(rows, reportingYear)[0] || null;
+
+export const getTopInstagramContentList = (rows, reportingYear, limit = 5) =>
   rows
     .filter((row) => isPublishedInYear(row, reportingYear))
     .map((row) => applyPlatformMetrics(row, "instagram"))
@@ -186,9 +192,13 @@ export const getTopInstagramContent = (rows, reportingYear) =>
       views: Number(row.igViews || row.views || 0),
       secondary: Number(row.igReach || 0) || Number(row.likes || 0) + Number(row.comments || 0) + Number(row.reshares || 0) + Number(row.saves || 0),
       date: row.publishedAt,
-    }))[0] || null;
+    }))
+    .slice(0, limit);
 
 export const getTopSocialContent = (rows, reportingYear) =>
+  getTopSocialContentList(rows, reportingYear)[0] || null;
+
+export const getTopSocialContentList = (rows, reportingYear, limit = 5) =>
   rows
     .filter((row) => isPublishedInYear(row, reportingYear))
     .sort((a, b) => Number(b.views || 0) - Number(a.views || 0))
@@ -206,9 +216,16 @@ export const getTopSocialContent = (rows, reportingYear) =>
         platform: platformValues[0]?.value > 0 ? platformValues[0].label : "All platforms",
         date: row.publishedAt,
       };
-    })[0] || null;
+    })
+    .slice(0, limit);
+
+export const getTopSocialContributor = (rows, reportingYear) =>
+  buildContributorLeaders(rows.filter((row) => isPublishedInYear(row, reportingYear)))[0] || null;
 
 export const getBestMetaCampaign = (rows) =>
+  getBestMetaCampaignList(rows)[0] || null;
+
+export const getBestMetaCampaignList = (rows, limit = 5) =>
   aggregateByCampaign(rows)
     .map((campaign) => buildCampaignReviewMetrics(campaign, []))
     .filter((campaign) => Number(campaign.results || 0) >= BEST_CAMPAIGN_MIN_LEADS && hasNumber(campaign.costPerResult))
@@ -216,7 +233,8 @@ export const getBestMetaCampaign = (rows) =>
       (a, b) =>
         Number(a.costPerResult) - Number(b.costPerResult) ||
         Number(b.results || 0) - Number(a.results || 0)
-    )[0] || null;
+    )
+    .slice(0, limit);
 
 const getLatestContentDate = (rows) =>
   rows
