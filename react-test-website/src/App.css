@@ -3993,9 +3993,9 @@ select {
 
 .socials-platform-card {
   min-height: 76px;
-  display: flex;
+  width: 100%;
+  display: grid;
   align-items: center;
-  justify-content: flex-end;
 }
 
 .socials-reporting-shell .hero {
@@ -4103,7 +4103,7 @@ select {
 }
 
 .socials-reporting-shell .platform-tab {
-  width: 46px;
+  width: 100%;
   height: 46px;
   min-height: 46px;
   padding: 0;
@@ -4115,10 +4115,12 @@ select {
 }
 
 .socials-reporting-shell .socials-platform-tabs {
-  display: flex;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
-  justify-content: flex-end;
-  gap: 14px;
+  justify-items: center;
+  gap: 18px;
 }
 
 .socials-reporting-shell .platform-tab-icon-wrap {

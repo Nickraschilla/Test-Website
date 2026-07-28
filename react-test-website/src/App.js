@@ -1592,7 +1592,7 @@ function App() {
           </div>
 
           <div className="socials-platform-card">
-            <div className="platform-tabs socials-platform-tabs" aria-label="Platform view">
+            <div className="platform-tabs socials-platform-tabs" aria-label="Social platform filters">
               {PLATFORM_OPTIONS.map((platform) => {
                 const isSelected = selectedPlatforms.includes(platform.value);
 
