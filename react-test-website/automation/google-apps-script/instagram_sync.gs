@@ -1,6 +1,6 @@
 const GRAPH_API_VERSION = "v23.0";
 const DEFAULT_SHEET_NAME = "Sheet1";
-const MEDIA_LIMIT = 100;
+const DEFAULT_INSTAGRAM_BATCH_SIZE = 25;
 const START_DATE = "2025-01-01T00:00:00Z";
 const LEGACY_REELS_HEADER_ROW = [
   "name",
@@ -92,7 +92,7 @@ function syncInstagramInsightsToSheet() {
     }
   });
 
-  existingRows.forEach((row) => {
+  selectRowsForSync_(existingRows, config.batchSize).forEach((row) => {
     syncSheetRowInPlace_(
       config,
       sheet,
@@ -210,6 +210,10 @@ function getConfig_() {
     creatorName: props.getProperty("META_CREATOR_NAME") || "",
     sheetId: props.getProperty("TARGET_SHEET_ID"),
     sheetName,
+    batchSize: getPositiveInteger_(
+      props.getProperty("INSTAGRAM_BATCH_SIZE"),
+      DEFAULT_INSTAGRAM_BATCH_SIZE
+    ),
     mediaMode:
       String(props.getProperty("INSTAGRAM_MEDIA_MODE") || "").trim().toLowerCase() ||
       (isDefaultSheet ? "reels" : "all"),
@@ -231,6 +235,11 @@ function getConfig_() {
   }
 
   return config;
+}
+
+function getPositiveInteger_(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
 function getSheet_(sheetId, sheetName) {
@@ -376,6 +385,17 @@ function isMediaOnOrAfterStartDate_(media) {
   return !Number.isNaN(date.getTime()) && date >= new Date(START_DATE);
 }
 
+function selectRowsForSync_(rows, batchSize) {
+  return rows
+    .slice()
+    .sort((first, second) => {
+      const firstTime = new Date(first.lastSyncedAt || 0).getTime() || 0;
+      const secondTime = new Date(second.lastSyncedAt || 0).getTime() || 0;
+      return firstTime - secondTime;
+    })
+    .slice(0, batchSize);
+}
+
 function fetchMedia_(config) {
   const fields = [
     "id",
@@ -396,7 +416,7 @@ function fetchMedia_(config) {
     "/media?fields=" +
     encodeURIComponent(fields.join(",")) +
     "&limit=" +
-    MEDIA_LIMIT +
+    encodeURIComponent(config.batchSize) +
     "&access_token=" +
     encodeURIComponent(config.accessToken);
 
