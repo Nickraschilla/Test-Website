@@ -4101,13 +4101,11 @@ select {
 
 .socials-reporting-shell .platform-tab {
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 12px;
   border-radius: 8px;
   box-shadow: none;
-  font-size: clamp(0.95rem, 1.45vw, 1.25rem);
-  background:
-    linear-gradient(180deg, #ffffff, #f5f8fb),
-    #ffffff;
+  font-size: 0;
+  background: #f5f8fb;
 }
 
 .socials-reporting-shell .socials-platform-tabs {
@@ -4116,21 +4114,67 @@ select {
 }
 
 .socials-reporting-shell .platform-tab-icon-wrap {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .socials-reporting-shell .platform-tab-icon {
-  width: 21px;
-  height: 21px;
+  width: 23px;
+  height: 23px;
 }
 
 .socials-reporting-shell .platform-tab-active {
+  box-shadow: 0 10px 22px rgba(15, 34, 61, 0.14);
+}
+
+.socials-reporting-shell .platform-tab-instagram {
+  border-color: rgba(225, 48, 108, 0.32);
   background:
-    linear-gradient(180deg, rgba(255, 48, 77, 0.94), rgba(192, 25, 45, 0.96)),
-    #ff304d;
-  box-shadow: 0 10px 22px rgba(237, 27, 52, 0.18);
+    linear-gradient(90deg, rgba(245, 133, 41, 0.18), rgba(225, 48, 108, 0.16), rgba(131, 58, 180, 0.16)),
+    #ffffff;
+}
+
+.socials-reporting-shell .platform-tab-instagram.platform-tab-active {
+  background:
+    linear-gradient(90deg, #f58529 0%, #dd2a7b 52%, #8134af 100%);
+}
+
+.socials-reporting-shell .platform-tab-facebook {
+  border-color: rgba(24, 119, 242, 0.32);
+  background:
+    linear-gradient(90deg, rgba(24, 119, 242, 0.17), rgba(24, 119, 242, 0.08)),
+    #ffffff;
+}
+
+.socials-reporting-shell .platform-tab-facebook.platform-tab-active {
+  background: linear-gradient(90deg, #1877f2 0%, #0b5fc7 100%);
+}
+
+.socials-reporting-shell .platform-tab-tiktok {
+  border-color: rgba(0, 0, 0, 0.18);
+  background:
+    linear-gradient(90deg, rgba(37, 244, 238, 0.16), rgba(0, 0, 0, 0.08), rgba(254, 44, 85, 0.14)),
+    #ffffff;
+}
+
+.socials-reporting-shell .platform-tab-tiktok.platform-tab-active {
+  background:
+    linear-gradient(90deg, #25f4ee 0%, #111111 48%, #fe2c55 100%);
+}
+
+.socials-reporting-shell .platform-tab-active .platform-tab-icon-wrap {
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.socials-reporting-shell .platform-tab-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .socials-reporting-shell .leaderboard-stage {

@@ -1602,7 +1602,9 @@ function App() {
                     key={platform.value}
                     type="button"
                     aria-pressed={isSelected}
-                    className={`platform-tab ${
+                    aria-label={platform.label}
+                    title={platform.label}
+                    className={`platform-tab platform-tab-${platform.value} ${
                       isSelected ? "platform-tab-active" : ""
                     }`}
                     onClick={() => {
