@@ -81,7 +81,7 @@ function syncInstagramInsightsToSheet() {
   }
 
   const mediaItems = fetchMedia_(config);
-  const followerCount = fetchFollowerCount_(config);
+  const followerCount = config.syncFollowers ? fetchFollowerCount_(config) : "";
   const mediaById = {};
   const mediaByPermalink = {};
 
@@ -149,7 +149,7 @@ function bootstrapSheetWithConfig_(config) {
 
   const page = fetchMediaPage_(config, getBootstrapCursor_());
   const mediaItems = page.mediaItems;
-  const followerCount = fetchFollowerCount_(config);
+  const followerCount = config.syncFollowers ? fetchFollowerCount_(config) : "";
   const newRows = mediaItems
     .filter(isMediaOnOrAfterStartDate_)
     .filter((media) => {
@@ -247,6 +247,8 @@ function getConfig_() {
     sheetLayout:
       String(props.getProperty("INSTAGRAM_SHEET_LAYOUT") || "").trim().toLowerCase() ||
       (isDefaultSheet ? "legacy" : "all-content"),
+    syncFollowers:
+      String(props.getProperty("INSTAGRAM_SYNC_FOLLOWERS") || "").trim().toLowerCase() === "true",
   };
 
   const missing = Object.entries({
@@ -393,7 +395,9 @@ function buildSheetRowForMedia_(config, headerMap, columnCount, media, followerC
   setValueByHeader_(row, headerMap, "mediaProductType", mediaDetails.media_product_type || "");
   setValueByHeader_(row, headerMap, "clipUrl", mediaDetails.permalink || "");
   setValueByHeader_(row, headerMap, "igMediaId", mediaDetails.id);
-  setValueByHeader_(row, headerMap, "igFollowers", followerCount || "");
+  if (config.syncFollowers) {
+    setValueByHeader_(row, headerMap, "igFollowers", followerCount || "");
+  }
   setValueByHeader_(row, headerMap, "publishedAt", mediaDetails.timestamp || "");
 
   return row;
@@ -616,7 +620,9 @@ function syncSheetRowInPlace_(
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igShares", getMetricValue_(insights, ["shares"]));
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igSaves", getMetricValue_(insights, ["saved"]));
   setCellByHeader_(sheet, headerMap, row.rowNumber, "igReach", getMetricValue_(insights, ["reach"]));
-  setCellByHeader_(sheet, headerMap, row.rowNumber, "igFollowers", followerCount || row.igFollowers || "");
+  if (config.syncFollowers) {
+    setCellByHeader_(sheet, headerMap, row.rowNumber, "igFollowers", followerCount || row.igFollowers || "");
+  }
   setCellByHeader_(sheet, headerMap, row.rowNumber, "lastSyncedAt", buildTimestamp_());
   setCellByHeader_(sheet, headerMap, row.rowNumber, "publishedAt", row.publishedAt || matchedMedia.timestamp || "");
 }
