@@ -1630,18 +1630,6 @@ function App() {
                 );
               })}
             </div>
-            <div className="analytics-filter-meta socials-filter-meta">
-              <span>{selectedPlatformLabel}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedPlatforms([]);
-                  setAscending(false);
-                }}
-              >
-                Reset
-              </button>
-            </div>
           </div>
         </section>
 

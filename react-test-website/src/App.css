@@ -3992,7 +3992,8 @@ select {
 }
 
 .socials-platform-card {
-  gap: 10px;
+  align-content: center;
+  gap: 12px;
 }
 
 .socials-reporting-shell .hero {
@@ -4100,72 +4101,60 @@ select {
 }
 
 .socials-reporting-shell .platform-tab {
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: 8px;
+  width: 46px;
+  height: 46px;
+  min-height: 46px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
   box-shadow: none;
   font-size: 0;
-  background: #f5f8fb;
 }
 
 .socials-reporting-shell .socials-platform-tabs {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
 }
 
 .socials-reporting-shell .platform-tab-icon-wrap {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.96);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 34, 61, 0.12);
 }
 
 .socials-reporting-shell .platform-tab-icon {
-  width: 23px;
-  height: 23px;
+  width: 27px;
+  height: 27px;
 }
 
 .socials-reporting-shell .platform-tab-active {
-  box-shadow: 0 10px 22px rgba(15, 34, 61, 0.14);
-}
-
-.socials-reporting-shell .platform-tab-instagram {
-  border-color: rgba(225, 48, 108, 0.32);
-  background:
-    linear-gradient(90deg, rgba(245, 133, 41, 0.18), rgba(225, 48, 108, 0.16), rgba(131, 58, 180, 0.16)),
-    #ffffff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .socials-reporting-shell .platform-tab-instagram.platform-tab-active {
-  background:
-    linear-gradient(90deg, #f58529 0%, #dd2a7b 52%, #8134af 100%);
-}
-
-.socials-reporting-shell .platform-tab-facebook {
-  border-color: rgba(24, 119, 242, 0.32);
-  background:
-    linear-gradient(90deg, rgba(24, 119, 242, 0.17), rgba(24, 119, 242, 0.08)),
-    #ffffff;
+  border-color: #dd2a7b;
+  box-shadow: 0 0 0 3px rgba(221, 42, 123, 0.18);
 }
 
 .socials-reporting-shell .platform-tab-facebook.platform-tab-active {
-  background: linear-gradient(90deg, #1877f2 0%, #0b5fc7 100%);
-}
-
-.socials-reporting-shell .platform-tab-tiktok {
-  border-color: rgba(0, 0, 0, 0.18);
-  background:
-    linear-gradient(90deg, rgba(37, 244, 238, 0.16), rgba(0, 0, 0, 0.08), rgba(254, 44, 85, 0.14)),
-    #ffffff;
+  border-color: #1877f2;
+  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.18);
 }
 
 .socials-reporting-shell .platform-tab-tiktok.platform-tab-active {
-  background:
-    linear-gradient(90deg, #25f4ee 0%, #111111 48%, #fe2c55 100%);
+  border-color: #111111;
+  box-shadow:
+    0 0 0 3px rgba(37, 244, 238, 0.18),
+    0 0 0 6px rgba(254, 44, 85, 0.12);
 }
 
 .socials-reporting-shell .platform-tab-active .platform-tab-icon-wrap {
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 10px 22px rgba(15, 34, 61, 0.16);
 }
 
 .socials-reporting-shell .platform-tab-label {
