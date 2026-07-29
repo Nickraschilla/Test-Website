@@ -411,6 +411,10 @@ test('focuses and clears the Meta Ads performance chart metric', () => {
   expect(screen.getByRole('button', { name: /show all metrics cost per lead/i })).toHaveAttribute('aria-pressed', 'true');
   expect(screen.queryByLabelText(/1 july leads/i)).not.toBeInTheDocument();
   expect(screen.getByLabelText(/1 july cost per lead/i)).toBeInTheDocument();
+  const performanceChart = screen.getByText(/performance over time/i).closest('section');
+  expect(within(performanceChart).getByText('$10.00')).toBeInTheDocument();
+  expect(within(performanceChart).getByText('$5.00')).toBeInTheDocument();
+  expect(within(performanceChart).queryByText('High')).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /show all metrics cost per lead/i }));
 

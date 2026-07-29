@@ -45,6 +45,21 @@ export function MetaAdsPerformanceOverTime({ rows }) {
     };
   }, [rows]);
   const trendSummary = useMemo(() => buildCampaignTrendSummary(rows), [rows]);
+  const axisLabels = useMemo(() => {
+    const focusedMetric = metrics.find((metric) => metric.key === focusedMetricKey);
+
+    if (!focusedMetric) {
+      return ["100%", "50%", "0"];
+    }
+
+    const maxValue = trendData.maxByMetric[focusedMetric.key] || 1;
+
+    return [
+      formatMetricValue(maxValue, focusedMetric.format),
+      formatMetricValue(maxValue / 2, focusedMetric.format),
+      formatMetricValue(0, focusedMetric.format),
+    ];
+  }, [focusedMetricKey, trendData.maxByMetric]);
   const hasTrendRows = trendData.rows.some((row) =>
     visibleMetrics.some((metric) => hasNumber(row.values[metric.key]))
   );
@@ -78,9 +93,9 @@ export function MetaAdsPerformanceOverTime({ rows }) {
       ) : (
         <div className="analytics-bar-chart meta-ads-review-bars">
           <div className="analytics-y-axis" aria-hidden="true">
-            <span>High</span>
-            <span>Mid</span>
-            <span>0</span>
+            {axisLabels.map((label) => (
+              <span key={label}>{label}</span>
+            ))}
           </div>
           <div className="analytics-bars">
             {trendData.rows.map((row) => (

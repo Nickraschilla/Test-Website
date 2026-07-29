@@ -2179,6 +2179,7 @@ select {
 }
 
 .meta-ads-review-bars {
+  grid-template-columns: 58px minmax(0, 1fr);
   min-height: 248px;
 }
 
