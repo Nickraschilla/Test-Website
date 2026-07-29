@@ -1446,7 +1446,6 @@ select {
 }
 
 .analytics-table-card {
-  max-height: 296px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
 }
@@ -1454,6 +1453,11 @@ select {
 .analytics-chart-card {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.analytics-main-grid > .analytics-table-card,
+.analytics-main-grid > .analytics-chart-card {
+  height: 390px;
 }
 
 .analytics-card-header {
@@ -5665,8 +5669,9 @@ select {
     margin-top: -4px;
   }
 
-  .analytics-table-card {
-    max-height: 340px;
+  .analytics-main-grid > .analytics-table-card,
+  .analytics-main-grid > .analytics-chart-card {
+    height: 340px;
   }
 
   .analytics-table-scroll {
