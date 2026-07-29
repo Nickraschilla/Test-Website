@@ -1363,6 +1363,35 @@ select {
   font-weight: 900;
 }
 
+.analytics-kpi-card .analytics-kpi-comparison {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+}
+
+.analytics-kpi-comparison-up {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.analytics-kpi-comparison-down {
+  background: #fee2e2;
+  color: #c62828;
+}
+
+.analytics-kpi-comparison-neutral {
+  background: #eef3fa;
+  color: #64748b;
+}
+
 .analytics-kpi-card em {
   align-self: end;
   color: #ff173a;

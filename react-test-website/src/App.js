@@ -27,6 +27,7 @@ import {
   formatDashboardDate,
   formatDashboardNumber,
   formatPercentageChange,
+  getPercentageChange,
   getBestMetaCampaign,
   getBestMetaCampaignList,
   getCampaignLinkId,
@@ -1069,9 +1070,21 @@ function InstagramContentPage({
 
     return (
       monthlyBreakdown.find((monthItem) => monthItem.month === Number(selectedAnalysisMonth))
-        ?.summary || createMonthSummary()
+      ?.summary || createMonthSummary()
     );
   }, [monthlyBreakdown, selectedAnalysisMonth]);
+
+  const comparisonPeriodSummary = useMemo(() => {
+    if (selectedAnalysisMonth === "all") {
+      return sumMonthlyBreakdown(comparisonMonthlyBreakdown);
+    }
+
+    return (
+      comparisonMonthlyBreakdown.find(
+        (monthItem) => monthItem.month === Number(selectedAnalysisMonth)
+      )?.summary || createMonthSummary()
+    );
+  }, [comparisonMonthlyBreakdown, selectedAnalysisMonth]);
 
   const selectedMonthLabel =
     selectedAnalysisMonth === "all"
@@ -1221,6 +1234,7 @@ function InstagramContentPage({
   );
 
   const selectedEngagements = getSummaryEngagements(selectedPeriodSummary);
+  const comparisonEngagements = getSummaryEngagements(comparisonPeriodSummary);
   const followerCount = useMemo(
     () => {
       const mostRecentRowWithFollowerCount = instagramPosts.find(
@@ -1232,11 +1246,71 @@ function InstagramContentPage({
     [instagramPosts]
   );
   const selectedProfileVisits = selectedPeriodSummary.reshares + selectedPeriodSummary.comments;
+  const comparisonProfileVisits =
+    comparisonPeriodSummary.reshares + comparisonPeriodSummary.comments;
   const kpiSummaryDivisor = getSummaryDivisor(selectedPeriodSummary, contentTotalsMode);
+  const comparisonKpiSummaryDivisor = getSummaryDivisor(
+    comparisonPeriodSummary,
+    contentTotalsMode
+  );
   const kpiViews = Math.round(selectedPeriodSummary.views / kpiSummaryDivisor);
   const kpiReach = Math.round(selectedPeriodSummary.reach / kpiSummaryDivisor);
   const kpiInteractions = Math.round(selectedEngagements / kpiSummaryDivisor);
   const kpiProfileVisits = Math.round(selectedProfileVisits / kpiSummaryDivisor);
+  const getKpiComparison = (currentValue, previousValue) => {
+    const change = getPercentageChange(currentValue, previousValue);
+    const hasPreviousValue = Number(previousValue) > 0;
+
+    if (!hasPreviousValue || change === null) {
+      return {
+        label: `No ${selectedMonthLabel} ${comparisonYearNumber} baseline`,
+        tone: "neutral",
+      };
+    }
+
+    return {
+      label: `${formatPercentageChange(change)} vs ${selectedMonthLabel} ${comparisonYearNumber}`,
+      tone: change > 0 ? "up" : change < 0 ? "down" : "neutral",
+    };
+  };
+  const kpiCards = [
+    {
+      metricKey: "views",
+      label: "Views",
+      value: kpiViews,
+      comparison: getKpiComparison(
+        kpiViews,
+        Math.round(comparisonPeriodSummary.views / comparisonKpiSummaryDivisor)
+      ),
+    },
+    {
+      metricKey: "reach",
+      label: "Reach",
+      value: kpiReach,
+      comparison: getKpiComparison(
+        kpiReach,
+        Math.round(comparisonPeriodSummary.reach / comparisonKpiSummaryDivisor)
+      ),
+    },
+    {
+      metricKey: "interactions",
+      label: "Interactions",
+      value: kpiInteractions,
+      comparison: getKpiComparison(
+        kpiInteractions,
+        Math.round(comparisonEngagements / comparisonKpiSummaryDivisor)
+      ),
+    },
+    {
+      metricKey: "profileVisits",
+      label: "Profile Visits",
+      value: kpiProfileVisits,
+      comparison: getKpiComparison(
+        kpiProfileVisits,
+        Math.round(comparisonProfileVisits / comparisonKpiSummaryDivisor)
+      ),
+    },
+  ];
   const selectedMetricOption =
     ANALYTICS_METRICS.find((metric) => metric.key === selectedMetric) || ANALYTICS_METRICS[0];
   const periodLabel = `${selectedAnalysisYear} · ${selectedMonthLabel}`;
@@ -1411,12 +1485,7 @@ function InstagramContentPage({
       ) : null}
 
       <section className="analytics-kpi-grid">
-        {[
-          ["views", "Views", kpiViews],
-          ["reach", "Reach", kpiReach],
-          ["interactions", "Interactions", kpiInteractions],
-          ["profileVisits", "Profile Visits", kpiProfileVisits],
-        ].map(([metricKey, label, value]) => (
+        {kpiCards.map(({ metricKey, label, value, comparison }) => (
           <button
             type="button"
             className={`analytics-kpi-card ${
@@ -1435,6 +1504,13 @@ function InstagramContentPage({
             <div>
               <span>{label}</span>
               <strong>{formatNumber(value)}</strong>
+              {selectedAnalysisMonth !== "all" ? (
+                <small
+                  className={`analytics-kpi-comparison analytics-kpi-comparison-${comparison.tone}`}
+                >
+                  {comparison.label}
+                </small>
+              ) : null}
             </div>
             {selectedMetric === metricKey ? <em>Focused</em> : null}
           </button>

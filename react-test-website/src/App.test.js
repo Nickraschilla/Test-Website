@@ -247,6 +247,50 @@ test('renders a clean executive overview on the dashboard front page', () => {
   expect(screen.queryByText(/latest campaign daily snapshot/i)).not.toBeInTheDocument();
 });
 
+test('shows selected Instagram month KPI comparisons against the same month last year', () => {
+  mockInstagramData.reels = [
+    {
+      id: 'ig-july-2026',
+      contentTitle: 'July 2026 post',
+      contentGroup: 'Everything',
+      publishedAt: '2026-07-10',
+      igMediaId: 'ig-media-2026',
+      igViews: 2000,
+      igReach: 1000,
+      igLikes: 100,
+      igComments: 40,
+      igShares: 20,
+      igSaves: 40,
+      igFollowers: 40852,
+    },
+    {
+      id: 'ig-july-2025',
+      contentTitle: 'July 2025 post',
+      contentGroup: 'Everything',
+      publishedAt: '2025-07-10',
+      igMediaId: 'ig-media-2025',
+      igViews: 1000,
+      igReach: 500,
+      igLikes: 50,
+      igComments: 20,
+      igShares: 10,
+      igSaves: 20,
+    },
+  ];
+
+  render(<App />);
+
+  fireEvent.click(
+    screen.getByRole('button', { name: /instagram reporting content groups/i })
+  );
+
+  const filterCard = document.querySelector('.analytics-filter-card');
+  const filters = within(filterCard).getAllByRole('combobox');
+  fireEvent.change(filters[2], { target: { value: '7' } });
+
+  expect(screen.getAllByText(/\+100\.0% vs july 2025/i)).toHaveLength(4);
+});
+
 test('keeps available dashboard sections visible when one source fails', () => {
   mockInstagramData.reels = [
     {
