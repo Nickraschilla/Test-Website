@@ -12,6 +12,9 @@ export function MetaAdsCampaignComparison({
   rows,
   sort,
   comparisonLimited,
+  isExpanded,
+  totalRows,
+  onToggleExpanded,
   onSort,
   onSelectCampaign,
 }) {
@@ -19,12 +22,27 @@ export function MetaAdsCampaignComparison({
     if (sort.key !== key) return "";
     return sort.direction === "asc" ? " ↑" : " ↓";
   };
+  const hasExpandableRows = totalRows > 1;
 
   return (
-    <section className="analytics-table-card meta-ads-table-card meta-ads-comparison-section">
+    <section
+      className={`analytics-table-card meta-ads-table-card meta-ads-comparison-section ${
+        isExpanded ? "meta-ads-comparison-section-expanded" : "meta-ads-comparison-section-collapsed"
+      }`}
+    >
       <div className="analytics-card-header">
         <strong>Campaign comparison</strong>
         {comparisonLimited ? <span>Limited comparison</span> : null}
+        {hasExpandableRows ? (
+          <button
+            type="button"
+            className="meta-ads-comparison-toggle"
+            aria-expanded={isExpanded}
+            onClick={onToggleExpanded}
+          >
+            {isExpanded ? "Show latest" : `Show all ${totalRows} campaigns`}
+          </button>
+        ) : null}
       </div>
       <div className="analytics-table-scroll">
         <table className="analytics-table meta-ads-comparison-table">

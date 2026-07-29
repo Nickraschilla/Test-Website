@@ -391,6 +391,7 @@ test('opens the Meta Ads Reporting tab', () => {
   expect(screen.queryByText(/campaign score/i)).not.toBeInTheDocument();
   expect(screen.getByText(/performance over time/i)).toBeInTheDocument();
   expect(screen.getByText(/campaign comparison/i)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /show all 2 campaigns/i })).toBeInTheDocument();
   expect(screen.getByText(/lead pipeline/i)).toBeInTheDocument();
   expect(screen.queryByText(/key takeaways/i)).not.toBeInTheDocument();
   expect(screen.getAllByText('$180.00').length).toBeGreaterThan(0);
@@ -428,9 +429,27 @@ test('switches Meta Ads campaign from the dropdown and comparison table', () => 
   expect(screen.getByRole('combobox', { name: /^campaign$/i })).toHaveValue('cmp_ended');
   expect(screen.getAllByText('$150.00').length).toBeGreaterThan(0);
 
+  fireEvent.click(screen.getByRole('button', { name: /show all 2 campaigns/i }));
   fireEvent.click(screen.getByRole('cell', { name: 'Meta Test Campaign' }));
 
   expect(screen.getByRole('combobox', { name: /^campaign$/i })).toHaveValue('cmp_active');
+});
+
+test('collapses Meta Ads campaign comparison to the latest campaign and expands history', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: /meta ads reporting paid campaigns/i }));
+
+  expect(screen.getByText('Ended Meta Campaign')).toBeInTheDocument();
+  expect(screen.queryByRole('cell', { name: 'Meta Test Campaign' })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /show all 2 campaigns/i }));
+
+  expect(screen.getByRole('button', { name: /show latest/i })).toHaveAttribute(
+    'aria-expanded',
+    'true'
+  );
+  expect(screen.getByRole('cell', { name: 'Meta Test Campaign' })).toBeInTheDocument();
 });
 
 test('shows lead pipeline rows from the lead sheet for the selected campaign', () => {

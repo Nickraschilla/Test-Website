@@ -2263,7 +2263,39 @@ select {
 }
 
 .meta-ads-comparison-section {
-  max-height: 470px;
+  max-height: none;
+}
+
+.meta-ads-comparison-section-expanded .analytics-table-scroll {
+  max-height: 410px;
+}
+
+.meta-ads-comparison-section-collapsed .analytics-table-scroll {
+  max-height: 132px;
+  overflow: hidden;
+}
+
+.meta-ads-comparison-toggle {
+  margin-left: auto;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.meta-ads-comparison-toggle:hover,
+.meta-ads-comparison-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
 }
 
 .meta-ads-comparison-table {

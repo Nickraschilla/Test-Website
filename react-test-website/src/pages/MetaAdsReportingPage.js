@@ -66,6 +66,7 @@ export function MetaAdsReportingPage({
   } = metaAdsLeadsData;
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [comparisonSort, setComparisonSort] = useState(DEFAULT_SORT);
+  const [isComparisonExpanded, setIsComparisonExpanded] = useState(false);
 
   const campaignOptions = useMemo(() => buildCampaignOptions(rows), [rows]);
 
@@ -103,6 +104,11 @@ export function MetaAdsReportingPage({
     () => sortCampaignComparisonRows(comparison.rows, comparisonSort.key, comparisonSort.direction),
     [comparison.rows, comparisonSort]
   );
+  const latestComparisonRows = useMemo(
+    () => sortCampaignComparisonRows(comparison.rows, "latestDate", "desc").slice(0, 1),
+    [comparison.rows]
+  );
+  const visibleComparisonRows = isComparisonExpanded ? comparisonRows : latestComparisonRows;
   const selectedCampaign = useMemo(
     () =>
       comparison.rows.find((campaign) => getMetaCampaignId(campaign) === selectedCampaignId) ||
@@ -133,6 +139,7 @@ export function MetaAdsReportingPage({
   const resetFilters = () => {
     setSelectedCampaignId(getDefaultCampaignId(rows));
     setComparisonSort(DEFAULT_SORT);
+    setIsComparisonExpanded(false);
   };
 
   return (
@@ -187,9 +194,12 @@ export function MetaAdsReportingPage({
           <MetaAdsReviewKpis campaign={selectedReview} />
           <MetaAdsPerformanceOverTime rows={selectedRows} />
           <MetaAdsCampaignComparison
-            rows={comparisonRows}
+            rows={visibleComparisonRows}
             sort={comparisonSort}
             comparisonLimited={comparison.comparisonLimited}
+            isExpanded={isComparisonExpanded}
+            totalRows={comparison.rows.length}
+            onToggleExpanded={() => setIsComparisonExpanded((isExpanded) => !isExpanded)}
             onSort={handleCampaignSort}
             onSelectCampaign={setSelectedCampaignId}
           />
